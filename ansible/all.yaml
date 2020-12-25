@@ -7,3 +7,22 @@
   become: yes
   roles:
     - role: interactive_access
+
+- name: Update all apt packages
+  hosts: all:!noop
+  become: yes
+  tasks:
+    - name: Update packages
+      apt:
+        update_cache: yes
+        upgrade: safe
+
+- name: Set up docker environment
+  hosts: all:!noop
+  become: yes
+  vars:
+    docker_edition: 'ce'
+    docker_install_compose: true
+    docker_package_state: present
+  roles:
+    - role: geerlingguy.docker

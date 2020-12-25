@@ -1,0 +1,10 @@
+---
+
+- name: Update all apt packages
+  hosts: all:!noop
+  become: yes
+  tasks:
+    - name: Update packages
+      apt:
+        update_cache: yes
+        upgrade: safe
