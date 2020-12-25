@@ -1,0 +1,59 @@
+---
+
+# set up ansible remote user
+- hosts: all
+  remote_user: root
+  tasks:
+    - name: Create ansible user
+      user:
+        name: "{{ ansible_username }}"
+        password: "{{ ansible_password | password_hash('sha512') }}"
+        comment: "ansible user"
+        shell: /bin/bash
+        create_home: yes
+        update_password: on_create
+        state: present
+    - name: Add authorized key
+      authorized_key:
+        user: "{{ ansible_username }}"
+        key: "{{ lookup('file', ansible_ssh_key_file + '.pub') }}"
+        exclusive: yes
+        state: present
+    - name: Grant no-password sudo privilege
+      copy:
+        content: "{{ ansible_username }} ALL=(ALL) NOPASSWD: ALL"
+        dest: "/etc/sudoers.d/{{ ansible_username }}"
+        mode: 0600
+  vars:
+    ansible_ssh_private_key_file: "{{ root_ssh_key_file }}"
+
+# set up interactive user
+- hosts: interactive_access
+  become: yes
+  tasks:
+    - name: Create interactive user
+      user:
+        name: "{{ interactive_username }}"
+        password: "{{ interactive_password | password_hash('sha512') }}"
+        comment: "interactive user"
+        groups: "{{ interactive_groups }}"
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+        update_password: on_create
+        state: present
+    - name: Add authorized key
+      authorized_key:
+        user: "{{ interactive_username }}"
+        key: "{{ lookup('file', interactive_ssh_key_file + '.pub') }}"
+        state: present
+
+# disable ssh login by password and empty passwords
+- hosts: all
+  become: yes
+  vars:
+    sshd:
+      PermitEmptyPasswords: no
+      PasswordAuthentication: no
+  roles:
+    - role: willshersystems.sshd
