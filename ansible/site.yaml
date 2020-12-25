@@ -1,0 +1,14 @@
+---
+
+- name: Echo username and password
+  gather_facts: false
+  hosts: all
+  tasks:
+
+    - name: Display the hostname
+      debug:
+        msg: "The hostname is {{ inventory_hostname }} and group is {{ group_names }}"
+
+    - name: Display proposed username and password
+      debug:
+        msg: "Username is {{ ansible_username }} and password is {{ ansible_password }}"
