@@ -17,3 +17,8 @@ Setup all servers with
 ```bash
 ansible-playbook ansible/all.yaml 
 ```
+
+Debug print local ansible environment with
+```bash
+ansible-playbook ansible/debug_print.yaml 
+```

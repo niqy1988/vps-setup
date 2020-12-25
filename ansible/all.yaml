@@ -2,8 +2,8 @@
 
 - import_playbook: bootstrap.yaml
 
-- name: Add interactive users
+- name: Set up interactive users
   hosts: dev
   become: yes
   roles:
-    - interactive_access
+    - role: interactive_access

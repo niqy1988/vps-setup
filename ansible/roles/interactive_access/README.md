@@ -1,5 +1,7 @@
-# Hosts with interactive access
+# Set up interactive access account
 
-Requires `interactive_username`, `interactive_password`, and `interactive_ssh_public_key_file` variables defined separately to run
+Requires `interactive.username` and `interactive.password` variables defined separately to run
 
-By default, the interactive user will be in `sudo` group, which can be overridden by `interactive_groups` list
+Default ssh public key is `~/.ssh/id_rsa.pub`, which can be changed with `interactives.sh_public_key_file` variable
+
+By default, the interactive user will be in `sudo` group, which can be overridden by `interactive.groups` list
