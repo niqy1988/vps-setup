@@ -3,7 +3,7 @@
 - import_playbook: bootstrap.yaml
 
 - name: Add interactive users
-  hosts: contabo
+  hosts: dev
   become: yes
   roles:
     - interactive_access
