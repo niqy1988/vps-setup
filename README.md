@@ -3,10 +3,15 @@ Ansible and configs for VPS setup
 
 Install requirements with
 ```bash
-ansible-galaxy install -r ansible/requirements.yml
+ansible-galaxy install -r ansible/requirements.yaml
 ```
 
-Setup basic users and ssh login config with
+Bootstrap server for future ansible configuration with
 ```bash
-ansible-playbook ansible/bootstrap/user_login.yaml 
+ansible-playbook ansible/bootstrap.yaml 
+```
+
+Setup all servers with
+```bash
+ansible-playbook ansible/all.yaml 
 ```

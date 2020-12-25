@@ -1,0 +1,17 @@
+- name: Create interactive user
+  user:
+    name: "{{ interactive_username }}"
+    password: "{{ interactive_password | password_hash('sha512') }}"
+    comment: "interactive user"
+    groups: "{{ interactive_groups }}"
+    append: yes
+    shell: /bin/bash
+    create_home: yes
+    update_password: on_create
+    state: present
+
+- name: Add authorized key
+  authorized_key:
+    user: "{{ interactive_username }}"
+    key: "{{ lookup('file', interactive_ssh_public_key_file) }}"
+    state: present
