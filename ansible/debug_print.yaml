@@ -1,0 +1,7 @@
+---
+
+- name: Print all variables
+  hosts: localhost
+  tasks:
+    - debug:
+        var: hostvars[inventory_hostname] 
