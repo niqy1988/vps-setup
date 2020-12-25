@@ -1,0 +1,8 @@
+# sandbox hosts with interactive access
+[dev]
+sample_interactive_host
+
+# other hosts
+[others]
+sample_generic_host
+sample_noroot_host # host without root access, relies on a bootstrap account
