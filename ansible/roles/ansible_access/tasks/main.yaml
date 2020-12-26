@@ -1,18 +1,18 @@
 - name: Create ansible user
   user:
-    name: "{{ ansible.username }}"
+    name: "{{ username }}"
     comment: "ansible user"
     shell: /bin/bash
     create_home: yes
     state: present
 - name: Add authorized key
   authorized_key:
-    user: "{{ ansible.username }}"
-    key: "{{ lookup('file', ansible.ssh_public_key_file) }}"
+    user: "{{ username }}"
+    key: "{{ lookup('file', ssh_public_key_file) }}"
     exclusive: yes
     state: present
 - name: Grant no-password sudo privilege
   copy:
-    content: "{{ ansible.username }} ALL=(ALL) NOPASSWD: ALL"
-    dest: "/etc/sudoers.d/{{ ansible.username }}"
+    content: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
+    dest: "/etc/sudoers.d/{{ username }}"
     mode: 0600

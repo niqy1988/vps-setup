@@ -1,7 +1,5 @@
-interactive:
-  username:
-  password:
-  ssh_public_key_file: ~/.ssh/id_rsa.pub
-  groups: 
-    - sudo
-  
+username:
+password:
+ssh_public_key_file: ~/.ssh/id_rsa.pub
+user_groups: 
+  - sudo

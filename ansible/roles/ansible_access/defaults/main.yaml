@@ -1,3 +1,2 @@
-ansible:
-  username: ansible_remote_user
-  ssh_public_key_file: ~/.ssh/id_rsa.pub
+username: ansible_remote_user
+ssh_public_key_file: ~/.ssh/id_rsa.pub
