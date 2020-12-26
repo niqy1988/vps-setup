@@ -20,5 +20,5 @@ ansible-playbook all.yaml
 
 Debug print local ansible environment with
 ```bash
-ansible-playbook ansible/debug_print.yaml 
+ansible-playbook debug_print.yaml 
 ```
