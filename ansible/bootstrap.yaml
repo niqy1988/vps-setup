@@ -5,10 +5,23 @@
   remote_user: "{{ bootstrap_username | default('root') }}"
   become: yes
   vars:
+    username: "{{ ansible_username }}"
+    ssh_public_key_file: "{{ ansible_ssh_public_key_file }}"
     ansible_ssh_private_key_file: "{{ bootstrap_ssh_private_key_file | default(root_ssh_private_key_file) }}"
   roles:
     - role: ansible_access
 
+- name: Set up interactive user
+  hosts: dev
+  become: yes
+  vars:
+    username: "{{ interactive_username }}"
+    password: "{{ interactive_password }}"
+    ssh_public_key_file: "{{ interactive_ssh_public_key_file }}"
+    user_groups: "{{ interactive_user_groups }}"
+  roles:
+    - role: interactive_access
+    
 - name: Disable ssh login by password and empty passwords
   hosts: all
   become: yes

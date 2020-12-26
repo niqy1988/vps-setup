@@ -1,14 +1,14 @@
 ---
 
-- name: Set up docker environment
-  hosts: all:!nodocker
+- name: Print all local variables
+  hosts: localhost
+  tasks:
+    - debug:
+        var: hostvars[inventory_hostname]
+
+- name: print all hostnames
+  hosts: all
   become: yes
   tasks:
     - debug:
-        var: inventory_hostname
-
-# - name: Print all variables
-#   hosts: localhost
-#   tasks:
-#     - debug:
-#         var: hostvars[inventory_hostname] 
+        msg: "hostname is: {{ inventory_hostname }}"

@@ -3,4 +3,3 @@ collections:
 roles:
   - name: willshersystems.sshd
   - name: geerlingguy.docker
-  - name: stefangweichinger.ansible_rclone
