@@ -1,0 +1,9 @@
+nginx_conf_d_path: /var/local/nginx/conf.d/
+nginx_certs_path: /var/local/nginx/certs/
+
+nginx_networks:
+  - name: nginx
+
+nginx_ports:
+  - 80
+  - 8080
