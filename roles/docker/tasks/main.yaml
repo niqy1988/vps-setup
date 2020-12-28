@@ -1,0 +1,16 @@
+- name: Install python + pip
+  become: yes
+  apt:
+    name: python3-pip
+    update_cache: yes
+
+- name: Install docker-py for ansible to manage Docker
+  pip:
+    name: docker
+
+- name: Add ansible user to 'docker' group for access
+  become: yes
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes

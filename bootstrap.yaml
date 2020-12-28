@@ -31,3 +31,24 @@
       PasswordAuthentication: no
   roles:
     - role: willshersystems.sshd
+
+- name: Deny all traffic in firewall except ssh connection 
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install ufw
+      apt:
+        name: ufw
+        update_cache: yes
+    - name: Allow ssh
+      community.general.ufw:
+        rule: allow
+        name: OpenSSH
+    - name: Deny other traffic by default
+      community.general.ufw:
+        default: deny
+        state: enabled
+
+  
+
+

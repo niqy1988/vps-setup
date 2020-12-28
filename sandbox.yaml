@@ -1,8 +1,7 @@
 ---
 
-- name: Test rclone
-  hosts: media
+- name: Test nginx in docker
+  hosts: sandbox
   vars:
-    rclone_local_config_dir: roles/rclone/sample_config_dir/
   roles:
-    - role: rclone
+    - role: nginx
