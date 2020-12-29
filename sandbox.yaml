@@ -1,7 +1,15 @@
 ---
 
-- name: Test nginx in docker
+# - name: Test nginx in docker
+#   hosts: sandbox
+#   vars:
+#   roles:
+#     - role: nginx
+
+- name: Set up mysql
   hosts: sandbox
   vars:
+    mysql_databse: wordpress
+    # mysql_backup_file: mysql/backup/wordpress.sql
   roles:
-    - role: nginx
+    - role: mysql

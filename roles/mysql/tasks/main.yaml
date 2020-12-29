@@ -1,0 +1,47 @@
+- name: Set up data folder
+  become: yes
+  file:
+    path: "{{ mysql_data_path }}/{{ item }}"
+    state: directory
+  loop:
+    - data
+    - backup
+
+- name: Copy backup file to remote
+  become: yes
+  copy:
+    src: "{{ mysql_backup_file }}"
+    dest: "{{ mysql_data_path }}/backup/backup.sql"
+  when: mysql_backup_file
+
+- name: Append MySQL networks to nginx networks list
+  set_fact:
+    nginx_networks: "{{ nginx_networks | default([]) + mysql_networks }}"
+
+- name: Set up docker networks
+  docker_network: 
+    name: "{{ item.name }}"
+  loop: "{{ mysql_networks | unique }}"
+
+- name: Start MySQL container
+  docker_container:
+    name: mysql
+    image: mysql
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+      MYSQL_DATABASE: "{{ mysql_databse }}"
+      MYSQL_USER: "{{ mysql_username }}"
+      MYSQL_PASSWORD: "{{ mysql_password }}"
+    volumes:
+      - "{{ mysql_data_path }}/data:/var/lib/mysql"
+    networks: "{{ mysql_networks | unique }}"
+    purge_networks: yes
+    networks_cli_compatible: no
+    container_default_behavior: no_defaults
+    restart_policy: always
+    
+- name: Recover from backup file
+  become: yes
+  shell:
+    cmd: "docker exec -i mysql sh -c 'exec mysql -uroot -p\"$MYSQL_ROOT_PASSWORD\"' < {{ mysql_data_path }}/backup/backup.sql"
+  when: mysql_backup_file

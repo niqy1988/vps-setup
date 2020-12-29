@@ -25,19 +25,16 @@
   docker_container:
     name: nginx
     image: nginx
-    links:
-    #  - "myredis:aliasedredis"
-    devices:
-    #  - "/dev/sda:/dev/xvda:rwm"
     volumes:
       - "/bin/netstat:/bin/netstat:ro"
       - "{{ nginx_conf_d_path }}:/etc/nginx/conf.d"
       - "{{ nginx_certs_path }}:/etc/nginx/certs"
     ports: "{{ nginx_ports | unique | map('string') | map('regex_replace', '([0-9]+)', '\\1:\\1') }}"
     networks: "{{ nginx_networks | unique }}"
-    purge_networks: yes
+    purge_networks: "{{ purge_nginx_networks }}"
     networks_cli_compatible: no
     container_default_behavior: no_defaults
+    restart_policy: always
     recreate: yes
     healthcheck:
       test:
