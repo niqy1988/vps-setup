@@ -25,10 +25,6 @@
   docker_container:
     name: nginx
     image: nginx
-    links:
-    #  - "myredis:aliasedredis"
-    devices:
-    #  - "/dev/sda:/dev/xvda:rwm"
     volumes:
       - "/bin/netstat:/bin/netstat:ro"
       - "{{ nginx_conf_d_path }}:/etc/nginx/conf.d"
@@ -38,6 +34,7 @@
     purge_networks: yes
     networks_cli_compatible: no
     container_default_behavior: no_defaults
+    restart_policy: always
     recreate: yes
     healthcheck:
       test:

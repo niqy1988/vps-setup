@@ -1,0 +1,25 @@
+---
+
+- name: Update existing apt packages
+  hosts: www
+  become: yes
+  tasks:
+    - name: Update packages
+      apt:
+        update_cache: yes
+        upgrade: safe
+
+- name: Set up Docker environment
+  hosts: www
+  vars:
+    docker_edition: 'ce'
+    docker_package_state: present
+  roles:
+    - role: docker
+
+- name: Set up mysql
+  hosts: www
+  vars:
+    mysql_databse: wordpress
+  roles:
+    - role: mysql
