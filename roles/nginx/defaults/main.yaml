@@ -3,6 +3,7 @@ nginx_certs_path: /var/local/nginx/certs/
 
 nginx_networks:
   - name: nginx
+purge_nginx_networks: no
 
 nginx_ports:
   - 80

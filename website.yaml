@@ -17,9 +17,16 @@
   roles:
     - role: docker
 
-- name: Set up mysql
+- name: Set up MySQL database
   hosts: www
   vars:
     mysql_databse: wordpress
+    mysql_networks:
+    - name: wordpress
   roles:
     - role: mysql
+
+- name: Set up nginx proxy
+  hosts: www
+  roles:
+    - role: nginx
