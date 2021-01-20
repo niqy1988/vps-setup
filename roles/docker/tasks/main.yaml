@@ -14,3 +14,9 @@
     name: "{{ ansible_user }}"
     groups: docker
     append: yes
+
+- name: Install netstat for health check
+  become: yes
+  apt:
+    name: net-tools
+    update_cache: yes

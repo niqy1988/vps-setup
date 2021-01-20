@@ -1,7 +1,6 @@
-# nginx_conf_d_path: /var/local/nginx/conf.d/
 mysql_data_path: /var/local/mysql
-mysql_backup_file: ""
 
+mysql_container_name: mysql
 mysql_networks:
   - name: mysql_db
 

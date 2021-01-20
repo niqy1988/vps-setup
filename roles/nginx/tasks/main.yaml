@@ -10,12 +10,6 @@
     path: "{{ nginx_certs_path }}"
     state: directory
 
-- name: Install netstat for health check
-  become: yes
-  apt:
-    name: net-tools
-    update_cache: yes
-
 - name: Set up docker networks
   docker_network: 
     name: "{{ item.name }}"
@@ -27,8 +21,8 @@
     image: nginx
     volumes:
       - "/bin/netstat:/bin/netstat:ro"
-      - "{{ nginx_conf_d_path }}:/etc/nginx/conf.d"
-      - "{{ nginx_certs_path }}:/etc/nginx/certs"
+      - "{{ nginx_conf_d_path }}:/etc/nginx/conf.d":ro
+      - "{{ nginx_certs_path }}:/etc/nginx/certs":ro
     ports: "{{ nginx_ports | unique | map('string') | map('regex_replace', '([0-9]+)', '\\1:\\1') }}"
     networks: "{{ nginx_networks | unique }}"
     purge_networks: "{{ purge_nginx_networks }}"

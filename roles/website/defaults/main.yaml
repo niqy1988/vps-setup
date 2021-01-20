@@ -1,0 +1,25 @@
+# Website
+website_data_path: /var/local/www
+website_networks:
+  - name: www
+website_domain_name: domain.net
+website_server_names:
+  - "{{ website_domain_name }}"
+  - "www.{{ website_domain_name }}"
+website_ssl_certificate: "{{ website_domain_name }}.crt"
+website_ssl_certificate_key: "{{ website_domain_name }}.key"
+
+# Wordpress
+wordpress_container_name: wordpress
+wordpress_data_path: "{{ website_data_path }}/wordpress" 
+
+# MySQL
+mysql_container_name: mysql_wp
+mysql_data_path: "{{ website_data_path }}/mysql"
+mysql_root_password: some_secret_password
+mysql_databse: wordpress
+mysql_username: wordpress
+mysql_password: wordpress_db_password
+
+# nginx
+nginx_conf_d_path: /var/local/nginx/conf.d/

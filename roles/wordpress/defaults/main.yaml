@@ -1,0 +1,10 @@
+wordpress_data_path: /var/local/wordpress
+
+wordpress_container_name: wordpress
+wordpress_networks:
+  - name: wordpress
+
+wordpress_db_host: mysql
+wordpress_db_name: wordpress
+wordpress_db_username: wordpress
+wordpress_db_password: wordpress_db_password

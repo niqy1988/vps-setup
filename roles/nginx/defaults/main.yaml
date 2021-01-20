@@ -7,4 +7,4 @@ purge_nginx_networks: no
 
 nginx_ports:
   - 80
-  - 8080
+  - 443
