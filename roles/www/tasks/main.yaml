@@ -1,0 +1,29 @@
+- name: Set up nginx website config folders
+  become: yes
+  file:
+    path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www"
+    state: directory
+  loop: "{{ www_domains }}"
+
+- name: Generate nginx config for website
+  become: yes
+  template:
+    src: www.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www.conf"
+  loop: "{{ www_domains }}"
+
+- name: Generate nginx config for static locations
+  become: yes
+  template:
+    src: www/static.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www/static.conf"
+  loop: "{{ www_domains }}"
+  when: www_static_site
+
+- name: Generate nginx config for wordpress locations
+  become: yes
+  template:
+    src: www/wordpress.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www/wordpress.conf"
+  loop: "{{ www_domains }}"
+  when: www_wordpress_site

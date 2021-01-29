@@ -1,0 +1,55 @@
+- name: Set up certbot folder
+  become: yes
+  file:
+    path: "{{ certbot_path }}"
+    state: directory
+    mode: u-rwx
+
+- name: Generate Cloudflare API ini
+  become: yes
+  template:
+    src: cloudflare.ini.j2
+    dest: "{{ certbot_path }}/cloudflare.ini"
+    mode: u-rwx
+
+- name: Request new certificates
+  docker_container:
+    name: certbot_request
+    image: certbot/dns-cloudflare
+    volumes:
+      - "{{ certbot_path }}:/etc/letsencrypt"
+    command: 
+      - "certonly"
+      - "--dns-cloudflare"
+      - "--dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini"
+      - "-d {{ item }}"
+      - "-d *.{{ item }}"
+      - "--email {{email_address}}"
+      - "--agree-tos"
+    pull: yes
+    detach: no
+    container_default_behavior: no_defaults
+  loop: "{{ domain_names }}"
+  when: request_new_certs
+
+- name: Set up cron job to renew certificates
+  cron:
+    name: renew certbot certificates
+    special_time: daily
+    job: "docker run --rm -it -v {{ certbot_path }}:/etc/letsencrypt certbot/dns-cloudflare renew --dns-cloudflare --agree-tos"
+
+- name: Set up nginx config folder
+  become: yes
+  file:
+    path: "{{ nginx_config_path }}/conf.d/{{ item }}"
+    state: directory
+  loop: "{{ domain_names }}"
+  when: nginx_https_redirect
+  
+- name: Set up nginx https redirects
+  become: yes
+  template:
+    src: ssl.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item }}/ssl.conf"
+  loop: "{{ domain_names }}"
+  when: nginx_https_redirect

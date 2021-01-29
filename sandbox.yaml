@@ -1,13 +1,7 @@
 ---
 
-- name: nginx settings
-  hosts: contabo_us
-  vars:
-    website_domain_name: "{{domain_name}}"
-    website_networks:
-      - name: wordpress
-    wordpress_container_name: wordpress
-    mysql_container_name: mysql_wp
-    mysql_databse: mysql_default_db
-  roles:
-    - role: website
+
+
+
+
+

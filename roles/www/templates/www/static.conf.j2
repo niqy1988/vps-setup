@@ -1,0 +1,6 @@
+# Static Content Server Config
+{% for location in www_static_locations %}
+location {{ location.path }} {
+  root {{ location.root }};
+}
+{% endfor %}

@@ -17,16 +17,53 @@
   roles:
     - role: docker
 
-- name: Set up MySQL database
+- name: Set up SSL certificates
   hosts: www
   vars:
-    mysql_databse: wordpress
-    mysql_networks:
-    - name: wordpress
+    reguest_new_certs: no
+  roles:
+    - role: certbot
+
+- name: Set up MySQL
+  hosts: www
+  vars:
+    mysql_container_name: "{{ www_db_container }}"
+    mysql_data_path: "{{ www_db_data_path }}"
+    mysql_networks: "{{ www_networks }}"
+    mysql_root_password: "{{ www_db_root_password }}"
+    mysql_databse: "{{ www_db_name }}"
+    mysql_username: "{{ www_db_username }}"
+    mysql_password: "{{ www_db_password }}"
   roles:
     - role: mysql
 
-- name: Set up nginx proxy
+- name: Set up wordpress
   hosts: www
+  vars:
+    wordpress_container_name: "{{ www_wp_container }}"
+    wordpress_data_path: "{{ www_wp_data_path }}" 
+    wordpress_networks: "{{ www_networks }}"
+    wordpress_db_host: "{{ www_db_container }}"
+    wordpress_db_name: "{{ www_db_name }}"
+    wordpress_db_username: "{{ www_db_username }}"
+    wordpress_db_password: "{{ www_db_password }}"
+  roles:
+    - role: wordpress
+
+- name: Set up www routing rules
+  hosts: www
+  roles:
+    - role: www
+
+- name: Set up nginx
+  hosts: www
+  vars:
+    nginx_networks: "{{ www_networks }}"
+    nginx_purge_networks: no
+    nginx_ports: "{{ www_ports }}"
+    nginx_purge_ports: no
+    nginx_contents: "{{ www_static_file_contents }}"
+    nginx_purge_contents: no
+    nginx_run: yes
   roles:
     - role: nginx

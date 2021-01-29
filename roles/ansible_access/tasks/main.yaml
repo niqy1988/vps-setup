@@ -5,14 +5,24 @@
     shell: /bin/bash
     create_home: yes
     state: present
+
 - name: Add authorized key
   authorized_key:
     user: "{{ username }}"
     key: "{{ lookup('file', ssh_public_key_file) }}"
     exclusive: yes
     state: present
+
 - name: Grant no-password sudo privilege
   copy:
     content: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
     dest: "/etc/sudoers.d/{{ username }}"
     mode: 0600
+
+- name: Set up facts folder
+  file:
+    path: /etc/ansible/facts.d
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    

@@ -1,6 +1,6 @@
 # WordPress Proxy Config
 location / {
-  proxy_pass http://{{ wordpress_container_name }};
+  proxy_pass http://{{ www_wp_container }};
   proxy_redirect off;
   proxy_set_header Host $host;
   proxy_set_header X-Real-IP $remote_addr;
