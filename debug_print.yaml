@@ -1,28 +1,14 @@
 ---
 
-# - name: Print all local variables
-#   hosts: localhost
-#   tasks:
-#     - debug:
-#         var: hostvars[inventory_hostname]
-
-# - name: print all hostnames
-#   hosts: all
-#   become: yes
-#   tasks:
-#     - debug:
-#         msg: "hostname is: {{ inventory_hostname }}"
-
-- name: Print
-  hosts: contabo_us
+- name: Print all local variables
+  hosts: localhost
   tasks:
     - debug:
-        var: domain_names
+        var: hostvars[inventory_hostname]
+
+- name: print all hostnames
+  hosts: all
+  become: yes
+  tasks:
     - debug:
-        var: www_server_types
-    - debug:
-        msg: wordpress needed
-      when: "'wordpress' in www_server_types"
-    - debug:
-        msg: static needed
-      when: "'static' in www_server_types"
+        msg: "hostname is: {{ inventory_hostname }}"
