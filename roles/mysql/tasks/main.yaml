@@ -30,9 +30,7 @@
     healthcheck:
       test:
         - CMD-SHELL
-        - "netstat -ntlp"
-        - "|" 
-        - "grep:3306"
+        - "netstat -ntlp | grep -q :3306" 
       interval: 10s
       timeout: 2s
       retries: 3
