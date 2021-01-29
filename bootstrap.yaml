@@ -49,6 +49,17 @@
         default: deny
         state: enabled
 
-  
-
-
+- name: Enable TCP BBR congestion control algorithm
+  hosts: all
+  become: yes
+  tasks:
+    - name: Set net.core.default_qdisc = fq
+      sysctl:
+        name: net.core.default_qdisc
+        value: fq
+        state: present
+    - name: Set net.ipv4.tcp_congestion_control = bbr
+      sysctl:
+        name: net.ipv4.tcp_congestion_control
+        value: bbr
+        state: present

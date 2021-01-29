@@ -1,53 +1,112 @@
-- name: Set up conf.d folder
+### Set up workding directories
+- name: Set up nginx folder
   become: yes
   file:
-    path: "{{ nginx_conf_d_path }}"
+    path: "{{ nginx_config_path }}"
     state: directory
+
+- name: Set up nginx subfolders
+  become: yes
+  file:
+    path: "{{ nginx_config_path }}/{{ item }}"
+    state: directory
+  loop:
+    - conf.d
+    - stream.d
+    - log
 
 - name: Set up certs folder
   become: yes
   file:
     path: "{{ nginx_certs_path }}"
     state: directory
+    mode: u-rwx
 
-- name: Install netstat for health check
+- name: Copy nginx.conf
   become: yes
-  apt:
-    name: net-tools
-    update_cache: yes
+  copy:
+    src: nginx.conf
+    dest: "{{ nginx_config_path }}/nginx.conf"
 
+- name: Set up contents folder
+  become: yes
+  file:
+    path: "{{ item.value }}"
+    state: directory
+  with_dict: "{{ nginx_contents }}"
+
+### Set up running facts
+- name: Add specified networks to existing networks list
+  set_fact:
+    nginx_networks: "{{ ( nginx_networks + ansible_local.nginx.networks | default([]) ) | unique }}"
+  when: not nginx_purge_networks
+
+- name: Add specified ports to existing ports list
+  set_fact:
+    nginx_ports: "{{ ( nginx_ports + ansible_local.nginx.ports | default([]) ) | unique }}"
+  when: not nginx_purge_ports
+  
+- name: Add specified content mounts to existing contents list
+  set_fact:
+    nginx_contents: "{{ ansible_local.nginx.contents | default({}) | combine(nginx_contents) }}"
+  when: not nginx_purge_contents
+  
+- name: Save nginx facts
+  copy: 
+    content: "{{ {
+      'networks': nginx_networks,
+      'ports': nginx_ports,
+      'contents': nginx_contents,
+    } | to_nice_json }}" 
+    dest: /etc/ansible/facts.d/nginx.fact
+
+### Set up networks
 - name: Set up docker networks
   docker_network: 
     name: "{{ item.name }}"
   loop: "{{ nginx_networks | unique }}"
+  when: nginx_run
 
+### Run nginx
 - name: Start nginx container
   docker_container:
     name: nginx
-    image: nginx
-    volumes:
-      - "/bin/netstat:/bin/netstat:ro"
-      - "{{ nginx_conf_d_path }}:/etc/nginx/conf.d"
-      - "{{ nginx_certs_path }}:/etc/nginx/certs"
+    image: nginx:alpine
+    volumes: "{{ [
+      nginx_config_path~'/nginx.conf:/etc/nginx/nginx.conf:ro',
+      nginx_config_path~'/conf.d:/etc/nginx/conf.d:ro',
+      nginx_config_path~'/stream.d:/etc/nginx/stream.d:ro',
+      nginx_config_path~'/log:/var/log/nginx',
+      nginx_certs_path~':/etc/nginx/certs:ro',
+    ] + nginx_contents.values() | zip(nginx_contents.keys()) | map('join',':') | list }}"
     ports: "{{ nginx_ports | unique | map('string') | map('regex_replace', '([0-9]+)', '\\1:\\1') }}"
     networks: "{{ nginx_networks | unique }}"
-    purge_networks: "{{ purge_nginx_networks }}"
+    purge_networks: yes
     networks_cli_compatible: no
     container_default_behavior: no_defaults
     restart_policy: always
-    recreate: yes
+    pull: yes
+    recreate: "{{ nginx_run }}"
     healthcheck:
       test:
         - CMD-SHELL
-        - "netstat -ntlp"
-        - "|" 
-        - "grep:{{ nginx_ports | first | string }}"
+        - "netstat -ntlp | grep -q :{{ nginx_ports | first | string }}" 
       interval: 10s
       timeout: 2s
       retries: 3
+  when: nginx_run
 
 - name: Sanity check for all ports listened
   wait_for:
     port: "{{ item }}"
     timeout: 5
   loop: "{{ nginx_ports | unique }}"
+  when: nginx_run
+
+### Cron job to reload nginx config
+- name: Set up nginx reload cron job
+  cron:
+    name: reload nginx config
+    special_time: hourly
+    job: docker exec -it nginx nginx -s reload
+  when: nginx_run

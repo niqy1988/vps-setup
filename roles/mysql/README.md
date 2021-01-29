@@ -1,1 +1,1 @@
-# Install and run MySQL on docker
+# Install and run MySQL(MariaDB) on docker

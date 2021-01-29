@@ -1,10 +1,22 @@
-nginx_conf_d_path: /var/local/nginx/conf.d/
-nginx_certs_path: /var/local/nginx/certs/
+domain_names:
+  - domain.net
+  - domain.com
+
+nginx_config_path: /var/local/nginx
+nginx_certs_path: /var/local/certbot
 
 nginx_networks:
-  - name: nginx
-purge_nginx_networks: no
+  - name: bridge
+nginx_purge_networks: no
 
 nginx_ports:
   - 80
-  - 8080
+  - 443
+nginx_purge_ports: no
+
+# formatted as target mount: host volume path
+nginx_contents:
+  /srv: /srv
+nginx_purge_contents: no
+
+nginx_run: no
