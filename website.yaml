@@ -20,7 +20,7 @@
 - name: Set up SSL certificates
   hosts: www
   vars:
-    reguest_new_certs: no
+    request_new_certs: no
   roles:
     - role: certbot
 

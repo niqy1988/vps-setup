@@ -26,7 +26,7 @@
   become: yes
   copy:
     src: nginx.conf
-    dest: "{{ nginx_config_path }}/nginx.conf"
+    dest: "{{ nginx_config_path }}"
 
 - name: Set up contents folder
   become: yes
