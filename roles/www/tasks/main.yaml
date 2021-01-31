@@ -27,3 +27,11 @@
     dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www/wordpress.conf"
   loop: "{{ www_domains }}"
   when: www_wordpress_site
+
+- name: Generate nginx config for proxy locations
+  become: yes
+  template:
+    src: www/proxy.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www/proxy.conf"
+  loop: "{{ www_domains }}"
+  when: www_proxy_site

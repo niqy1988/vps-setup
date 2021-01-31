@@ -1,0 +1,17 @@
+# WordPress Proxy Config
+location {{ www_proxy_path }} {
+  proxy_pass https://{{ www_proxy_destination }};
+  proxy_redirect off;
+  
+  proxy_ssl_server_name on;  
+  proxy_ssl_certificate     /etc/nginx/certs/live/{{ item.domain_name }}/fullchain.pem;
+  proxy_ssl_certificate_key /etc/nginx/certs/live/{{ item.domain_name }}/privkey.pem;
+  proxy_ssl_session_reuse on;
+
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Host $host;
+  proxy_set_header X-Forwarded-Server $host;
+  proxy_set_header X-Forwarded-Proto $scheme;  
+}

@@ -1,1 +1,19 @@
 ---
+
+- name: Set up www site
+  hosts: xray
+  roles:
+    - role: www
+
+- name: Set up nginx
+  hosts: xray
+  vars:
+    nginx_networks: "{{ xray_networks }}"
+    nginx_purge_networks: no
+    nginx_ports: "{{ www_ports }}"
+    nginx_purge_ports: no
+    nginx_contents: "{{ www_static_file_contents }}"
+    nginx_purge_contents: no
+    nginx_run: yes
+  roles:
+    - role: nginx
