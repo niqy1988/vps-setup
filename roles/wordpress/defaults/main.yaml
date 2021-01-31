@@ -2,7 +2,7 @@ wordpress_data_path: /var/local/wordpress
 
 wordpress_container_name: wordpress
 wordpress_networks:
-  - name: wordpress
+  - name: bridge
 
 wordpress_db_host: mysql
 wordpress_db_name: wordpress

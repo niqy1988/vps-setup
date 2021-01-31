@@ -64,7 +64,7 @@
 - name: Set up docker networks
   docker_network: 
     name: "{{ item.name }}"
-  loop: "{{ nginx_networks | unique }}"
+  loop: "{{ nginx_networks }}"
   when: nginx_run
 
 ### Run nginx
@@ -79,8 +79,8 @@
       nginx_config_path~'/log:/var/log/nginx',
       nginx_certs_path~':/etc/nginx/certs:ro',
     ] + nginx_contents.values() | zip(nginx_contents.keys()) | map('join',':') | list }}"
-    ports: "{{ nginx_ports | unique | map('string') | map('regex_replace', '([0-9]+)', '\\1:\\1') }}"
-    networks: "{{ nginx_networks | unique }}"
+    ports: "{{ nginx_ports | map('string') | map('regex_replace', '([0-9]+)', '\\1:\\1') }}"
+    networks: "{{ nginx_networks }}"
     purge_networks: yes
     networks_cli_compatible: no
     container_default_behavior: no_defaults
@@ -100,7 +100,7 @@
   wait_for:
     port: "{{ item }}"
     timeout: 5
-  loop: "{{ nginx_ports | unique }}"
+  loop: "{{ nginx_ports }}"
   when: nginx_run
 
 ### Cron job to reload nginx config

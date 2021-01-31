@@ -1,0 +1,48 @@
+---
+
+- name: Update existing apt packages
+  hosts: xray
+  become: yes
+  tasks:
+    - name: Update packages
+      apt:
+        update_cache: yes
+        upgrade: safe
+
+- name: Set up Docker environment
+  hosts: xray
+  vars:
+    docker_edition: 'ce'
+    docker_package_state: present
+  roles:
+    - role: docker
+
+- name: Set up SSL certificates
+  hosts: xray
+  vars:
+    request_new_certs: no
+  roles:
+    - role: certbot
+
+- name: Set up www site
+  hosts: xray
+  roles:
+    - role: www
+
+- name: Set up xray
+  hosts: xray
+  roles:
+    - role: xray
+
+- name: Set up nginx
+  hosts: xray
+  vars:
+    nginx_networks: "{{ xray_networks }}"
+    nginx_purge_networks: no
+    nginx_ports: "{{ www_ports }}"
+    nginx_purge_ports: no
+    nginx_contents: "{{ www_static_file_contents }}"
+    nginx_purge_contents: no
+    nginx_run: yes
+  roles:
+    - role: nginx

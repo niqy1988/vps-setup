@@ -1,5 +1,4 @@
 # ansible hosts
 /inventory
 /rclone
-/mysql
-/wordpress
+/xray
