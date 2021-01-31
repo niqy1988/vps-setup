@@ -1,0 +1,29 @@
+{
+    "log": {
+        "access": "/var/log/xray/access.log",
+        "error": "/var/log/xray/error.log",
+        "loglevel": "warning"
+    },
+    "inbounds": [
+        {
+            "port": {{ xray_port }},
+            "protocol": "vless",
+            "settings": {
+                "clients": {{ xray_clients | to_nice_json }},
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "none",
+                "wsSettings": {
+                    "path": "{{ xray_path }}"
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        }
+    ]
+}

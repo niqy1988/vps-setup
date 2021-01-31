@@ -7,7 +7,7 @@
 - name: Set up docker networks
   docker_network: 
     name: "{{ item.name }}"
-  loop: "{{ wordpress_networks | unique }}"
+  loop: "{{ wordpress_networks }}"
 
 - name: Start wordpress container
   docker_container:
@@ -21,7 +21,7 @@
     volumes:
       - "/bin/netstat:/bin/netstat:ro"
       - "{{ wordpress_data_path }}:/var/www/html"
-    networks: "{{ wordpress_networks | unique }}"
+    networks: "{{ wordpress_networks }}"
     purge_networks: yes
     networks_cli_compatible: no
     container_default_behavior: no_defaults

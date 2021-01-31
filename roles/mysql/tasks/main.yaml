@@ -7,7 +7,7 @@
 - name: Set up docker networks
   docker_network: 
     name: "{{ item.name }}"
-  loop: "{{ mysql_networks | unique }}"
+  loop: "{{ mysql_networks }}"
 
 - name: Start MySQL container
   docker_container:
@@ -21,7 +21,7 @@
     volumes:
       - "/bin/netstat:/bin/netstat:ro"
       - "{{ mysql_data_path }}:/var/lib/mysql"
-    networks: "{{ mysql_networks | unique }}"
+    networks: "{{ mysql_networks }}"
     purge_networks: yes
     networks_cli_compatible: no
     container_default_behavior: no_defaults

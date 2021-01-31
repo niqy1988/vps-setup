@@ -16,8 +16,8 @@ www_static_file_mount: "/srv/www/static"
 www_static_locations:
   - path: /index.html
     root: "{{ www_static_file_mount }}"
-  - path: /error.html
-    root: /usr/share/nginx/html/50x.html
+  - path: /50x.html
+    root: /usr/share/nginx/html
 
 # Wordpress
 www_wordpress_site: yes

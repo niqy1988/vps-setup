@@ -2,7 +2,7 @@ mysql_data_path: /var/local/mysql
 
 mysql_container_name: mysql
 mysql_networks:
-  - name: mysql_db
+  - name: bridge
 
 mysql_root_password: some_secret_password
 

@@ -1,0 +1,52 @@
+- name: Set up xray config folders
+  become: yes
+  file:
+    path: "{{ xray_data_path }}/log"
+    state: directory
+
+- name: Generate xray server config
+  become: yes
+  template:
+    src: server_config.json.j2
+    dest: "{{ xray_data_path }}/server_config.json"
+
+- name: Set up nginx config folders
+  become: yes
+  file:
+    path: "{{ nginx_config_path }}/conf.d/{{ item }}/www"
+    state: directory
+  loop: "{{ xray_domains }}"
+
+- name: Generate nginx config for xray
+  become: yes
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item }}/www/xray.conf"
+  loop: "{{ xray_domains }}"
+
+- name: Set up docker networks
+  docker_network: 
+    name: "{{ item.name }}"
+  loop: "{{ xray_networks }}"
+
+- name: Start xray container
+  docker_container:
+    name: "{{ xray_container_name }}"
+    image: teddysun/xray
+    volumes:
+      - "/bin/netstat:/bin/netstat:ro"
+      - "{{ xray_data_path }}/server_config.json:/etc/xray/config.json:ro"
+      - "{{ xray_data_path }}/log:/var/log/xray"
+    networks: "{{ xray_networks }}"
+    purge_networks: yes
+    networks_cli_compatible: no
+    container_default_behavior: no_defaults
+    restart_policy: always
+    recreate: yes
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "netstat -ntlp | grep -q :{{ xray_port }}"
+      interval: 10s
+      timeout: 2s
+      retries: 3
