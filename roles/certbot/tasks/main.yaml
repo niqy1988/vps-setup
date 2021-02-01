@@ -12,6 +12,15 @@
     dest: "{{ certbot_path }}/cloudflare.ini"
     mode: u-rwx
 
+- name: Load list of existing domains    
+  set_fact:
+    cur_domains: "{{ ansible_local.certbot.domains | default([]) }}"
+
+- name: Find new domains not on the host
+  set_fact:
+    new_domains: "{{ domain_names | difference(cur_domains) | list }}"
+  when: request_new_certs
+
 - name: Request new certificates
   docker_container:
     name: certbot_request
@@ -29,7 +38,13 @@
     pull: yes
     detach: no
     container_default_behavior: no_defaults
-  loop: "{{ domain_names }}"
+  loop: "{{ new_domains }}"
+  when: request_new_certs
+
+- name: Save certbot facts
+  copy: 
+    content: "{{ { 'domains': (cur_domains + new_domains) | unique } | to_nice_json }}" 
+    dest: /etc/ansible/facts.d/certbot.fact
   when: request_new_certs
 
 - name: Set up cron job to renew certificates
