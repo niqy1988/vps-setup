@@ -3,3 +3,7 @@
 - import_playbook: bootstrap.yaml
 
 - import_playbook: media_server.yaml
+
+- import_playbook: wordpress.yaml
+
+- import_playbook: xray.yaml

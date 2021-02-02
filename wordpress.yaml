@@ -1,7 +1,7 @@
 ---
 
 - name: Update existing apt packages
-  hosts: www
+  hosts: wordpress
   become: yes
   tasks:
     - name: Update packages
@@ -10,7 +10,8 @@
         upgrade: safe
 
 - name: Set up Docker environment
-  hosts: www
+  hosts: wordpress
+  become: yes
   vars:
     docker_edition: 'ce'
     docker_package_state: present
@@ -18,14 +19,12 @@
     - role: docker
 
 - name: Set up SSL certificates
-  hosts: www
-  vars:
-    request_new_certs: no
+  hosts: wordpress
   roles:
     - role: certbot
 
 - name: Set up MySQL
-  hosts: www
+  hosts: wordpress
   vars:
     mysql_container_name: "{{ www_db_container }}"
     mysql_data_path: "{{ www_db_data_path }}"
@@ -38,7 +37,7 @@
     - role: mysql
 
 - name: Set up wordpress
-  hosts: www
+  hosts: wordpress
   vars:
     wordpress_container_name: "{{ www_wp_container }}"
     wordpress_data_path: "{{ www_wp_data_path }}" 
@@ -51,12 +50,12 @@
     - role: wordpress
 
 - name: Set up www routing rules
-  hosts: www
+  hosts: wordpress
   roles:
     - role: www
 
 - name: Set up nginx
-  hosts: www
+  hosts: wordpress
   vars:
     nginx_networks: "{{ www_networks }}"
     nginx_purge_networks: no

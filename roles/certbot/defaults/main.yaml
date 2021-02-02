@@ -2,7 +2,7 @@ domain_names:
   - domain.net
   - domain.com
 
-request_new_certs: no
+request_new_certs: yes
 
 certbot_path: /var/local/certbot
 

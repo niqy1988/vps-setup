@@ -23,6 +23,11 @@ www_static_locations:
 www_wordpress_site: yes
 www_wp_container: www_wordpress
 
+# Proxy
+www_proxy_site: no
+www_proxy_path: /
+www_proxy_destination: www.google.com
+
 # certbot
 certbot_path: /var/local/certbot
 

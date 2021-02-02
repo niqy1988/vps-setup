@@ -11,6 +11,7 @@
 
 - name: Set up Docker environment
   hosts: media
+  become: yes
   vars:
     docker_edition: 'ce'
     docker_package_state: present
