@@ -40,6 +40,10 @@
     container_default_behavior: no_defaults
   loop: "{{ new_domains }}"
   when: request_new_certs
+  retries: 3
+  delay: 10
+  register: result
+  until: result is not failed
 
 - name: Save certbot facts
   copy: 
