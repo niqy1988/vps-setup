@@ -19,6 +19,7 @@
     password: "{{ interactive_password }}"
     ssh_public_key_file: "{{ interactive_ssh_public_key_file }}"
     user_groups: "{{ interactive_user_groups }}"
+    sudoer: "{{ interactive_sudoer }}"
   roles:
     - role: interactive_access
     
@@ -31,23 +32,6 @@
       PasswordAuthentication: no
   roles:
     - role: willshersystems.sshd
-
-- name: Deny all traffic in firewall except ssh connection 
-  hosts: all
-  become: yes
-  tasks:
-    - name: Install ufw
-      apt:
-        name: ufw
-        update_cache: yes
-    - name: Allow ssh
-      community.general.ufw:
-        rule: allow
-        name: OpenSSH
-    - name: Deny other traffic by default
-      community.general.ufw:
-        default: deny
-        state: enabled
 
 - name: Enable TCP BBR congestion control algorithm
   hosts: all
