@@ -1,6 +1,5 @@
 username:
 password:
 ssh_public_key_file: ~/.ssh/id_rsa.pub
-user_groups:
-  - "{{ username }}"
+user_groups: []
 sudoer: no

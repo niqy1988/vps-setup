@@ -47,3 +47,48 @@
         name: net.ipv4.tcp_congestion_control
         value: bbr
         state: present
+
+- name: Initialize firewalld
+  hosts: all
+  become: yes
+  tasks:
+    - name: Default service rules
+      ansible.posix.firewalld:
+        service: "{{ item.service }}"
+        state: "{{ item.rule }}"
+        permanent: yes
+        immediate: yes
+      loop:
+        - service: ssh
+          rule: enabled
+        - service: dhcpv6-client
+          rule: enabled
+        - service: cockpit
+          rule: disabled
+    - name: Clean up Oracle Cloud iptables passthrough rules
+      lineinfile:
+        path: /etc/firewalld/direct.xml
+        regexp: "{{ item }}"
+        state: absent
+      loop:
+        - <passthrough ipv="ipv4">-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT</passthrough>
+        - <passthrough ipv="ipv4">-A INPUT -p icmp -j ACCEPT</passthrough>
+        - <passthrough ipv="ipv4">-A INPUT -i lo -j ACCEPT</passthrough>
+        - <passthrough ipv="ipv4">-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT</passthrough>
+        - <passthrough ipv="ipv4">-A INPUT -j REJECT --reject-with icmp-host-prohibited</passthrough>
+        - <passthrough ipv="ipv4">-A FORWARD -j REJECT --reject-with icmp-host-prohibited</passthrough>
+        - <passthrough ipv="ipv4">-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT</passthrough>
+      when: hostvars[inventory_hostname]['ansible_chassis_asset_tag'] == "OracleCloud.com"
+      notify:
+        - Reload firewalld
+    - name: Start firewalld service
+      systemd:
+        name: firewalld
+        state: started
+      notify:
+        - Reload firewalld
+  handlers:
+    - name: Reload firewalld
+      systemd:
+        name: firewalld
+        state: reloaded
