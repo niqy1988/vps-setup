@@ -20,7 +20,7 @@
   when: request_new_certs
 
 - name: Request new certificates
-  docker_container:
+  community.general.docker_container:
     name: certbot_request
     image: certbot/dns-cloudflare
     volumes:

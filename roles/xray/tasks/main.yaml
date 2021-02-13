@@ -30,7 +30,7 @@
   loop: "{{ xray_networks }}"
 
 - name: Start xray container
-  docker_container:
+  community.general.docker_container:
     name: "{{ xray_container_name }}"
     image: teddysun/xray
     volumes:

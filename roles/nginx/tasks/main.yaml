@@ -69,7 +69,7 @@
 
 ### Run nginx
 - name: Start nginx container
-  docker_container:
+  community.general.docker_container:
     name: nginx
     image: nginx:alpine
     volumes: "{{ [

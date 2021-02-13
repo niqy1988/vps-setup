@@ -47,13 +47,23 @@
   pip:
     name: docker
 
+- name: Install netstat for health check
+  dnf:
+    name: net-tools
+    state: present
+
 - name: Add ansible user to 'docker' group for access
   user:
     name: "{{ ansible_user }}"
     groups: docker
     append: yes
+  register: ansible_docker_user
 
-- name: Install netstat for health check
-  dnf:
-    name: net-tools
-    state: present
+- name: Test run busybox
+  become: yes
+  become_user: "{{ ansible_docker_user.name }}"
+  community.general.docker_container:
+    name: test_busybox
+    image: busybox
+    container_default_behavior: no_defaults
+  ignore_errors: yes

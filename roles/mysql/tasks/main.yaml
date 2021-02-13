@@ -10,7 +10,7 @@
   loop: "{{ mysql_networks }}"
 
 - name: Start MySQL container
-  docker_container:
+  community.general.docker_container:
     name: "{{ mysql_container_name }}"
     image: mariadb
     env:

@@ -10,7 +10,7 @@
   loop: "{{ wordpress_networks }}"
 
 - name: Start wordpress container
-  docker_container:
+  community.general.docker_container:
     name: "{{ wordpress_container_name }}"
     image: wordpress
     env:
