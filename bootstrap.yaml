@@ -57,7 +57,6 @@
         service: "{{ item.service }}"
         state: "{{ item.rule }}"
         permanent: yes
-        immediate: yes
       loop:
         - service: ssh
           rule: enabled
@@ -65,6 +64,8 @@
           rule: enabled
         - service: cockpit
           rule: disabled
+      notify:
+        - Reload firewalld
     - name: Clean up Oracle Cloud iptables passthrough rules
       lineinfile:
         path: /etc/firewalld/direct.xml
