@@ -25,4 +25,7 @@
     state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
-    
+
+- name: Reset SSH connection to apply changes
+  meta: reset_connection
+  

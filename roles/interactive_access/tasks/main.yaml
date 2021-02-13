@@ -27,3 +27,7 @@
     path: "/etc/sudoers.d/{{ username }}"
     state: absent
   when: not sudoer
+
+- name: Reset SSH connection to apply changes
+  meta: reset_connection
+  
