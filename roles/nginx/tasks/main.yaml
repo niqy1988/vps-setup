@@ -82,7 +82,7 @@
     ports: "{{ nginx_ports | map('string') | map('regex_replace', '([0-9]+)', '\\1:\\1') }}"
     networks: "{{ nginx_networks }}"
     purge_networks: yes
-    networks_cli_compatible: no
+    networks_cli_compatible: yes
     container_default_behavior: no_defaults
     restart_policy: always
     pull: "{{ nginx_run }}"
