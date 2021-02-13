@@ -33,6 +33,11 @@
       - container-selinux
     state: present
 
+- name: Start docker service
+  systemd:
+    name: docker
+    state: started
+
 - name: Install python + pip
   dnf:
     name: python3-pip
@@ -52,9 +57,3 @@
   dnf:
     name: net-tools
     state: present
-
-- name: Start docker service
-  systemd:
-    name: docker
-    state: started
-    
