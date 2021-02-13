@@ -57,13 +57,7 @@
     name: "{{ ansible_user }}"
     groups: docker
     append: yes
-  register: ansible_docker_user
 
-- name: Test run busybox
-  become: yes
-  become_user: "{{ ansible_docker_user.name }}"
-  community.general.docker_container:
-    name: test_busybox
-    image: busybox
-    container_default_behavior: no_defaults
-  ignore_errors: yes
+- name: Reset SSH connection to apply group changes
+  meta: reset_connection
+  
