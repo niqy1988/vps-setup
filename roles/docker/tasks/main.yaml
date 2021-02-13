@@ -1,22 +1,60 @@
+- name: Remove old versions of Docker
+  dnf:
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-engine
+    state: absent
+
+- name: Add Docker GPG key
+  rpm_key:
+    key: https://download.docker.com/linux/centos/gpg
+    state: present
+
+- name: Add Docker repository
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: '/etc/yum.repos.d/docker-ce.repo'
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Install Docker
+  dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - container-selinux
+    state: present
+
 - name: Install python + pip
-  become: yes
-  apt:
+  dnf:
     name: python3-pip
-    update_cache: yes
+    state: present
 
 - name: Install docker-py for ansible to manage Docker
   pip:
     name: docker
 
 - name: Add ansible user to 'docker' group for access
-  become: yes
   user:
     name: "{{ ansible_user }}"
     groups: docker
     append: yes
 
 - name: Install netstat for health check
-  become: yes
-  apt:
+  dnf:
     name: net-tools
-    update_cache: yes
+    state: present
+
+- name: Start docker service
+  systemd:
+    name: docker
+    state: started
+    

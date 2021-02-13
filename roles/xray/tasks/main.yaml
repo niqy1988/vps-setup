@@ -34,7 +34,6 @@
     name: "{{ xray_container_name }}"
     image: teddysun/xray
     volumes:
-      - "/bin/netstat:/bin/netstat:ro"
       - "{{ xray_data_path }}/server_config.json:/etc/xray/config.json:ro"
       - "{{ xray_data_path }}/log:/var/log/xray"
     networks: "{{ xray_networks }}"
@@ -42,6 +41,7 @@
     networks_cli_compatible: no
     container_default_behavior: no_defaults
     restart_policy: always
+    pull: yes
     recreate: yes
     healthcheck:
       test:

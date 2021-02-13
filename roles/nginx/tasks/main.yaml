@@ -85,7 +85,7 @@
     networks_cli_compatible: no
     container_default_behavior: no_defaults
     restart_policy: always
-    pull: yes
+    pull: "{{ nginx_run }}"
     recreate: "{{ nginx_run }}"
     healthcheck:
       test:
