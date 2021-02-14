@@ -3,10 +3,12 @@
   become: yes
   file:
     path: "{{ nginx_config_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
     state: directory
 
 - name: Set up nginx subfolders
-  become: yes
   file:
     path: "{{ nginx_config_path }}/{{ item }}"
     state: directory
@@ -15,23 +17,23 @@
     - stream.d
     - log
 
+- name: Copy nginx.conf
+  copy:
+    src: nginx.conf
+    dest: "{{ nginx_config_path }}"
+
 - name: Set up certs folder
   become: yes
   file:
     path: "{{ nginx_certs_path }}"
     state: directory
-    mode: u-rwx
-
-- name: Copy nginx.conf
-  become: yes
-  copy:
-    src: nginx.conf
-    dest: "{{ nginx_config_path }}"
 
 - name: Set up contents folder
   become: yes
   file:
     path: "{{ item.value }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     state: directory
   with_dict: "{{ nginx_contents }}"
 

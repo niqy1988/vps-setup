@@ -1,7 +1,30 @@
+- name: Set up mysql data owner group
+  become: yes
+  group:
+    name: "{{ mysql_data_owner }}"
+    gid: "{{ mysql_data_uid | int }}"
+    state: present
+
+- name: Set up mysql data owner
+  become: yes
+  user:
+    name: "{{ mysql_data_owner }}"
+    group: "{{ mysql_data_owner }}"
+    comment: "mysql data owner"
+    home: /
+    shell: /sbin/nologin
+    uid: "{{ mysql_data_uid | int }}"
+    password_lock: yes
+    system: yes
+    state: present
+
 - name: Set up data folder
   become: yes
   file:
     path: "{{ mysql_data_path }}"
+    owner: "{{ mysql_data_owner }}"
+    group: "{{ mysql_data_owner }}"
+    recurse: yes
     state: directory
 
 - name: Set up docker networks

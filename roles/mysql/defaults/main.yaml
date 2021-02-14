@@ -1,4 +1,6 @@
 mysql_data_path: /var/local/mysql
+mysql_data_owner: mysql-docker
+mysql_data_uid: 999
 
 mysql_container_name: mysql
 mysql_networks:
@@ -9,4 +11,3 @@ mysql_root_password: some_secret_password
 mysql_databse: mysql_default_db
 mysql_username: non_root_user
 mysql_password: user_password
-
