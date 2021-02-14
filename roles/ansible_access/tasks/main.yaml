@@ -1,10 +1,29 @@
+- name: Create ansible user group
+  group:
+    name: "{{ username }}"
+    gid: "{{ uid | int }}"
+    state: present
+
 - name: Create ansible user
   user:
     name: "{{ username }}"
+    group: "{{ username }}"
     comment: "ansible user"
     shell: /bin/bash
     create_home: yes
+    password_lock: yes
+    uid: "{{ uid | int }}"
     state: present
+
+- name: Set subuid/subgid for ansible user namespace
+  lineinfile:
+    path: "{{ item }}"
+    regexp: "{{ username }}:"
+    line: "{{ username }}:{{ uid }}:65536"
+    state: present
+  loop:
+    - /etc/subuid
+    - /etc/subgid
 
 - name: Add authorized key
   authorized_key:
@@ -22,10 +41,10 @@
 - name: Set up facts folder
   file:
     path: /etc/ansible/facts.d
-    state: directory
     owner: "{{ username }}"
     group: "{{ username }}"
+    recurse: yes
+    state: directory
 
 - name: Reset SSH connection to apply changes
   meta: reset_connection
-  

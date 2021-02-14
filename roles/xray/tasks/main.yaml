@@ -1,24 +1,37 @@
-- name: Set up xray config folders
+- name: Set up xray folder
   become: yes
   file:
-    path: "{{ xray_data_path }}/log"
+    path: "{{ xray_data_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
     state: directory
 
 - name: Generate xray server config
-  become: yes
   template:
     src: server_config.json.j2
     dest: "{{ xray_data_path }}/server_config.json"
 
-- name: Set up nginx config folders
+- name: Set up xray log folder
+  file:
+    path: "{{ xray_data_path }}/log"
+    state: directory
+
+- name: Set up nginx folder
   become: yes
+  file:
+    path: "{{ nginx_config_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    state: directory
+
+- name: Set up nginx site folders
   file:
     path: "{{ nginx_config_path }}/conf.d/{{ item }}/www"
     state: directory
   loop: "{{ xray_domains }}"
 
 - name: Generate nginx config for xray
-  become: yes
   template:
     src: nginx.conf.j2
     dest: "{{ nginx_config_path }}/conf.d/{{ item }}/www/xray.conf"

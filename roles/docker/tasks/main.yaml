@@ -32,6 +32,11 @@
       - containerd.io
       - container-selinux
     state: present
+    
+- name: Generate daemon config
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
 
 - name: Start docker service
   systemd:

@@ -1,5 +1,4 @@
 # Website
-www_data_path: /var/local/www
 www_domains: 
   - domain_name: domain.net
     server_names:
