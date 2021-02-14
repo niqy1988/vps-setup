@@ -4,7 +4,6 @@
     password: "{{ password | password_hash('sha512') }}"
     comment: "interactive user"
     groups: "{{ user_groups }}"
-    append: yes
     shell: /bin/bash
     create_home: yes
     update_password: on_create
@@ -15,3 +14,20 @@
     user: "{{ username }}"
     key: "{{ lookup('file', ssh_public_key_file) }}"
     state: present
+
+- name: Grant sudo privilege
+  copy:
+    content: "{{ username }} ALL=(ALL) ALL"
+    dest: "/etc/sudoers.d/{{ username }}"
+    mode: 0600
+  when: sudoer
+
+- name: Remove sudo privilege
+  file:
+    path: "/etc/sudoers.d/{{ username }}"
+    state: absent
+  when: not sudoer
+
+- name: Reset SSH connection to apply changes
+  meta: reset_connection
+  

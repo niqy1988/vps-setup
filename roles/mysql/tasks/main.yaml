@@ -10,7 +10,7 @@
   loop: "{{ mysql_networks }}"
 
 - name: Start MySQL container
-  docker_container:
+  community.general.docker_container:
     name: "{{ mysql_container_name }}"
     image: mariadb
     env:
@@ -23,9 +23,10 @@
       - "{{ mysql_data_path }}:/var/lib/mysql"
     networks: "{{ mysql_networks }}"
     purge_networks: yes
-    networks_cli_compatible: no
+    networks_cli_compatible: yes
     container_default_behavior: no_defaults
     restart_policy: always
+    pull: yes
     recreate: yes
     healthcheck:
       test:

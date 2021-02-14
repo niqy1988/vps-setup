@@ -1,20 +1,17 @@
 ---
 
-- name: Update existing apt packages
+- name: Update existing packages
   hosts: media
   become: yes
   tasks:
     - name: Update packages
-      apt:
-        update_cache: yes
-        upgrade: safe
+      dnf:
+        name: "*"
+        state: latest
 
 - name: Set up Docker environment
   hosts: media
   become: yes
-  vars:
-    docker_edition: 'ce'
-    docker_package_state: present
   roles:
     - role: docker
 

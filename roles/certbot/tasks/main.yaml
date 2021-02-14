@@ -3,14 +3,12 @@
   file:
     path: "{{ certbot_path }}"
     state: directory
-    mode: u-rwx
 
 - name: Generate Cloudflare API ini
   become: yes
   template:
     src: cloudflare.ini.j2
     dest: "{{ certbot_path }}/cloudflare.ini"
-    mode: u-rwx
 
 - name: Load list of existing domains    
   set_fact:
@@ -22,7 +20,7 @@
   when: request_new_certs
 
 - name: Request new certificates
-  docker_container:
+  community.general.docker_container:
     name: certbot_request
     image: certbot/dns-cloudflare
     volumes:

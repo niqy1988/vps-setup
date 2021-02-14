@@ -10,7 +10,7 @@
   loop: "{{ wordpress_networks }}"
 
 - name: Start wordpress container
-  docker_container:
+  community.general.docker_container:
     name: "{{ wordpress_container_name }}"
     image: wordpress
     env:
@@ -23,9 +23,10 @@
       - "{{ wordpress_data_path }}:/var/www/html"
     networks: "{{ wordpress_networks }}"
     purge_networks: yes
-    networks_cli_compatible: no
+    networks_cli_compatible: yes
     container_default_behavior: no_defaults
     restart_policy: always
+    pull: yes
     recreate: yes
     healthcheck:
       test:
