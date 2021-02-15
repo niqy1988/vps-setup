@@ -1,3 +1,8 @@
+- name: Get ansible user info
+  getent:
+    database: passwd
+    key: "{{ ansible_user }}"
+
 - name: Set up xray folder
   become: yes
   file:
@@ -37,10 +42,23 @@
     dest: "{{ nginx_config_path }}/conf.d/{{ item }}/www/xray.conf"
   loop: "{{ xray_domains }}"
 
-- name: Set up docker networks
-  docker_network: 
-    name: "{{ item.name }}"
-  loop: "{{ xray_networks }}"
+- name: Create firewalld service rule
+  become: yes
+  copy:
+    src: xray.xml
+    dest: /usr/lib/firewalld/services
+    mode: "644"
+  notify: Reload firewalld
+
+- meta: flush_handlers
+
+- name: Enable firewalld service rule
+  become: yes
+  ansible.posix.firewalld:
+    service: xray
+    state: enabled
+    immediate: yes
+    permanent: yes
 
 - name: Start xray container
   community.general.docker_container:
@@ -49,7 +67,9 @@
     volumes:
       - "{{ xray_data_path }}/server_config.json:/etc/xray/config.json:ro"
       - "{{ xray_data_path }}/log:/var/log/xray"
-    networks: "{{ xray_networks }}"
+    user: "{{ getent_passwd[ansible_user][1] }}:{{ getent_passwd[ansible_user][2] }}"
+    userns_mode: host 
+    network_mode: host
     purge_networks: yes
     networks_cli_compatible: yes
     container_default_behavior: no_defaults

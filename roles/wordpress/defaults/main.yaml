@@ -1,6 +1,5 @@
 wordpress_data_path: /var/local/wordpress
 wordpress_data_owner: wordpress-docker
-wordpress_data_uid: 33
 
 wordpress_container_name: wordpress
 wordpress_networks:
