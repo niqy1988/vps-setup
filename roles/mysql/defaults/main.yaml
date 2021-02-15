@@ -1,6 +1,5 @@
 mysql_data_path: /var/local/mysql
 mysql_data_owner: mysql-docker
-mysql_data_uid: 999
 
 mysql_container_name: mysql
 mysql_networks:

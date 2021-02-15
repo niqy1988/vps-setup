@@ -33,7 +33,8 @@
 - name: Set up nginx
   hosts: xray
   vars:
-    nginx_networks: "{{ xray_networks }}"
+    nginx_networks:
+      - name: bridge
     nginx_purge_networks: no
     nginx_ports: "{{ www_ports }}"
     nginx_purge_ports: no

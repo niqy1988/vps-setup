@@ -1,3 +1,12 @@
+- name: Get ansible user info
+  getent:
+    database: passwd
+    key: "{{ ansible_user }}"
+
+- name: Set mysql data owner uid
+  set_fact:
+    mysql_data_uid: "{{ getent_passwd[ansible_user][1] | int + 999 }}"
+
 - name: Set up mysql data owner group
   become: yes
   group:

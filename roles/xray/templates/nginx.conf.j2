@@ -1,6 +1,6 @@
 # Xray Proxy Config
 location {{ xray_path }} {
-  proxy_pass http://{{ xray_container }}:{{ xray_port }};
+  proxy_pass http://172.17.0.1:{{ xray_port }};
   proxy_redirect off;
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "upgrade";

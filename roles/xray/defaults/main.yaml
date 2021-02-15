@@ -6,8 +6,6 @@ xray_domains:
 xray_path: /xray
 
 xray_container_name: xray
-xray_networks:
-  - name: bridge
 xray_port: 10086
 
 xray_clients:
