@@ -1,0 +1,11 @@
+[Unit]
+Description="Mount Rclone Drive %i"
+PartOf=rclone.target
+
+[Service]
+Type=simple
+User={{ ansible_user }}
+Group={{ ansible_user }}
+ExecStart=/bin/bash {{ rclone_config_path }}/mount/%i.sh
+ExecStop=/bin/bash {{ rclone_config_path }}/unmount/%i.sh
+Restart=always

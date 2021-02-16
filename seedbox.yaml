@@ -1,0 +1,22 @@
+---
+
+- name: Update existing packages
+  hosts: seedbox
+  become: yes
+  tasks:
+    - name: Update packages
+      dnf:
+        name: "*"
+        state: latest
+
+- name: Set up Docker environment
+  hosts: seedbox
+  become: yes
+  roles:
+    - role: docker
+
+- name: Set up rclone drives
+  hosts: seedbox
+  roles: 
+    - role: rclone
+

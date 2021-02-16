@@ -1,5 +1,4 @@
 # ansible hosts
 /inventory
-/rclone
-/xray
+/files
 sandbox.yaml
