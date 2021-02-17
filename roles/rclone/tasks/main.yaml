@@ -1,28 +1,81 @@
-- name: Install rclone
-  apt:
-    name: rclone
-    state: latest
-    update_cache: yes
+- name: Install fuse + rclone
   become: yes
+  dnf:
+    name: 
+      - fuse
+      - rclone
+    state: present
 
-- name: Set rclone config
-  block:
-    - name: Initialize config dirs
-      set_fact:
-        rclone_config_dirs: 
-          - "{{ playbook_dir + '/' + rclone_local_config_dir }}"
+- name: Set allow_other in fuse
+  become: yes
+  lineinfile:
+    path: /etc/fuse.conf
+    regexp: user_allow_other
+    line: user_allow_other
+    state: present
 
-    - name: Append group config dirs
-      set_fact:
-        rclone_config_dirs: "{{ rclone_config_dirs + [ rclone_config_dirs[0] + item + '/' ] }}"
-      loop: "{{ group_names }}"
-      when: rclone_load_group_config
+- name: Set up rclone folder
+  become: yes
+  file:
+    path: "{{ rclone_config_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+    state: directory
 
-    - name: Set config file
-      blockinfile:
-        path: "{{ rclone_remote_config_file_path }}"
-        block: "{{ lookup('file', item) }}"
-        create: yes
-        marker: "# {mark} {{ item | basename }}"
-      with_fileglob: "{{ rclone_config_dirs | product('*.yaml') | map('join') }}"
-  when: rclone_remote_config_file_path is defined
+- name: Set up rclone config file
+  template:
+    src: config/rclone.conf.j2
+    dest: "{{ rclone_config_path }}/rclone.conf"
+
+- name: Set up script folders
+  file:
+    path: "{{ rclone_config_path }}/{{ item }}"
+    state: directory
+  loop: 
+    - mount
+    - unmount
+
+- name: Set up mount scripts
+  template:
+    src: script/mount.sh.j2
+    dest: "{{ rclone_config_path }}/mount/{{ item.name }}.sh"
+    mode: +x
+  when: item.mount_path is defined
+  loop: "{{ rclone_mounts }}"
+
+- name: Set up unmount scripts
+  template:
+    src: script/unmount.sh.j2
+    dest: "{{ rclone_config_path }}/unmount/{{ item.name }}.sh"
+    mode: +x
+  when: item.mount_path is defined
+  loop: "{{ rclone_mounts }}"
+
+- name: Create rclone service
+  become: yes
+  template:
+    src: service/rclone@.service.j2
+    dest: /etc/systemd/system/rclone@.service
+    mode: "644"
+
+- name: Create rclone service target
+  become: yes
+  template:
+    src: service/rclone.target.j2
+    dest: /etc/systemd/system/rclone.target
+    mode: "644"
+    
+- name: Enable rclone service
+  become: yes
+  systemd:
+    name: rclone@.service
+    enabled: yes
+
+- name: Start rclone services
+  become: yes
+  systemd:
+    name: rclone.target
+    enabled: yes
+    daemon_reload: yes
+    state: restarted

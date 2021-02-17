@@ -1,4 +1,10 @@
-rclone_remote_config_file_path: ~/.config/rclone/rclone.conf
-rclone_local_config_dir: rclone/
-rclone_load_group_config: yes
-  
+rclone_config_path: /var/local/rclone
+
+rclone_mounts:
+  - name: sample
+    config: sample.conf
+    remote: sample
+    mount_path: /mnt/sample
+    dir: shared
+  - name: sample2
+    config: another_sample.conf

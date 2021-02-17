@@ -31,3 +31,8 @@
 - name: Reset SSH connection to apply changes
   meta: reset_connection
   
+- name: Install screen tool
+  dnf:
+    name: screen
+    state: present
+    

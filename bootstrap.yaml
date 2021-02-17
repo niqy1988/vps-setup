@@ -12,18 +12,21 @@
   roles:
     - role: ansible_access
 
-- name: Set up interactive user
-  hosts: dev
+- name: Enable extra YUM repositories
+  hosts: all
   become: yes
-  vars:
-    username: "{{ interactive_username }}"
-    password: "{{ interactive_password }}"
-    ssh_public_key_file: "{{ interactive_ssh_public_key_file }}"
-    user_groups: "{{ interactive_user_groups }}"
-    sudoer: "{{ interactive_sudoer }}"
-  roles:
-    - role: interactive_access
-    
+  tasks:
+    - name: Enable PowerTools
+      ini_file:
+        dest: /etc/yum.repos.d/CentOS-Linux-PowerTools.repo
+        section: powertools
+        option: enabled
+        value: "1"
+    - name: Enable EPEL
+      dnf:
+        name: epel-release
+        state: latest
+
 - name: Disable ssh login by password and empty passwords
   hosts: all
   become: yes
@@ -86,6 +89,7 @@
     - name: Start firewalld service
       systemd:
         name: firewalld
+        enabled: yes
         state: started
       notify:
         - Reload firewalld
@@ -93,4 +97,18 @@
     - name: Reload firewalld
       systemd:
         name: firewalld
+        enabled: yes
         state: reloaded
+
+- name: Set up interactive user
+  hosts: dev
+  become: yes
+  vars:
+    username: "{{ interactive_username }}"
+    password: "{{ interactive_password }}"
+    ssh_public_key_file: "{{ interactive_ssh_public_key_file }}"
+    user_groups: "{{ interactive_user_groups }}"
+    sudoer: "{{ interactive_sudoer }}"
+  roles:
+    - role: interactive_access
+    

@@ -1,0 +1,24 @@
+plex_data_path: /var/local/plex
+plex_media_volumes:
+  - /host_data/music:/data/music
+  - /local/movies:/data/movies
+
+plex_container_name: plex
+plex_networks:
+  - name: bridge
+
+# network
+plex_domains: 
+  - domain_name: domain.net
+    server_names:
+      - plex.domain.net
+      - media.domain.net
+  - domain_name: domain.com
+    server_names:
+      - plex.domain.com
+
+plex_ports: 
+  - 32400
+
+# nginx
+nginx_config_path: /var/local/nginx

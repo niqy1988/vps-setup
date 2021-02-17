@@ -41,6 +41,7 @@
 - name: Start docker service
   systemd:
     name: docker
+    enabled: yes
     state: started
 
 - name: Install python + pip
