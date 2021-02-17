@@ -1,9 +1,7 @@
 server {
 
-  {% for port in plex_ports %}
-  listen {{ port }} ssl http2;
-  listen [::]:{{ port }} ssl http2;
-  {% endfor %}
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
 
   server_name {{ item.server_names | join(' ') }};
 

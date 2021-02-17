@@ -56,12 +56,14 @@
     name: "{{ plex_container_name }}"
     image: plexinc/pms-docker
     env:
-      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:{{ plex_ports[0] }}/"
+      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:443/"
       PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
     volumes: "{{ [
       plex_data_path~'/config:/config',
       plex_data_path~'/transcode:/transcode',
     ] + plex_media_volumes }}"
+    ports:
+      - "{{ plex_direct_port }}:32400"
     networks: "{{ plex_networks }}"
     purge_networks: yes
     networks_cli_compatible: yes
