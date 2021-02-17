@@ -4,8 +4,7 @@ rclone_mounts:
   - name: sample
     config: sample.conf
     remote: sample
-    dir: shared
     mount_path: /mnt/sample
+    dir: shared
   - name: sample2
     config: another_sample.conf
-    remote: another

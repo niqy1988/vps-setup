@@ -1,7 +1,7 @@
 [Unit]
 Description="Mount All Rclone Drives"
 After=network.target local-fs.target remote-fs.target
-Wants={% for remote in rclone_mounts %}rclone@{{ remote.name }}.service {% endfor %}
+Wants={% for remote in rclone_mounts %}{% if 'mount_path' in remote %}rclone@{{ remote.name }}.service {% endif %}{% endfor %}
 
 [Install]
 WantedBy=default.target

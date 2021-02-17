@@ -1,0 +1,71 @@
+- name: Set up plex folder
+  become: yes
+  file:
+    path: "{{ plex_data_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+    state: directory
+
+- name: Set up plex config and transcode subfolders
+  file:
+    path: "{{ plex_data_path }}/{{ item }}"
+    state: directory
+  loop:
+    - config
+    - transcode
+
+- name: Check existing PLEX preference file
+  stat:
+    path: "{{ plex_data_path }}/config/Library/Application Support/Plex Media Server/Preferences.xml"
+  register: pref_stat
+
+- name: Set up nginx folder
+  become: yes
+  file:
+    path: "{{ nginx_config_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    state: directory
+
+- name: Set up nginx site folders
+  file:
+    path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
+    state: directory
+  loop: "{{ plex_domains }}"
+
+- name: Generate nginx config for plex
+  template:
+    src: plex.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/plex.conf"
+  loop: "{{ plex_domains }}"
+
+- name: Set up docker networks
+  docker_network: 
+    name: "{{ item.name }}"
+  loop: "{{ plex_networks }}"
+
+- name: Input PLEX claim token
+  pause:
+    prompt: "Input a claim token, acquired from https://www.plex.tv/claim "
+  register: plex_claim_token
+  when: not pref_stat.stat.exists
+
+- name: Start plex container
+  community.general.docker_container:
+    name: "{{ plex_container_name }}"
+    image: plexinc/pms-docker
+    env:
+      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:{{ plex_ports[0] }}/"
+      PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
+    volumes: "{{ [
+      plex_data_path~'/config:/config',
+      plex_data_path~'/transcode:/transcode',
+    ] + plex_media_volumes }}"
+    networks: "{{ plex_networks }}"
+    purge_networks: yes
+    networks_cli_compatible: yes
+    container_default_behavior: no_defaults
+    restart_policy: always
+    pull: yes
+    recreate: yes

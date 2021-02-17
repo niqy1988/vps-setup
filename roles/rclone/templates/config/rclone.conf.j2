@@ -1,5 +1,5 @@
-{% for remote in rclone_mounts %}
-# Configuration for {{ remote.name }}
-{{ lookup('file', remote.config) }}
+{% for rclone_drive in rclone_mounts %}
+# Configuration for {{ rclone_drive.name }}
+{{ lookup('file', rclone_drive.config) }}
 
 {% endfor %}

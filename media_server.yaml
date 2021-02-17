@@ -19,3 +19,28 @@
   hosts: media
   roles:
     - role: rclone
+
+- name: Set up SSL certificates
+  hosts: media
+  roles:
+    - role: certbot
+
+- name: Set up PLEX server
+  hosts: media
+  vars:
+    plex_networks: "{{ media_networks }}"
+  roles:
+    - role: plex
+
+- name: Set up nginx
+  hosts: media
+  vars:
+    nginx_networks: "{{ media_networks }}"
+    nginx_purge_networks: no
+    nginx_ports: "{{ plex_ports }}"
+    nginx_purge_ports: no
+    nginx_contents: {}
+    nginx_purge_contents: no
+    nginx_run: yes
+  roles:
+    - role: nginx
