@@ -54,6 +54,7 @@
       - "/bin/netstat:/bin/netstat:ro"
       - "{{ mysql_data_path }}:/var/lib/mysql"
     networks: "{{ mysql_networks }}"
+    network_mode: default
     purge_networks: yes
     networks_cli_compatible: yes
     container_default_behavior: no_defaults

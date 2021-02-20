@@ -83,6 +83,7 @@
     ] + nginx_contents.values() | zip(nginx_contents.keys()) | map('join',':') | list }}"
     ports: "{{ nginx_ports | map('string') | map('regex_replace', '([0-9]+)', '\\1:\\1') }}"
     networks: "{{ nginx_networks }}"
+    network_mode: default
     purge_networks: yes
     networks_cli_compatible: yes
     container_default_behavior: no_defaults
