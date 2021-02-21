@@ -1,58 +1,36 @@
-- name: Get ansible user info
-  getent:
-    database: passwd
-    key: "{{ ansible_user }}"
-
-- name: Set qbittorrent data owner uid
-  set_fact:
-    plex_data_uid: "{{ getent_passwd[ansible_user][1] | int + 1000 }}"
-
-- name: Set up PLEX data owner group
-  become: yes
-  group:
-    name: "{{ plex_data_owner }}"
-    gid: "{{ plex_data_uid | int }}"
-    state: present
-
-- name: Set up PLEX data owner
-  become: yes
-  user:
-    name: "{{ plex_data_owner }}"
-    group: "{{ plex_data_owner }}"
-    comment: "plex data owner"
-    home: /
-    shell: /sbin/nologin
-    uid: "{{ plex_data_uid | int }}"
-    password_lock: yes
-    system: yes
-    state: present
-
-- name: Set up PLEX folder
+- name: Create qBittorrent folder
   become: yes
   file:
-    path: "{{ plex_data_path }}"
-    owner: "{{ plex_data_owner }}"
-    group: "{{ plex_data_owner }}"
+    path: "{{ qbittorrent_data_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     recurse: yes
+    follow: no
     state: directory
 
-- name: Set up PLEX config and transcode subfolders
-  file:
-    path: "{{ plex_data_path }}/{{ item }}"
-    owner: "{{ plex_data_owner }}"
-    group: "{{ plex_data_owner }}"
-    state: directory
-  loop:
-    - config
-    - transcode
+- name: Set up qBittorrent folder
+  block:
+    - name: Set up folders to mount into docker
+      file:
+        path: "{{ qbittorrent_data_path }}/{{ item }}"
+        state: directory
+      loop:
+        - config
+        - downloads
+        - data
+    - name: Set up data folder link destinations
+      file:
+        path: "{{ qbittorrent_data_path }}/data/{{ item.target | dirname }}"
+        state: directory
+      loop: "{{ qbittorrent_data_links }}"
+    - name: Set up data folder links
+      file:
+        path: "{{ qbittorrent_data_path }}/data/{{ item.target }}"
+        src: "{{ item.source }}"
+        state: link
+      loop: "{{ qbittorrent_data_links}}"
 
-- name: Set up PLEX media folders
-  file:
-    path: "{{ item.host_path }}"
-    state: directory
-  loop: "{{ plex_media_volumes }}"
-
-- name: Set up nginx folder
+- name: Create nginx folder
   become: yes
   file:
     path: "{{ nginx_config_path }}"
@@ -60,56 +38,53 @@
     group: "{{ ansible_user }}"
     state: directory
 
-- name: Set up nginx site folders
-  file:
-    path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
-    state: directory
-  loop: "{{ plex_domains }}"
-
-- name: Generate nginx config for PLEX
-  template:
-    src: plex.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/plex.conf"
-  loop: "{{ plex_domains }}"
+- name: Set up nginx site rules
+  block:
+    - name: Create site folders
+      file:
+        path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
+        state: directory
+      loop: "{{ qbittorrent_domains }}"
+    - name: Generate nginx config for qBittorrent
+      template:
+        src: qbittorrent.conf.j2
+        dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/qbittorrent.conf"
+      loop: "{{ qbittorrent_domains }}"
 
 - name: Set up docker networks
   docker_network: 
     name: "{{ item.name }}"
-  loop: "{{ plex_networks }}"
+  loop: "{{ qbittorrent_networks }}"
 
-- name: Check existing PLEX preference file
-  stat:
-    path: "{{ plex_data_path }}/config/Library/Application Support/Plex Media Server/Preferences.xml"
-  register: pref_stat
-
-- name: Input PLEX claim token
-  pause:
-    prompt: "Input a claim token, acquired from https://www.plex.tv/claim "
-  register: plex_claim_token
-  when: not pref_stat.stat.exists
-
-- name: Generate PLEX media mount statements
-  set_fact:
-    plex_media_mounts: "{{ 
-      plex_media_mounts|default([]) +
-      [ item.host_path~':'~item.plex_path~':ro' ]
-    }}"
-  loop: "{{ plex_media_volumes }}"
-
-- name: Start PLEX container
+- name: Start qBittorrent container
   community.general.docker_container:
-    name: "{{ plex_container_name }}"
-    image: plexinc/pms-docker
+    name: "{{ qbittorrent_container_name }}"
+    image: ghcr.io/linuxserver/qbittorrent
     env:
-      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:443/"
-      PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
-    volumes: "{{ [
-      plex_data_path~'/config:/config',
-      plex_data_path~'/transcode:/transcode',
-    ] + plex_media_mounts }}"
+      PUID: "0"
+      PGID: "0"
+    mounts:
+      - source: "{{ qbittorrent_data_path }}/config"
+        target: /config
+        type: bind
+      - source: "{{ qbittorrent_data_path }}/downloads"
+        target: /downloads
+        type: bind
+      - source: "{{ qbittorrent_data_path }}/data"
+        target: /data
+        type: bind
+      - source: /mnt
+        target: /mnt
+        type: bind
+        propagation: rslave
+      - source: /bin/netstat
+        target: /bin/netstat
+        type: bind
+        read_only: yes
     ports:
-      - "{{ plex_direct_port }}:32400"
-    networks: "{{ plex_networks }}"
+      - "{{ qbittorrent_bt_port }}:{{ qbittorrent_bt_port }}"
+      - "{{ qbittorrent_bt_port }}:{{ qbittorrent_bt_port }}/udp"
+    networks: "{{ qbittorrent_networks }}"
     network_mode: default
     purge_networks: yes
     networks_cli_compatible: yes
@@ -117,3 +92,10 @@
     restart_policy: always
     pull: yes
     recreate: yes
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "netstat -ntlp | grep -q :8080"
+      interval: 10s
+      timeout: 2s
+      retries: 3

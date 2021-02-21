@@ -1,26 +1,25 @@
-plex_data_owner: plex_docker
-plex_data_path: /var/local/plex
-plex_media_volumes:
-  - host_path: /host_data/music
-    plex_path: /data/music
-  - host_path: /local/movies
-    plex_path: /data/movies
+qbittorrent_data_path: /var/local/qbittorrent
+qbittorrent_data_links:
+  - source: /mnt/Downloaded
+    target: finished
+  - source: /mnt/bt
+    target: bt
 
-plex_container_name: plex
-plex_networks:
+qbittorrent_container_name: qbittorrent
+qbittorrent_networks:
   - name: bridge
 
 # network
-plex_domains: 
+qbittorrent_domains: 
   - domain_name: domain.net
     server_names:
-      - plex.domain.net
-      - media.domain.net
+      - bt.domain.net
+      - qbittorrent.domain.net
   - domain_name: domain.com
     server_names:
-      - plex.domain.com
+      - qbittorrent.domain.com
 
-plex_direct_port: 32400
+qbittorrent_bt_port: 6881
 
 # nginx
 nginx_config_path: /var/local/nginx

@@ -25,7 +25,7 @@
   roles:
     - role: certbot
 
-- name: Set up qbittorrent
+- name: Set up qBittorrent
   hosts: seedbox
   vars:
     qbittorrent_networks: "{{ bt_networks }}"

@@ -4,6 +4,8 @@
 
 - import_playbook: wordpress.yaml
 
-# - import_playbook: media_server.yaml
+- import_playbook: media_server.yaml
+
+- import_playbook: seedbox.yaml
 
 - import_playbook: xray.yaml
