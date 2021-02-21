@@ -1,0 +1,119 @@
+- name: Get ansible user info
+  getent:
+    database: passwd
+    key: "{{ ansible_user }}"
+
+- name: Set qbittorrent data owner uid
+  set_fact:
+    plex_data_uid: "{{ getent_passwd[ansible_user][1] | int + 1000 }}"
+
+- name: Set up PLEX data owner group
+  become: yes
+  group:
+    name: "{{ plex_data_owner }}"
+    gid: "{{ plex_data_uid | int }}"
+    state: present
+
+- name: Set up PLEX data owner
+  become: yes
+  user:
+    name: "{{ plex_data_owner }}"
+    group: "{{ plex_data_owner }}"
+    comment: "plex data owner"
+    home: /
+    shell: /sbin/nologin
+    uid: "{{ plex_data_uid | int }}"
+    password_lock: yes
+    system: yes
+    state: present
+
+- name: Set up PLEX folder
+  become: yes
+  file:
+    path: "{{ plex_data_path }}"
+    owner: "{{ plex_data_owner }}"
+    group: "{{ plex_data_owner }}"
+    recurse: yes
+    state: directory
+
+- name: Set up PLEX config and transcode subfolders
+  file:
+    path: "{{ plex_data_path }}/{{ item }}"
+    owner: "{{ plex_data_owner }}"
+    group: "{{ plex_data_owner }}"
+    state: directory
+  loop:
+    - config
+    - transcode
+
+- name: Set up PLEX media folders
+  file:
+    path: "{{ item.host_path }}"
+    state: directory
+  loop: "{{ plex_media_volumes }}"
+
+- name: Set up nginx folder
+  become: yes
+  file:
+    path: "{{ nginx_config_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    state: directory
+
+- name: Set up nginx site folders
+  file:
+    path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
+    state: directory
+  loop: "{{ plex_domains }}"
+
+- name: Generate nginx config for PLEX
+  template:
+    src: plex.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/plex.conf"
+  loop: "{{ plex_domains }}"
+
+- name: Set up docker networks
+  docker_network: 
+    name: "{{ item.name }}"
+  loop: "{{ plex_networks }}"
+
+- name: Check existing PLEX preference file
+  stat:
+    path: "{{ plex_data_path }}/config/Library/Application Support/Plex Media Server/Preferences.xml"
+  register: pref_stat
+
+- name: Input PLEX claim token
+  pause:
+    prompt: "Input a claim token, acquired from https://www.plex.tv/claim "
+  register: plex_claim_token
+  when: not pref_stat.stat.exists
+
+- name: Generate PLEX media mount statements
+  set_fact:
+    plex_media_mounts: "{{ 
+      plex_media_mounts|default([]) +
+      [ item.host_path~':'~item.plex_path~':ro' ]
+    }}"
+  loop: "{{ plex_media_volumes }}"
+
+- name: Start PLEX container
+  community.general.docker_container:
+    name: "{{ plex_container_name }}"
+    image: plexinc/pms-docker
+    env:
+      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:443/"
+      PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
+    volumes: "{{ [
+      plex_data_path~'/config:/config',
+      plex_data_path~'/transcode:/transcode',
+    ] + plex_media_mounts }}"
+    ports:
+      - "{{ plex_direct_port }}:32400"
+    networks: "{{ plex_networks }}"
+    network_mode: default
+    purge_networks: yes
+    networks_cli_compatible: yes
+    container_default_behavior: no_defaults
+    restart_policy: always
+    pull: yes
+    recreate: yes

@@ -1,58 +1,46 @@
-- name: Get ansible user info
-  getent:
-    database: passwd
-    key: "{{ ansible_user }}"
-
-- name: Set PLEX data owner uid
-  set_fact:
-    plex_data_uid: "{{ getent_passwd[ansible_user][1] | int + 1000 }}"
-
-- name: Set up PLEX data owner group
-  become: yes
-  group:
-    name: "{{ plex_data_owner }}"
-    gid: "{{ plex_data_uid | int }}"
-    state: present
-
 - name: Set up PLEX data owner
-  become: yes
-  user:
-    name: "{{ plex_data_owner }}"
-    group: "{{ plex_data_owner }}"
-    comment: "plex data owner"
-    home: /
-    shell: /sbin/nologin
-    uid: "{{ plex_data_uid | int }}"
-    password_lock: yes
-    system: yes
-    state: present
+  include_role:
+    name: docker_user
+  vars:
+    username: "{{ plex_data_owner }}"
+    comment: "PLEX data owner"
+    uid_offset: 1000
 
-- name: Set up PLEX folder
+- name: Create PLEX folder
   become: yes
   file:
     path: "{{ plex_data_path }}"
     owner: "{{ plex_data_owner }}"
     group: "{{ plex_data_owner }}"
     recurse: yes
+    follow: no
     state: directory
 
-- name: Set up PLEX config and transcode subfolders
-  file:
-    path: "{{ plex_data_path }}/{{ item }}"
-    owner: "{{ plex_data_owner }}"
-    group: "{{ plex_data_owner }}"
-    state: directory
-  loop:
-    - config
-    - transcode
+- name: Set up PLEX folder
+  become: yes
+  become_user: "{{ plex_data_owner }}"
+  block:
+    - name: Set up folders to mount into docker
+      file:
+        path: "{{ plex_data_path }}/{{ item }}"
+        state: directory
+      loop:
+        - config
+        - transcode
+        - data
+    - name: Set up data folder link destinations
+      file:
+        path: "{{ plex_data_path }}/data/{{ item.target | dirname }}"
+        state: directory
+      loop: "{{ plex_data_links }}"
+    - name: Set up data folder links
+      file:
+        path: "{{ plex_data_path }}/data/{{ item.target }}"
+        src: "{{ item.source }}"
+        state: link
+      loop: "{{ plex_data_links}}"
 
-- name: Set up PLEX media folders
-  file:
-    path: "{{ item.host_path }}"
-    state: directory
-  loop: "{{ plex_media_volumes }}"
-
-- name: Set up nginx folder
+- name: Create nginx folder
   become: yes
   file:
     path: "{{ nginx_config_path }}"
@@ -60,17 +48,18 @@
     group: "{{ ansible_user }}"
     state: directory
 
-- name: Set up nginx site folders
-  file:
-    path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
-    state: directory
-  loop: "{{ plex_domains }}"
-
-- name: Generate nginx config for PLEX
-  template:
-    src: plex.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/plex.conf"
-  loop: "{{ plex_domains }}"
+- name: Set up nginx site rules
+  block:
+    - name: Create site folders
+      file:
+        path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
+        state: directory
+      loop: "{{ plex_domains }}"
+    - name: Generate nginx config for PLEX
+      template:
+        src: plex.conf.j2
+        dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/plex.conf"
+      loop: "{{ plex_domains }}"
 
 - name: Set up docker networks
   docker_network: 
@@ -88,14 +77,6 @@
   register: plex_claim_token
   when: not pref_stat.stat.exists
 
-- name: Generate PLEX media mount statements
-  set_fact:
-    plex_media_mounts: "{{ 
-      plex_media_mounts|default([]) +
-      [ item.host_path~':'~item.plex_path~':ro' ]
-    }}"
-  loop: "{{ plex_media_volumes }}"
-
 - name: Start PLEX container
   community.general.docker_container:
     name: "{{ plex_container_name }}"
@@ -103,10 +84,20 @@
     env:
       ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:443/"
       PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
-    volumes: "{{ [
-      plex_data_path~'/config:/config',
-      plex_data_path~'/transcode:/transcode',
-    ] + plex_media_mounts }}"
+    mounts:
+      - source: "{{ plex_data_path }}/config"
+        target: /config
+        type: bind
+      - source: "{{ plex_data_path }}/transcode"
+        target: /transcode
+        type: bind
+      - source: "{{ plex_data_path }}/data"
+        target: /data
+        type: bind
+      - source: /mnt
+        target: /mnt
+        type: bind
+        propagation: rslave
     ports:
       - "{{ plex_direct_port }}:32400"
     networks: "{{ plex_networks }}"
