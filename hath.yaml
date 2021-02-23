@@ -1,5 +1,20 @@
 ---
 
+- name: Update existing packages
+  hosts: xray
+  become: yes
+  tasks:
+    - name: Update packages
+      dnf:
+        name: "*"
+        state: latest
+
+- name: Set up Docker environment
+  hosts: xray
+  become: yes
+  roles:
+    - role: docker
+
 - name: Set up Hentai@Home server
   hosts: hath
   roles:
