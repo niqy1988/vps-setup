@@ -1,31 +1,10 @@
-- name: Get ansible user info
-  getent:
-    database: passwd
-    key: "{{ ansible_user }}"
-
-- name: Set wordpress data owner uid
-  set_fact:
-    wordpress_data_uid: "{{ getent_passwd[ansible_user][1] | int + 33 }}"
-
-- name: Set up wordpress data owner group
-  become: yes
-  group:
-    name: "{{ wordpress_data_owner }}"
-    gid: "{{ wordpress_data_uid | int }}"
-    state: present
-
-- name: Set up wordpress data owner
-  become: yes
-  user:
-    name: "{{ wordpress_data_owner }}"
-    group: "{{ wordpress_data_owner }}"
+- name: Set up mysql data owner
+  include_role:
+    name: docker_user
+  vars:
+    username: "{{ wordpress_data_owner }}"
     comment: "wordpress data owner"
-    home: /
-    shell: /sbin/nologin
-    uid: "{{ wordpress_data_uid | int }}"
-    password_lock: yes
-    system: yes
-    state: present
+    uid_offset: 33
 
 - name: Set up data folder
   become: yes
@@ -54,6 +33,7 @@
       - "/bin/netstat:/bin/netstat:ro"
       - "{{ wordpress_data_path }}:/var/www/html"
     networks: "{{ wordpress_networks }}"
+    network_mode: default
     purge_networks: yes
     networks_cli_compatible: yes
     container_default_behavior: no_defaults

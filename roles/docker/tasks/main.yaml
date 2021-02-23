@@ -33,6 +33,11 @@
       - container-selinux
     state: present
     
+- name: Create docker config folder
+  file:
+    path: /etc/docker
+    state: directory
+
 - name: Generate daemon config
   template:
     src: daemon.json.j2

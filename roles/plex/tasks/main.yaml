@@ -1,26 +1,46 @@
-- name: Set up plex folder
+- name: Set up PLEX data owner
+  include_role:
+    name: docker_user
+  vars:
+    username: "{{ plex_data_owner }}"
+    comment: "PLEX data owner"
+    uid_offset: 1000
+
+- name: Create PLEX folder
   become: yes
   file:
     path: "{{ plex_data_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ plex_data_owner }}"
+    group: "{{ plex_data_owner }}"
     recurse: yes
+    follow: no
     state: directory
 
-- name: Set up plex config and transcode subfolders
-  file:
-    path: "{{ plex_data_path }}/{{ item }}"
-    state: directory
-  loop:
-    - config
-    - transcode
+- name: Set up PLEX folder
+  become: yes
+  become_user: "{{ plex_data_owner }}"
+  block:
+    - name: Set up folders to mount into docker
+      file:
+        path: "{{ plex_data_path }}/{{ item }}"
+        state: directory
+      loop:
+        - config
+        - transcode
+        - data
+    - name: Set up data folder link destinations
+      file:
+        path: "{{ plex_data_path }}/data/{{ item.target | dirname }}"
+        state: directory
+      loop: "{{ plex_data_links }}"
+    - name: Set up data folder links
+      file:
+        path: "{{ plex_data_path }}/data/{{ item.target }}"
+        src: "{{ item.source }}"
+        state: link
+      loop: "{{ plex_data_links}}"
 
-- name: Check existing PLEX preference file
-  stat:
-    path: "{{ plex_data_path }}/config/Library/Application Support/Plex Media Server/Preferences.xml"
-  register: pref_stat
-
-- name: Set up nginx folder
+- name: Create nginx folder
   become: yes
   file:
     path: "{{ nginx_config_path }}"
@@ -28,22 +48,28 @@
     group: "{{ ansible_user }}"
     state: directory
 
-- name: Set up nginx site folders
-  file:
-    path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
-    state: directory
-  loop: "{{ plex_domains }}"
-
-- name: Generate nginx config for plex
-  template:
-    src: plex.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/plex.conf"
-  loop: "{{ plex_domains }}"
+- name: Set up nginx site rules
+  block:
+    - name: Create site folders
+      file:
+        path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
+        state: directory
+      loop: "{{ plex_domains }}"
+    - name: Generate nginx config for PLEX
+      template:
+        src: plex.conf.j2
+        dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/plex.conf"
+      loop: "{{ plex_domains }}"
 
 - name: Set up docker networks
   docker_network: 
     name: "{{ item.name }}"
   loop: "{{ plex_networks }}"
+
+- name: Check existing PLEX preference file
+  stat:
+    path: "{{ plex_data_path }}/config/Library/Application Support/Plex Media Server/Preferences.xml"
+  register: pref_stat
 
 - name: Input PLEX claim token
   pause:
@@ -51,18 +77,31 @@
   register: plex_claim_token
   when: not pref_stat.stat.exists
 
-- name: Start plex container
+- name: Start PLEX container
   community.general.docker_container:
     name: "{{ plex_container_name }}"
     image: plexinc/pms-docker
     env:
-      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:{{ plex_ports[0] }}/"
+      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:443/"
       PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
-    volumes: "{{ [
-      plex_data_path~'/config:/config',
-      plex_data_path~'/transcode:/transcode',
-    ] + plex_media_volumes }}"
+    mounts:
+      - source: "{{ plex_data_path }}/config"
+        target: /config
+        type: bind
+      - source: "{{ plex_data_path }}/transcode"
+        target: /transcode
+        type: bind
+      - source: "{{ plex_data_path }}/data"
+        target: /data
+        type: bind
+      - source: /mnt
+        target: /mnt
+        type: bind
+        propagation: rslave
+    ports:
+      - "{{ plex_direct_port }}:32400"
     networks: "{{ plex_networks }}"
+    network_mode: default
     purge_networks: yes
     networks_cli_compatible: yes
     container_default_behavior: no_defaults

@@ -37,10 +37,6 @@
   vars:
     nginx_networks: "{{ media_networks }}"
     nginx_purge_networks: no
-    nginx_ports: "{{ plex_ports }}"
-    nginx_purge_ports: no
-    nginx_contents: {}
-    nginx_purge_contents: no
     nginx_run: yes
   roles:
     - role: nginx

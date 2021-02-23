@@ -1,0 +1,37 @@
+- name: Set base user to current ansible user, if not defined
+  set_fact:
+    base_user: "{{ ansible_user }}"
+  when: base_user is not defined 
+
+- name: Get base user info
+  getent:
+    database: passwd
+    key: "{{ base_user }}"
+
+- name: Calculate docker user uid
+  set_fact:
+    docker_user_uid: "{{ getent_passwd[base_user][1] | int + uid_offset | int }}"
+
+- name: Calculate docker user gid
+  set_fact:
+    docker_user_gid: "{{ getent_passwd[base_user][2] | int + gid_offset | default(uid_offset) | int }}"
+
+- name: Set up docker user group
+  become: yes
+  group:
+    name: "{{ username }}"
+    gid: "{{ docker_user_gid | int }}"
+    state: present
+
+- name: Set up docker user
+  become: yes
+  user:
+    name: "{{ username }}"
+    group: "{{ username }}"
+    comment: "{{ comment }}"
+    home: /
+    shell: /sbin/nologin
+    uid: "{{ docker_user_uid | int }}"
+    password_lock: yes
+    system: yes
+    state: present

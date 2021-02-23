@@ -17,6 +17,26 @@
 
 - name: Set up rclone drives
   hosts: seedbox
-  roles: 
+  roles:
     - role: rclone
 
+- name: Set up SSL certificates
+  hosts: seedbox
+  roles:
+    - role: certbot
+
+- name: Set up qBittorrent
+  hosts: seedbox
+  vars:
+    qbittorrent_networks: "{{ bt_networks }}"
+  roles:
+    - role: qbittorrent
+
+- name: Set up nginx
+  hosts: seedbox
+  vars:
+    nginx_networks: "{{ bt_networks }}"
+    nginx_purge_networks: no
+    nginx_run: yes
+  roles:
+    - role: nginx

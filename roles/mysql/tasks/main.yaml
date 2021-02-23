@@ -1,31 +1,10 @@
-- name: Get ansible user info
-  getent:
-    database: passwd
-    key: "{{ ansible_user }}"
-
-- name: Set mysql data owner uid
-  set_fact:
-    mysql_data_uid: "{{ getent_passwd[ansible_user][1] | int + 999 }}"
-
-- name: Set up mysql data owner group
-  become: yes
-  group:
-    name: "{{ mysql_data_owner }}"
-    gid: "{{ mysql_data_uid | int }}"
-    state: present
-
 - name: Set up mysql data owner
-  become: yes
-  user:
-    name: "{{ mysql_data_owner }}"
-    group: "{{ mysql_data_owner }}"
-    comment: "mysql data owner"
-    home: /
-    shell: /sbin/nologin
-    uid: "{{ mysql_data_uid | int }}"
-    password_lock: yes
-    system: yes
-    state: present
+  include_role:
+    name: docker_user
+  vars:
+    username: "{{ mysql_data_owner }}"
+    comment: "MySQL data owner"
+    uid_offset: 999
 
 - name: Set up data folder
   become: yes
@@ -54,6 +33,7 @@
       - "/bin/netstat:/bin/netstat:ro"
       - "{{ mysql_data_path }}:/var/lib/mysql"
     networks: "{{ mysql_networks }}"
+    network_mode: default
     purge_networks: yes
     networks_cli_compatible: yes
     container_default_behavior: no_defaults
