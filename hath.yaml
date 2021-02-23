@@ -1,0 +1,6 @@
+---
+
+- name: Set up Hentai@Home server
+  hosts: hath
+  roles:
+    - role: hath

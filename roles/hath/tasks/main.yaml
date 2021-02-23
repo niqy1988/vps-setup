@@ -1,0 +1,55 @@
+- name: Create data folder
+  become: yes
+  file:
+    path: "{{ hath_data_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+    follow: no
+    state: directory
+
+- name: Set up H@H subfolders
+  file:
+    path: "{{ hath_data_path }}/{{ item }}"
+    state: directory
+  loop:
+    - cache
+    - data
+    - download
+    - log
+    - tmp
+
+- name: Set up docker networks
+  docker_network: 
+    name: "{{ item.name }}"
+  loop: "{{ hath_networks }}"
+
+- name: Start H@H container
+  community.general.docker_container:
+    name: "{{ hath_container_name }}"
+    image: frosty5689/hath
+    env:
+      HATH_CLIENT_ID: "{{ hath_client_id }}"
+      HATH_CLIENT_KEY: "{{ hath_client_key }}"
+    volumes:
+      - "{{ hath_data_path }}/cache:/hath/cache"
+      - "{{ hath_data_path }}/data:/hath/data"
+      - "{{ hath_data_path }}/download:/hath/download"
+      - "{{ hath_data_path }}/log:/hath/log"
+      - "{{ hath_data_path }}/tmp:/hath/tmp"
+    ports: "{{ hath_port }}:{{ hath_port }}/tcp"
+    networks: "{{ hath_networks }}"
+    network_mode: default
+    purge_networks: yes
+    networks_cli_compatible: yes
+    container_default_behavior: no_defaults
+    restart_policy: always
+    pull: yes
+    recreate: yes
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "netstat -ntlp | grep -q :{{ hath_port }}" 
+      interval: 10s
+      timeout: 2s
+      retries: 3
