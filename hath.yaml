@@ -1,7 +1,7 @@
 ---
 
 - name: Update existing packages
-  hosts: xray
+  hosts: hath
   become: yes
   tasks:
     - name: Update packages
@@ -10,7 +10,7 @@
         state: latest
 
 - name: Set up Docker environment
-  hosts: xray
+  hosts: hath
   become: yes
   roles:
     - role: docker

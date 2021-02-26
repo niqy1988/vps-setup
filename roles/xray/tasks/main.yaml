@@ -72,6 +72,8 @@
     network_mode: host
     purge_networks: yes
     networks_cli_compatible: yes
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
     container_default_behavior: no_defaults
     restart_policy: always
     pull: yes

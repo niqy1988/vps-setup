@@ -19,7 +19,7 @@
   copy:
     content: "{{ username }} ALL=(ALL) ALL"
     dest: "/etc/sudoers.d/{{ username }}"
-    mode: 0600
+    mode: "600"
   when: sudoer
 
 - name: Remove sudo privilege

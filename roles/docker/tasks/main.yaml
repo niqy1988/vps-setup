@@ -22,7 +22,7 @@
     dest: '/etc/yum.repos.d/docker-ce.repo'
     owner: root
     group: root
-    mode: 0644
+    mode: "644"
 
 - name: Install Docker
   dnf:
