@@ -57,23 +57,27 @@
     special_time: daily
     job: "docker run --rm -it -v {{ certbot_path }}:/etc/letsencrypt certbot/dns-cloudflare renew --dns-cloudflare --agree-tos"
 
-- name: Set up nginx
-  block:
-    - name: Set up nginx folder
-      become: yes
-      file:
-        path: "{{ nginx_config_path }}"
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        state: directory
-    - name: Set up domain config folders
-      file:
-        path: "{{ nginx_config_path }}/conf.d/{{ item }}"
-        state: directory
-      loop: "{{ domain_names }}"
-    - name: Set up https redirect
-      template:
-        src: ssl.conf.j2
-        dest: "{{ nginx_config_path }}/conf.d/{{ item }}/ssl.conf"
-      loop: "{{ domain_names }}"  
-  when: nginx_https_redirect
+- name: Set up nginx folder
+  become: yes
+  file:
+    path: "{{ nginx_config_path }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    state: directory
+
+- name: Reject invalid ssl handshakes
+  copy:
+    src: ssl_reject_handshake.conf
+    dest: "{{ nginx_config_path }}/conf.d"
+
+- name: Set up domain config folders
+  file:
+    path: "{{ nginx_config_path }}/conf.d/{{ item }}"
+    state: directory
+  loop: "{{ domain_names }}"
+
+- name: Set up https redirect
+  template:
+    src: ssl.conf.j2
+    dest: "{{ nginx_config_path }}/conf.d/{{ item }}/ssl.conf"
+  loop: "{{ domain_names }}"  
