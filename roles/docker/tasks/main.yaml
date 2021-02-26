@@ -71,4 +71,17 @@
 
 - name: Reset SSH connection to apply group changes
   meta: reset_connection
-  
+
+- name: Run watchtower to auto-update containers with com.centurylinklabs.watchtower.enable = true
+  community.general.docker_container:
+    name: "{{ watchtower_container_name }}"
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    userns_mode: host
+    command: --label-enable
+    container_default_behavior: no_defaults
+    restart_policy: always
+    pull: yes
+    recreate: yes
+    

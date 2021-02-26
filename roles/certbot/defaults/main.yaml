@@ -6,5 +6,4 @@ request_new_certs: yes
 
 certbot_path: /var/local/certbot
 
-nginx_https_redirect: yes
 nginx_config_path: /var/local/nginx
