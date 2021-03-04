@@ -82,7 +82,6 @@
     name: "{{ plex_container_name }}"
     image: plexinc/pms-docker
     env:
-      ADVERTISE_IP: "https://{{ plex_domains[0].server_names[0] }}:443/"
       PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
     mounts:
       - source: "{{ plex_data_path }}/config"
