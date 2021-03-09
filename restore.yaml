@@ -1,0 +1,40 @@
+---
+
+- name: Set restore source folder
+  hosts: all
+  tasks:
+    - name: Set backup folder
+      set_fact:
+        backup_path: "/home/{{ ansible_user }}/backup"
+
+- name: Install unarchive tools
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install unzip and tar
+      dnf:
+        name:
+          - tar
+          - unzip
+        state: present  
+
+- name: Restore backups
+  hosts: all
+  become: yes
+  tasks:
+    - name: Restore ansible environments
+      unarchive:
+        remote_src: yes
+        src: "{{ backup_path }}/ansible.tgz"
+        dest: /etc
+    - name: Restore local service configs
+      unarchive:
+        remote_src: yes
+        src: "{{ backup_path }}/local.tgz"
+        dest: /var
+    - name: Restore served contentes
+      unarchive:
+        remote_src: yes
+        src: "{{ backup_path }}/srv.tgz"
+        dest: /
+      

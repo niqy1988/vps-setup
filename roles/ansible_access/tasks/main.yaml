@@ -38,6 +38,13 @@
     dest: "/etc/sudoers.d/{{ username }}"
     mode: "600"
 
+- name: Set up ansible folder
+  file:
+    path: /etc/ansible
+    owner: root
+    group: root
+    state: directory
+
 - name: Set up facts folder
   file:
     path: /etc/ansible/facts.d
