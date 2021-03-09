@@ -12,11 +12,15 @@ rclone mount \
     --allow-other \
     --umask 002 \
     --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63" \
+    {% if item.polling | default(false) | bool %}
+    --poll-interval 15s \
+    --dir-cache-time 336h \
+    {% endif %}
     --buffer-size 64M \
     --vfs-cache-mode full \
-    --vfs-read-ahead 512M \
-    --vfs-cache-max-size 50G \
-    --vfs-cache-max-age 336h \
+    --vfs-read-ahead 256M \
+    --vfs-cache-max-size {{ item.vfs_cache_size | default('5G') }} \
+    --vfs-cache-max-age 168h \
     
 ####################################################
 # Sample rclone mount parameters
