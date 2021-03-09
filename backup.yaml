@@ -1,0 +1,36 @@
+---
+
+- name: Create backup folder
+  hosts: all
+  tasks:
+    - name: Set backup folder path
+      set_fact:
+        backup_path: "/home/{{ ansible_user }}/backup"
+    - name: Create backup folder in home directory
+      file:
+        path: "{{ backup_path }}"
+        state: directory
+
+- name: Backup files
+  hosts: all
+  become: yes
+  tasks:
+    - name: Backup ansible environments
+      community.general.archive:
+        path: /etc/ansible
+        dest: "{{ backup_path }}/ansible.tgz"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+    - name: Backup local service configs
+      community.general.archive:
+        path: /var/local
+        dest: "{{ backup_path }}/local.tgz"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+    - name: Backup served contents
+      community.general.archive:
+        path: /srv
+        dest: "{{ backup_path }}/srv.tgz"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      
