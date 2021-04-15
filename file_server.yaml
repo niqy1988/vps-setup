@@ -1,0 +1,44 @@
+---
+
+- name: Update existing packages
+  hosts: file
+  become: yes
+  tasks:
+    - name: Update packages
+      dnf:
+        name: "*"
+        state: latest
+
+- name: Set up Docker environment
+  hosts: file
+  become: yes
+  roles:
+    - role: docker
+
+- name: Set up rclone drives
+  hosts: file
+  roles:
+    - role: rclone
+
+- name: Set up file browser
+  hosts: file
+  vars:
+    filebrowser_data_links: "{{ file_data_links }}"
+    filebrowser_networks: "{{ file_networks }}"
+    filebrowser_domains: "{{ file_domains }}"
+  roles:
+    - role: filebrowser
+
+- name: Set up SSL certificates
+  hosts: file
+  roles:
+    - role: certbot
+
+- name: Set up nginx
+  hosts: file
+  vars:
+    nginx_networks: "{{ file_networks }}"
+    nginx_purge_networks: no
+    nginx_run: yes
+  roles:
+    - role: nginx

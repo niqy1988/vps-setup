@@ -1,0 +1,21 @@
+filebrowser_data_path: /var/local/filebrowser
+filebrowser_data_links:
+  - source: /mnt/remote
+    target: remote
+
+filebrowser_container_name: filebrowser
+filebrowser_networks:
+  - name: bridge
+
+# network
+filebrowser_domains: 
+  - domain_name: domain.net
+    server_names:
+      - file.domain.net
+      - filebrowser.domain.net
+  - domain_name: domain.com
+    server_names:
+      - file.domain.com
+
+# nginx
+nginx_config_path: /var/local/nginx
