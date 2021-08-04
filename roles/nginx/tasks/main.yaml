@@ -111,5 +111,5 @@
   cron:
     name: reload nginx config
     special_time: hourly
-    job: docker exec -it nginx nginx -s reload
+    job: docker exec nginx nginx -s reload
   when: nginx_run

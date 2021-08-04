@@ -55,7 +55,7 @@
   cron:
     name: renew certbot certificates
     special_time: daily
-    job: "docker run --rm -it -v {{ certbot_path }}:/etc/letsencrypt certbot/dns-cloudflare renew --dns-cloudflare --agree-tos"
+    job: "docker run --rm -v {{ certbot_path }}:/etc/letsencrypt certbot/dns-cloudflare renew --dns-cloudflare --agree-tos"
 
 - name: Set up nginx folder
   become: yes
