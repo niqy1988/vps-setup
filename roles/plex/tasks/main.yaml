@@ -81,6 +81,8 @@
   community.general.docker_container:
     name: "{{ plex_container_name }}"
     image: plexinc/pms-docker
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
     env:
       PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
     mounts:
