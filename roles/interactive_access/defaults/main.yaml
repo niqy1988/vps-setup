@@ -1,5 +1,5 @@
-username:
-password:
+username: "{{ interactive_username }}"
+password: "{{ interactive_password }}"
 ssh_public_key_file: ~/.ssh/id_rsa.pub
 user_groups: []
-sudoer: no
+sudoer: yes

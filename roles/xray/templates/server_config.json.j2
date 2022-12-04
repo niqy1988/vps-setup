@@ -9,8 +9,8 @@
             "port": {{ xray_port }},
             "protocol": "vless",
             "settings": {
-                "clients": {{ xray_clients | to_nice_json }},
-                "decryption": "none"
+                "decryption": "none",
+                "clients": {{ xray_clients | to_nice_json }}
             },
             "streamSettings": {
                 "network": "ws",

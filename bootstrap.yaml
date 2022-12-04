@@ -5,28 +5,97 @@
   remote_user: "{{ bootstrap_username | default('root') }}"
   become: yes
   vars:
-    username: "{{ ansible_username }}"
-    uid: "{{ ansible_uid }}"
-    ssh_public_key_file: "{{ ansible_ssh_public_key_file }}"
     ansible_ssh_private_key_file: "{{ bootstrap_ssh_private_key_file | default(root_ssh_private_key_file) }}"
   roles:
     - role: ansible_access
 
+- name: Set up base file system structure
+  hosts: all
+  become: yes
+  tasks:
+    - name: Mount drives
+      ansible.posix.mount:
+        path: "{{ item.path }}"
+        src: "{{ item.src }}"
+        fstype: "{{ item.fstype | default('ext4') }}"
+        state: mounted
+      with_items: "{{ sys_file_system.mounts | default([]) }}"
+    - name: Create system folders
+      file:
+        path: "{{ item.path }}"
+        state: directory
+      with_items: "{{ sys_file_system.dirs | default([]) }}"
+    - name: Create symlinks
+      block:
+        - file:
+            path: "{{ item.path }}"
+            state: absent
+          with_items: "{{ sys_file_system.links | default([]) }}"
+        - file:
+            path: "{{ item.path }}"
+            src: "{{ item.src }}"
+            state: link
+          with_items: "{{ sys_file_system.links | default([]) }}"
+    
 - name: Enable extra YUM repositories
   hosts: all
   become: yes
   tasks:
-    - name: Enable PowerTools
-      ini_file:
-        dest: /etc/yum.repos.d/CentOS-Linux-PowerTools.repo
-        section: powertools
-        option: enabled
-        value: "1"
-    - name: Enable EPEL
+    - name: Find all repo files
+      find:
+        paths: "/etc/yum.repos.d/"
+        patterns: "almalinux-*.repo"
+      register: repos
+    - name: Enable official mirrorlist
+      replace:
+        path: "{{ item.path }}"
+        regexp: '^#\s*mirrorlist'
+        replace: 'mirrorlist'
+      with_items: "{{ repos.files }}"
+    - name: Disable mirror baseurl
+      replace:
+        path: "{{ item.path }}"
+        regexp: '^baseurl'
+        replace: '# baseurl'
+      with_items: "{{ repos.files }}"
+    - name: Refresh dnf cache
+      shell:
+        cmd: dnf makecache
+        warn: no
+    - name: Install PowerTools/crb
+      dnf:
+        name: yum-utils
+        state: latest
+    - name: Enable PowerTools/crb
+      shell: 
+        cmd: dnf config-manager --enable crb
+        warn: no
+    - name: Install EPEL
       dnf:
         name: epel-release
         state: latest
+    - name: Enable EPEL
+      shell: 
+        cmd: dnf config-manager --enable epel
+        warn: no
 
+- name: Install and update critical packages 
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Chinese locale
+      dnf:
+        name: langpacks-core-zh_CN.noarch
+        state: latest
+    - name: Install Python
+      dnf:
+        name: python3-pip
+        state: latest
+    - name: Update existing packages
+      dnf:
+        name: "*"
+        state: latest
+        
 - name: Disable ssh login by password and empty passwords
   hosts: all
   become: yes
@@ -56,6 +125,10 @@
   hosts: all
   become: yes
   tasks:
+    - name: Install firewalld
+      dnf:
+        name: firewalld
+        state: latest
     - name: Default service rules
       ansible.posix.firewalld:
         service: "{{ item.service }}"
@@ -68,22 +141,6 @@
           rule: enabled
         - service: cockpit
           rule: disabled
-      notify:
-        - Reload firewalld
-    - name: Clean up Oracle Cloud iptables passthrough rules
-      lineinfile:
-        path: /etc/firewalld/direct.xml
-        regexp: "{{ item }}"
-        state: absent
-      loop:
-        - <passthrough ipv="ipv4">-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT</passthrough>
-        - <passthrough ipv="ipv4">-A INPUT -p icmp -j ACCEPT</passthrough>
-        - <passthrough ipv="ipv4">-A INPUT -i lo -j ACCEPT</passthrough>
-        - <passthrough ipv="ipv4">-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT</passthrough>
-        - <passthrough ipv="ipv4">-A INPUT -j REJECT --reject-with icmp-host-prohibited</passthrough>
-        - <passthrough ipv="ipv4">-A FORWARD -j REJECT --reject-with icmp-host-prohibited</passthrough>
-        - <passthrough ipv="ipv4">-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT</passthrough>
-      when: hostvars[inventory_hostname]['ansible_chassis_asset_tag'] == "OracleCloud.com"
       notify:
         - Reload firewalld
     - name: Start firewalld service
@@ -106,9 +163,5 @@
   vars:
     username: "{{ interactive_username }}"
     password: "{{ interactive_password }}"
-    ssh_public_key_file: "{{ interactive_ssh_public_key_file }}"
-    user_groups: "{{ interactive_user_groups }}"
-    sudoer: "{{ interactive_sudoer }}"
   roles:
     - role: interactive_access
-    

@@ -1,25 +1,18 @@
-qbittorrent_data_path: /var/local/qbittorrent
-qbittorrent_data_links:
-  - source: /mnt/Downloaded
-    target: finished
-  - source: /mnt/bt
-    target: bt
+# qbittorrent
+username: "{{ podman_username }}"
+app_path: /app/qbittorrent
+download_path: /data/Downloads
+  
+# podman
+container: qbittorrent
+networks: 
+  - "{{ podman_network }}"
+direct_port: 6881
 
-qbittorrent_container_name: qbittorrent
-qbittorrent_networks:
-  - name: bridge
-
-# network
-qbittorrent_domains: 
-  - domain_name: domain.net
-    server_names:
-      - bt.domain.net
-      - qbittorrent.domain.net
-  - domain_name: domain.com
-    server_names:
-      - qbittorrent.domain.com
-
-qbittorrent_bt_port: 6881
+# browser access
+domains: "{{ host_domains }}"
+server_prefix: bt
 
 # nginx
-nginx_config_path: /var/local/nginx
+nginx_path: "{{ nginx_path }}"
+nginx_user: "{{ podman_username }}"

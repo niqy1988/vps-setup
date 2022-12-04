@@ -10,20 +10,10 @@
     group: "{{ username }}"
     comment: "ansible user"
     shell: /bin/bash
+    uid: "{{ uid | int }}"
     create_home: yes
     password_lock: yes
-    uid: "{{ uid | int }}"
     state: present
-
-- name: Set subuid/subgid for ansible user namespace
-  lineinfile:
-    path: "{{ item }}"
-    regexp: "{{ username }}:"
-    line: "{{ username }}:{{ uid }}:65536"
-    state: present
-  loop:
-    - /etc/subuid
-    - /etc/subgid
 
 - name: Add authorized key
   authorized_key:
@@ -34,7 +24,7 @@
 
 - name: Grant no-password sudo privilege
   copy:
-    content: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
+    content: "{{ username }} ALL=(ALL) NOPASSWD:ALL"
     dest: "/etc/sudoers.d/{{ username }}"
     mode: "600"
 

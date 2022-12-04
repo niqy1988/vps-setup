@@ -2,10 +2,10 @@ server {
   listen 443 ssl http2;
   listen [::]:443 ssl http2;
 
-  server_name {{ item.server_names | join(' ') }};
+  server_name www.{{ item }};
 
-  ssl_certificate       /etc/nginx/certs/live/{{ item.domain_name }}/fullchain.pem;
-  ssl_certificate_key   /etc/nginx/certs/live/{{ item.domain_name }}/privkey.pem;
+  ssl_certificate       /etc/nginx/certs/live/{{ item }}/fullchain.pem;
+  ssl_certificate_key   /etc/nginx/certs/live/{{ item }}/privkey.pem;
 
   ssl_stapling on;
   ssl_stapling_verify on;
@@ -14,5 +14,5 @@ server {
   client_max_body_size 64M;
 
   # Locations
-  include conf.d/{{ item.domain_name }}/www/*.conf;
+  include conf.d/{{ item }}/www/*.conf;
 }

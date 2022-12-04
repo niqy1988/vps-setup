@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+
+  <short>podman</short>
+  <description> Expose podman published ports. </description>
+
+  {% for tcp_port in tcp_ports %}
+  <port protocol="tcp" port="{{ tcp_port }}"/>
+  {% endfor %}
+  
+  {% for udp_port in udp_ports %}
+  <port protocol="udp" port="{{ udp_port }}"/>
+  {% endfor %}
+
+</service>

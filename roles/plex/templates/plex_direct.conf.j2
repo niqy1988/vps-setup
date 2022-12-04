@@ -1,0 +1,8 @@
+server {
+
+  listen {{ direct_port }};
+  listen [::]:{{ direct_port }};
+
+  proxy_pass {{ container }}:32400;
+  
+}

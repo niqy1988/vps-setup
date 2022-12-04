@@ -1,10 +1,17 @@
 # Xray Proxy Config
 location {{ xray_path }} {
-  proxy_pass http://172.17.0.1:{{ xray_port }};
+  proxy_intercept_errors on;
+  error_page 400 = @xray_error;
+
+  proxy_pass http://host.containers.internal:{{ xray_port }};
   proxy_redirect off;
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "upgrade";
   proxy_set_header Host $http_host;
   proxy_set_header X-Real-IP $remote_addr;
   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+
+location @xray_error {
+  return 403;
 }

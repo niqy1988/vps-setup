@@ -1,0 +1,2 @@
+Changes will not be persisted to the server
+For temporary use, consider using /temp folder

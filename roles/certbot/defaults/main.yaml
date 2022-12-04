@@ -1,9 +1,14 @@
-domain_names:
-  - domain.net
-  - domain.com
-
+# certbot config
+username: "{{ podman_username }}"
+api_key: "{{ certbot_cloudflare_api_key }}"
+domains: "{{ host_domains }}"
 request_new_certs: yes
 
-certbot_path: /var/local/certbot
+# podman config
+request_container: certbot-request
+renew_container: certbot-renew
 
-nginx_config_path: /var/local/nginx
+# nginx
+certbot_path: "{{ certbot_path }}"
+nginx_path: "{{ nginx_path }}"
+nginx_user: "{{ podman_username }}"

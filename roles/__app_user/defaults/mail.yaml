@@ -1,0 +1,5 @@
+username: podman-user
+comment: user/owner of podman mounts in host filesystem
+base_user: 
+uid_offset: 1000
+gid_offset: 

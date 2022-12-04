@@ -2,15 +2,18 @@
   become: yes
   file:
     path: "{{ certbot_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
     recurse: yes
     state: directory
 
 - name: Generate Cloudflare API ini
+  become: yes
+  become_user: "{{ username }}"
   template:
     src: cloudflare.ini.j2
     dest: "{{ certbot_path }}/cloudflare.ini"
+    mode: "600"
 
 - name: Load list of existing domains    
   set_fact:
@@ -18,26 +21,29 @@
 
 - name: Find new domains not on the host
   set_fact:
-    new_domains: "{{ domain_names | difference(cur_domains) | list }}"
+    new_domains: "{{ domains | difference(cur_domains) | list }}"
   when: request_new_certs
 
 - name: Request new certificates
-  community.general.docker_container:
-    name: certbot_request
-    image: certbot/dns-cloudflare
-    volumes:
+  become: yes
+  become_user: "{{ username }}"
+  containers.podman.podman_container:
+    name: "{{ request_container }}"
+    image: docker.io/certbot/dns-cloudflare
+    volume:
       - "{{ certbot_path }}:/etc/letsencrypt"
-    command: 
-      - "certonly"
-      - "--dns-cloudflare"
-      - "--dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini"
-      - "-d {{ item }}"
-      - "-d *.{{ item }}"
-      - "--email {{email_address}}"
-      - "--agree-tos"
-    pull: yes
-    detach: no
-    container_default_behavior: no_defaults
+    entrypoint: "/bin/sh"
+    command:
+      - -c
+      - >-
+        certbot certonly 
+        --dns-cloudflare 
+        --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini 
+        --email {{ email_address }} 
+        --agree-tos 
+        -d {{ item }} 
+        -d *.{{ item }}
+    recreate: yes
   loop: "{{ new_domains }}"
   when: request_new_certs
   retries: 3
@@ -51,33 +57,80 @@
     dest: /etc/ansible/facts.d/certbot.fact
   when: request_new_certs
 
+- name: Create service to renew certificates
+  become: yes
+  become_user: "{{ username }}"
+  containers.podman.podman_container:
+    name: "{{ renew_container }}"
+    image: docker.io/certbot/dns-cloudflare
+    label:
+      io.containers.autoupdate: registry
+      PODMAN_SYSTEMD_UNIT: "container-{{ renew_container }}.service"
+    volume:
+      - "{{ certbot_path }}:/etc/letsencrypt"
+    command:
+      - renew
+      - --dns-cloudflare
+      - --agree-tos
+    recreate: yes
+    state: created
+    generate_systemd:
+      path: "/home/{{ username }}/.config/systemd/user"
+      
+- name: Enable and start certbot_renew service
+  become: yes
+  become_user: "{{ username }}"
+  systemd:
+    name: "container-{{ renew_container }}.service"
+    scope: user
+    daemon_reload: yes
+    enabled: yes
+    state: started
+
 - name: Set up cron job to renew certificates
+  become: yes
+  become_user: "{{ username }}"
   cron:
     name: renew certbot certificates
     special_time: daily
-    job: "docker run --rm -v {{ certbot_path }}:/etc/letsencrypt certbot/dns-cloudflare renew --dns-cloudflare --agree-tos"
+    job: "systemctl --user restart container-{{ renew_container }}.service"
 
 - name: Set up nginx folder
   become: yes
   file:
-    path: "{{ nginx_config_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    state: directory
+    path: "{{ nginx_path }}"
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    recurse: yes
+    state: directory  
 
-- name: Reject invalid ssl handshakes
-  copy:
-    src: ssl_reject_handshake.conf
-    dest: "{{ nginx_config_path }}/conf.d"
+- name: Setup nginx config
+  become: yes
+  become_user: "{{ nginx_user }}"
+  block:
+    - name: Set up nginx config folder
+      file:
+        path: "{{ nginx_path }}/conf.d"
+        state: directory
+    - name: Reject invalid ssl handshakes
+      copy:
+        src: ssl_reject_handshake.conf
+        dest: "{{ nginx_path }}/conf.d/ssl_reject_handshake.conf"
+    - name: Set up domain config folders
+      file:
+        path: "{{ nginx_path }}/conf.d/{{ item }}"
+        state: directory
+      loop: "{{ domains }}"
+    - name: Set up https redirect
+      template:
+        src: ssl.conf.j2
+        dest: "{{ nginx_path }}/conf.d/{{ item }}/ssl.conf"
+      loop: "{{ domains }}"  
 
-- name: Set up domain config folders
-  file:
-    path: "{{ nginx_config_path }}/conf.d/{{ item }}"
-    state: directory
-  loop: "{{ domain_names }}"
-
-- name: Set up https redirect
-  template:
-    src: ssl.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item }}/ssl.conf"
-  loop: "{{ domain_names }}"  
+- name: Set up podman ports
+  import_role:
+    name: register_ports
+  vars:
+    tcp_ports:
+      - 80
+    purge_ports: no

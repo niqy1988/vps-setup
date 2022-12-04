@@ -1,0 +1,62 @@
+- name: Set up podman user group
+  group:
+    name: "{{ username }}"
+    gid: "{{ uid | int }}"
+    state: present
+
+- name: Set up app user
+  user:
+    name: "{{ username }}"
+    group: "{{ username }}"
+    comment: "default podman user"
+    shell: /bin/bash
+    uid: "{{ uid | int }}"
+    create_home: yes
+    password_lock: yes
+    state: present
+
+- name: Set subuid and subgid range
+  lineinfile:
+    path: "/etc/{{ item }}"
+    regexp: "^{{ username }}"
+    line: "{{ username }}:{{ uid | int + 1 }}:65535"
+  loop:
+    - subuid
+    - subgid
+
+- name: Set up user linger
+  command: 
+    cmd: "loginctl enable-linger {{ username }}"
+    creates: "/var/lib/systemd/linger/{{ username }}"
+
+- name: export XDG_RUNTIME_DIR when su
+  lineinfile: 
+    path: "/home/{{ username }}/.bashrc"
+    regexp: "^export XDG_RUNTIME_DIR="
+    line: 'export XDG_RUNTIME_DIR="/run/user/{{ uid }}"'
+
+- name: Disable priviledged port
+  sysctl:
+    name: net.ipv4.ip_unprivileged_port_start
+    value: '0'
+
+- name: Create podman network
+  become: yes
+  become_user: "{{ username }}"
+  containers.podman.podman_network: 
+    name: "{{ network }}"
+
+- name: Install podman
+  dnf:
+    name: podman
+    state: present
+    
+- name: Install netstat for health check
+  dnf:
+    name: net-tools
+    state: present
+
+- name: Install podman-py for ansible access
+  pip: 
+    name: podman
+    state: present

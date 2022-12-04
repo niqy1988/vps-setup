@@ -1,21 +1,16 @@
-filebrowser_data_path: /var/local/filebrowser
-filebrowser_data_links:
-  - source: /mnt/remote
-    target: remote
+username: "{{ podman_username }}"
+app_path: /app/filebrowser
+file_paths: "{{ host_exposed_files }}"
 
-filebrowser_container_name: filebrowser
-filebrowser_networks:
-  - name: bridge
+# podman
+container: file-server
+networks: 
+  - "{{ podman_network }}"
 
-# network
-filebrowser_domains: 
-  - domain_name: domain.net
-    server_names:
-      - file.domain.net
-      - filebrowser.domain.net
-  - domain_name: domain.com
-    server_names:
-      - file.domain.com
+# browser access
+domains: "{{ host_domains }}"
+server_prefix: file
 
 # nginx
-nginx_config_path: /var/local/nginx
+nginx_path: "{{ nginx_path }}"
+nginx_user: "{{ podman_username }}"

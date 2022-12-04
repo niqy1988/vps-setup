@@ -1,34 +1,6 @@
 # Website
-www_domains: 
-  - domain_name: domain.net
-    server_names:
-      - domain.net
-      - www.domain.net
-  - domain_name: domain.com
-    server_names:
-      - www.domain.com
-      - site.domain.com
-
-# Static File Server
-www_static_site: yes
-www_static_file_mount: "/srv/www/static"
-www_static_locations:
-  - path: /index.html
-    root: "{{ www_static_file_mount }}"
-  - path: /50x.html
-    root: /usr/share/nginx/html
-
-# Wordpress
-www_wordpress_site: yes
-www_wp_container: www_wordpress
-
-# Proxy
-www_proxy_site: no
-www_proxy_path: /
-www_proxy_destination: www.google.com
-
-# certbot
-certbot_path: /var/local/certbot
+domains: "{{ host_domains }}"
 
 # nginx
-nginx_config_path: /var/local/nginx
+nginx_path: "{{ nginx_path }}"
+nginx_user: "{{ podman_username }}"

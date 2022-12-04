@@ -1,91 +1,101 @@
 - name: Create filebrowser folder
   become: yes
   file:
-    path: "{{ filebrowser_data_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    path: "{{ app_path }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
     recurse: yes
     follow: no
     state: directory
 
 - name: Set up configs
+  become: yes
+  become_user: "{{ username }}"
   block: 
     - name: Copy config file
       copy:
         src: config.json
-        dest: "{{ filebrowser_data_path }}/config.json"
+        dest: "{{ app_path }}/config.json"
     - name: Create database file
       file:
-        path: "{{ filebrowser_data_path }}/database.db"
+        path: "{{ app_path }}/database.db"
         state: touch
+    - name: Create temp folder
+      file:
+        path: "{{ app_path }}/srv/temp"
+        state: directory
+    - name: Add disclaimer files
+      copy:
+        src: "{{ item }}"
+        dest: "{{ app_path }}/srv/{{ item }}"
+      loop:
+        - __请勿在根目录保存文件__.txt
+        - __DO NOT SAVE FILE HERE__.txt
 
-- name: Set up share file folder
+- name: Generate podman volume mount lists
   block:
-    - name: Set up root folder
-      file:
-        path: "{{ filebrowser_data_path }}/srv"
-        state: directory
-    - name: Set up data link destinations
-      file:
-        path: "{{ filebrowser_data_path }}/srv/{{ item.target | dirname }}"
-        state: directory
-      loop: "{{ filebrowser_data_links }}"
-    - name: Set up data links
-      file:
-        path: "{{ filebrowser_data_path }}/srv/{{ item.target }}"
-        src: "{{ item.source }}"
-        state: link
-      loop: "{{ filebrowser_data_links}}"
+    - name: config files and default mounts
+      set_fact:
+        volume_mounts: 
+          - "{{ app_path }}/config.json:/.filebrowser.json"
+          - "{{ app_path }}/database.db:/database.db"
+          - "{{ app_path }}/srv/temp:/srv/temp"
+          - "{{ app_path }}/srv/__请勿在根目录保存文件__.txt:/srv/__请勿在根目录保存文件__.txt"
+          - "{{ app_path }}/srv/__DO NOT SAVE FILE HERE__.txt:/srv/__DO NOT SAVE FILE HERE__.txt"
+    - name: served files
+      set_fact:
+        volume_mounts: "{{ volume_mounts + [ item.path ~ ':/srv/' ~ item.name ] }}"
+      loop: "{{ file_paths }}"
 
+
+### Podman container and service
+- name: Create filebrowser container
+  become: yes
+  become_user: "{{ username }}"
+  containers.podman.podman_container:
+    name: "{{ container }}"
+    image: docker.io/filebrowser/filebrowser
+    label:
+      io.containers.autoupdate: registry
+      PODMAN_SYSTEMD_UNIT: "container-{{ container }}.service"
+    network: "{{ networks }}"
+    volume: "{{ volume_mounts }}"
+    recreate: yes
+    state: created
+    generate_systemd:
+      path: "/home/{{ username }}/.config/systemd/user"
+
+- name: Enable and start filebrowser service
+  become: yes
+  become_user: "{{ username }}"
+  systemd:
+    name: "container-{{ container }}.service"
+    scope: user
+    daemon_reload: yes
+    enabled: yes
+    state: started
+
+
+### nginx
 - name: Create nginx folder
   become: yes
   file:
-    path: "{{ nginx_config_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    path: "{{ nginx_path }}"
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
     state: directory
 
 - name: Set up nginx site rules
+  become: yes
+  become_user: "{{ nginx_user }}"
   block:
     - name: Create site folders
       file:
-        path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
+        path: "{{ nginx_path }}/conf.d/{{ item }}"
         state: directory
-      loop: "{{ filebrowser_domains }}"
+      loop: "{{ domains }}"
     - name: Generate nginx config for filebrowser
       template:
         src: filebrowser.conf.j2
-        dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/filebrowser.conf"
-      loop: "{{ filebrowser_domains }}"
-
-- name: Set up docker networks
-  docker_network: 
-    name: "{{ item.name }}"
-  loop: "{{ filebrowser_networks }}"
-
-- name: Start filebrowser container
-  community.general.docker_container:
-    name: "{{ filebrowser_container_name }}"
-    image: filebrowser/filebrowser
-    mounts:
-      - source: "{{ filebrowser_data_path }}/config.json"
-        target: /.filebrowser.json
-        type: bind
-      - source: "{{ filebrowser_data_path }}/database.db"
-        target: /database.db
-        type: bind
-      - source: "{{ filebrowser_data_path }}/srv"
-        target: /srv
-        type: bind
-      - source: /mnt
-        target: /mnt
-        type: bind
-        propagation: rslave
-    networks: "{{ filebrowser_networks }}"
-    network_mode: default
-    purge_networks: yes
-    networks_cli_compatible: yes
-    container_default_behavior: no_defaults
-    restart_policy: always
-    pull: yes
-    recreate: yes
+        dest: "{{ nginx_path }}/conf.d/{{ item }}/filebrowser.conf"
+      loop: "{{ domains }}"

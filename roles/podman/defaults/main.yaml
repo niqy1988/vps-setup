@@ -1,0 +1,3 @@
+username: "{{ podman_username }}"
+uid: "{{ podman_uid }}"
+network: "{{ podman_network }}"

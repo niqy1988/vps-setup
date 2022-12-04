@@ -1,17 +1,20 @@
-xray_data_path: /var/local/xray
-
-xray_domains:
-  - domain.net
-  - domain.com
-xray_path: /xray
-
-xray_container_name: xray
-xray_port: 10086
+# xray
+username: "{{ podman_username }}"
+app_path: /app/xray
 
 xray_clients:
   - id: 00000000-0000-0000-0000-000000000000
     level: 999
     email: sample@domain.net
 
+# podman
+container: xray
+xray_port: 44380
+
+# www
+domains: "{{ host_domains }}"
+xray_path: /stream/pass
+
 # nginx
-nginx_config_path: /var/local/nginx
+nginx_path: "{{ nginx_path }}"
+nginx_user: "{{ podman_username }}"

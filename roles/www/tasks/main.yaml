@@ -1,40 +1,31 @@
 - name: Set up nginx folder
   become: yes
   file:
-    path: "{{ nginx_config_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    path: "{{ nginx_path }}"
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
     state: directory
 
 - name: Set up nginx website folders
+  become: yes
+  become_user: "{{ nginx_user }}"
   file:
-    path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www"
+    path: "{{ nginx_path }}/conf.d/{{ item }}/www"
     state: directory
-  loop: "{{ www_domains }}"
+  loop: "{{ domains }}"
 
 - name: Generate nginx config for website
+  become: yes
+  become_user: "{{ nginx_user }}"
   template:
     src: www.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www.conf"
-  loop: "{{ www_domains }}"
+    dest: "{{ nginx_path }}/conf.d/{{ item }}/www.conf"
+  loop: "{{ domains }}"
 
-- name: Generate nginx config for static locations
-  template:
-    src: www/static.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www/static.conf"
-  loop: "{{ www_domains }}"
-  when: www_static_site
-
-- name: Generate nginx config for wordpress locations
-  template:
-    src: www/wordpress.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www/wordpress.conf"
-  loop: "{{ www_domains }}"
-  when: www_wordpress_site
-
-- name: Generate nginx config for proxy locations
-  template:
-    src: www/proxy.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/www/proxy.conf"
-  loop: "{{ www_domains }}"
-  when: www_proxy_site
+- name: Set up podman ports
+  import_role:
+    name: register_ports
+  vars:
+    tcp_ports:
+      - 443
+    purge_ports: no

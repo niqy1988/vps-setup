@@ -1,0 +1,10 @@
+server {
+
+  listen {{ direct_port }};
+  listen {{ direct_port }} udp;
+  listen [::]:{{ direct_port }};
+  listen [::]:{{ direct_port }} udp;
+
+  proxy_pass {{ container }}:{{ direct_port }};
+  
+}

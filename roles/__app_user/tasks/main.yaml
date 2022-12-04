@@ -8,22 +8,19 @@
     database: passwd
     key: "{{ base_user }}"
 
-- name: Calculate docker user uid
+- name: Calculate app user uid and gid
   set_fact:
-    docker_user_uid: "{{ getent_passwd[base_user][1] | int + uid_offset | int }}"
+    app_user_uid: "{{ getent_passwd[base_user][1] | int + uid_offset | int }}"
+    app_user_gid: "{{ getent_passwd[base_user][2] | int + gid_offset | default(uid_offset) | int }}"
 
-- name: Calculate docker user gid
-  set_fact:
-    docker_user_gid: "{{ getent_passwd[base_user][2] | int + gid_offset | default(uid_offset) | int }}"
-
-- name: Set up docker user group
+- name: Set up app user group
   become: yes
   group:
     name: "{{ username }}"
-    gid: "{{ docker_user_gid | int }}"
+    gid: "{{ app_user_gid | int }}"
     state: present
 
-- name: Set up docker user
+- name: Set up app user
   become: yes
   user:
     name: "{{ username }}"
@@ -31,7 +28,7 @@
     comment: "{{ comment }}"
     home: /
     shell: /sbin/nologin
-    uid: "{{ docker_user_uid | int }}"
+    uid: "{{ app_user_uid | int }}"
     password_lock: yes
     system: yes
     state: present
