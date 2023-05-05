@@ -4,7 +4,7 @@
     gid: "{{ uid | int }}"
     state: present
 
-- name: Set up app user
+- name: Set up podman user
   user:
     name: "{{ username }}"
     group: "{{ username }}"
@@ -40,12 +40,6 @@
     name: net.ipv4.ip_unprivileged_port_start
     value: '0'
 
-- name: Create podman network
-  become: yes
-  become_user: "{{ username }}"
-  containers.podman.podman_network: 
-    name: "{{ network }}"
-
 - name: Install podman
   dnf:
     name: podman
@@ -60,3 +54,10 @@
   pip: 
     name: podman
     state: present
+
+- name: Create podman network
+  become: yes
+  become_user: "{{ username }}"
+  containers.podman.podman_network: 
+    name: "{{ network }}"
+    

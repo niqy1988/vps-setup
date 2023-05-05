@@ -1,7 +1,7 @@
 # nginx
 username: "{{ podman_username }}"
 app_path: /app/nginx
-certs_path: /app/certbot
+certs_path: "{{ certs_path }}"
 
 # podman
 container: nginx
