@@ -59,25 +59,19 @@
         replace: '# baseurl'
       with_items: "{{ repos.files }}"
     - name: Refresh dnf cache
-      shell:
-        cmd: dnf makecache
-        warn: no
+      shell: dnf makecache
     - name: Install PowerTools/crb
       dnf:
         name: yum-utils
         state: latest
     - name: Enable PowerTools/crb
-      shell: 
-        cmd: dnf config-manager --enable crb
-        warn: no
+      shell: dnf config-manager --enable crb
     - name: Install EPEL
       dnf:
         name: epel-release
         state: latest
     - name: Enable EPEL
-      shell: 
-        cmd: dnf config-manager --enable epel
-        warn: no
+      shell: dnf config-manager --enable epel
 
 - name: Install and update critical packages 
   hosts: all
