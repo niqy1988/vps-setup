@@ -1,0 +1,87 @@
+---
+# create user and group
+- name: Set up user group
+  group:
+    name: "{{ username }}"
+    gid: "{{ uid | int }}"
+    state: present
+
+- name: Set up user
+  user:
+    name: "{{ username }}"
+    password: "{{ password | ternary(password | password_hash('sha512'), '!') }}"
+    update_password: on_create
+    uid: "{{ uid | int }}"
+    group: "{{ username }}"
+    groups: "{{ user_groups }}"
+    shell: /bin/bash
+    create_home: yes
+    password_lock: "{{ password | length == 0 }}"
+    comment: "{{ comment }}"
+    state: present
+
+- name: Set subuid and subgid range
+  lineinfile:
+    path: "/etc/{{ item }}"
+    regexp: "^{{ username }}"
+    line: "{{ username }}:{{ uid | int + 1 }}:65535"
+  loop:
+    - subuid
+    - subgid
+
+# ssh public key for remote login
+- name: Add authorized key
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    key: "{{ lookup('file', ssh_public_key_file) }}"
+    exclusive: yes
+    state: present
+  when: ssh_public_key_file | length > 0
+
+- name: Remove authorized key
+  file: 
+    path: "/home/{{ username }}/.ssh/authorized_keys"
+    state: absent
+  when: ssh_public_key_file | length == 0
+
+# set up linger
+- name: Set up user linger
+  shell: 
+    cmd: "loginctl enable-linger {{ username }}"
+    creates: "/var/lib/systemd/linger/{{ username }}"
+  when: linger
+
+- name: export XDG_RUNTIME_DIR when su
+  lineinfile: 
+    path: "/home/{{ username }}/.bashrc"
+    regexp: "^export XDG_RUNTIME_DIR="
+    line: 'export XDG_RUNTIME_DIR="/run/user/{{ uid }}"'
+  when: linger
+
+- name: Remove up user linger
+  shell: 
+    cmd: "loginctl disable-linger {{ username }}"
+    removes: "/var/lib/systemd/linger/{{ username }}"
+  when: not linger
+
+- name: Do not set XDG_RUNTIME_DIR when su
+  lineinfile: 
+    path: "/home/{{ username }}/.bashrc"
+    regexp: "^export XDG_RUNTIME_DIR="
+    state: absent
+  when: not linger
+
+# set up sudo
+- name: Grant sudo privilege
+  copy:
+    content: "{{ username }} ALL=(ALL) ALL"
+    dest: "/etc/sudoers.d/{{ username }}"
+    mode: "600"
+  when: sudoer
+
+- name: Remove sudo privilege
+  file:
+    path: "/etc/sudoers.d/{{ username }}"
+    state: absent
+  when: not sudoer
+  
