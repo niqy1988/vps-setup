@@ -2,8 +2,8 @@
 
 # credentials
 username: newuser
-password: # empty for locked password
-ssh_public_key_file: # empty for no ssh login
+password: '' # empty for locked password
+ssh_public_key_file: '' # empty for no ssh login
 
 # uid and groups
 uid: 100000
@@ -14,4 +14,4 @@ sudoer: no
 linger: no
 
 # user description
-comment: 
+comment: ''

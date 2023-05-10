@@ -1,32 +1,19 @@
-- name: Create ansible user group
-  group:
-    name: "{{ username }}"
-    gid: "{{ uid | int }}"
-    state: present
+- name: set scoped var for current role
+  set_fact:
+    role_vars_ansible_access:
+      username: "{{ username }}"
+      uid: "{{ uid }}"
+      ssh_public_key_file: "{{ ssh_public_key_file }}"
 
-- name: Create ansible user
-  user:
-    name: "{{ username }}"
-    group: "{{ username }}"
-    comment: "ansible user"
-    shell: /bin/bash
-    uid: "{{ uid | int }}"
-    create_home: yes
-    password_lock: yes
-    state: present
-
-- name: Add authorized key
-  authorized_key:
-    user: "{{ username }}"
-    key: "{{ lookup('file', ssh_public_key_file) }}"
-    exclusive: yes
-    state: present
-
-- name: Grant no-password sudo privilege
-  copy:
-    content: "{{ username }} ALL=(ALL) NOPASSWD:ALL"
-    dest: "/etc/sudoers.d/{{ username }}"
-    mode: "600"
+- name: Set up ansible user
+  include_role:
+    name: user
+  vars:
+    username: "{{ role_vars_ansible_access.username }}"
+    uid: "{{ role_vars_ansible_access.uid }}"
+    ssh_public_key_file: "{{ role_vars_ansible_access.ssh_public_key_file }}"
+    sudoer: yes
+    comment: ansible remote user
 
 - name: Set up ansible folder
   file:

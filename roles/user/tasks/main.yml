@@ -9,7 +9,7 @@
 - name: Set up user
   user:
     name: "{{ username }}"
-    password: "{{ password | ternary(password | password_hash('sha512'), '!') }}"
+    password: "{{ (password | length > 0) | ternary(password | password_hash('sha512'), '!') }}"
     update_password: on_create
     uid: "{{ uid | int }}"
     group: "{{ username }}"
@@ -30,7 +30,7 @@
     - subgid
 
 # ssh public key for remote login
-- name: Add authorized key
+- name: Add ssh public key
   ansible.posix.authorized_key:
     user: "{{ username }}"
     key: "{{ lookup('file', ssh_public_key_file) }}"
@@ -38,37 +38,37 @@
     state: present
   when: ssh_public_key_file | length > 0
 
-- name: Remove authorized key
+- name: Remove ssh public key
   file: 
     path: "/home/{{ username }}/.ssh/authorized_keys"
     state: absent
   when: ssh_public_key_file | length == 0
 
-# set up linger
+# user session linger
 - name: Set up user linger
-  shell: 
-    cmd: "loginctl enable-linger {{ username }}"
-    creates: "/var/lib/systemd/linger/{{ username }}"
+  block:
+    - name: Enable user linger
+      shell: 
+        cmd: "loginctl enable-linger {{ username }}"
+        creates: "/var/lib/systemd/linger/{{ username }}"
+    - name: Export XDG_RUNTIME_DIR when su
+      lineinfile: 
+        path: "/home/{{ username }}/.bashrc"
+        regexp: "^export XDG_RUNTIME_DIR="
+        line: 'export XDG_RUNTIME_DIR="/run/user/{{ uid }}"'
   when: linger
 
-- name: export XDG_RUNTIME_DIR when su
-  lineinfile: 
-    path: "/home/{{ username }}/.bashrc"
-    regexp: "^export XDG_RUNTIME_DIR="
-    line: 'export XDG_RUNTIME_DIR="/run/user/{{ uid }}"'
-  when: linger
-
-- name: Remove up user linger
-  shell: 
-    cmd: "loginctl disable-linger {{ username }}"
-    removes: "/var/lib/systemd/linger/{{ username }}"
-  when: not linger
-
-- name: Do not set XDG_RUNTIME_DIR when su
-  lineinfile: 
-    path: "/home/{{ username }}/.bashrc"
-    regexp: "^export XDG_RUNTIME_DIR="
-    state: absent
+- name: Remove user linger
+  block:
+    - name: Disable user linger
+      shell: 
+        cmd: "loginctl disable-linger {{ username }}"
+        removes: "/var/lib/systemd/linger/{{ username }}"
+    - name: Do not set XDG_RUNTIME_DIR when su
+      lineinfile: 
+        path: "/home/{{ username }}/.bashrc"
+        regexp: "^export XDG_RUNTIME_DIR="
+        state: absent
   when: not linger
 
 # set up sudo

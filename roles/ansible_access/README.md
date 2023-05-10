@@ -8,6 +8,7 @@ Valid variables and default values:
 |Variable           |Default Value             |
 |-------------------|--------------------------|
 |username           |ansible_remote            |
+|uid                |900000                    |
 |ssh_public_key_file|~/.ssh/ansible_id_rsa.pub |
 
 Consider setting up the same account as default in `~/.ansible.cfg` as follows:
