@@ -29,10 +29,6 @@
       block:
         - file:
             path: "{{ item.path }}"
-            state: absent
-          loop: "{{ sys_file_system.links | default([]) }}"
-        - file:
-            path: "{{ item.path }}"
             src: "{{ item.src }}"
             state: link
           loop: "{{ sys_file_system.links | default([]) }}"
