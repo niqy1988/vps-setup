@@ -19,29 +19,29 @@
         src: "{{ item.src }}"
         fstype: "{{ item.fstype | default('ext4') }}"
         state: mounted
-      with_items: "{{ sys_file_system.mounts | default([]) }}"
+      loop: "{{ sys_file_system.mounts | default([]) }}"
     - name: Create system folders
       file:
         path: "{{ item.path }}"
         state: directory
-      with_items: "{{ sys_file_system.dirs | default([]) }}"
+      loop: "{{ sys_file_system.dirs | default([]) }}"
     - name: Create symlinks
       block:
         - file:
             path: "{{ item.path }}"
             state: absent
-          with_items: "{{ sys_file_system.links | default([]) }}"
+          loop: "{{ sys_file_system.links | default([]) }}"
         - file:
             path: "{{ item.path }}"
             src: "{{ item.src }}"
             state: link
-          with_items: "{{ sys_file_system.links | default([]) }}"
+          loop: "{{ sys_file_system.links | default([]) }}"
     
-- name: Enable extra YUM repositories
+- name: Use official YUM repositories mirrorlist
   hosts: all
   become: yes
   tasks:
-    - name: Find all repo files
+    - name: Find all official repo files
       find:
         paths: "/etc/yum.repos.d/"
         patterns: "almalinux-*.repo"
@@ -51,27 +51,60 @@
         path: "{{ item.path }}"
         regexp: '^#\s*mirrorlist'
         replace: 'mirrorlist'
-      with_items: "{{ repos.files }}"
+      loop: "{{ repos.files }}"
+      notify:
+        - Refresh dnf cache
     - name: Disable mirror baseurl
       replace:
         path: "{{ item.path }}"
         regexp: '^baseurl'
         replace: '# baseurl'
-      with_items: "{{ repos.files }}"
+      loop: "{{ repos.files }}"
+      notify:
+        - Refresh dnf cache
+  handlers:
     - name: Refresh dnf cache
       shell: dnf makecache
+
+- name: Enable additional YUM repositories
+  hosts: all
+  become: yes
+  tasks:
     - name: Install PowerTools/crb
       dnf:
         name: yum-utils
         state: latest
+      notify:
+        - Refresh dnf cache
     - name: Enable PowerTools/crb
-      shell: dnf config-manager --enable crb
+      community.general.ini_file:
+        path: /etc/yum.repos.d/almalinux-crb.repo
+        section: crb
+        option: enabled
+        value: 1
+        no_extra_spaces: yes
+        create: no
+      notify:
+        - Refresh dnf cache
     - name: Install EPEL
       dnf:
         name: epel-release
         state: latest
+      notify:
+        - Refresh dnf cache
     - name: Enable EPEL
-      shell: dnf config-manager --enable epel
+      community.general.ini_file:
+        path: /etc/yum.repos.d/epel.repo
+        section: epel
+        option: enabled
+        value: 1
+        no_extra_spaces: yes
+        create: no
+      notify:
+        - Refresh dnf cache
+  handlers:
+    - name: Refresh dnf cache
+      shell: dnf makecache
 
 - name: Install and update critical packages 
   hosts: all
@@ -123,6 +156,8 @@
       dnf:
         name: firewalld
         state: latest
+      notify:
+        - Reload firewalld
     - name: Default service rules
       ansible.posix.firewalld:
         service: "{{ item.service }}"
