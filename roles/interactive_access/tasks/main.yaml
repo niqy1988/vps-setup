@@ -1,33 +1,25 @@
-- name: Create interactive user
-  user:
-    name: "{{ username }}"
-    password: "{{ password | password_hash('sha512') }}"
-    comment: "interactive user"
-    groups: "{{ user_groups }}"
-    shell: /bin/bash
-    create_home: yes
-    update_password: on_create
-    state: present
+- name: set scoped var for current role
+  set_fact:
+    role_vars_interactive_access:
+      username: "{{ username }}"
+      password: "{{ password }}"
+      ssh_public_key_file: "{{ ssh_public_key_file }}"
+      user_groups: "{{ user_groups }}"
+      uid: "{{ uid }}"
+      sudoer: "{{ sudoer }}"
 
-- name: Add authorized key
-  authorized_key:
-    user: "{{ username }}"
-    key: "{{ lookup('file', ssh_public_key_file) }}"
-    state: present
+- name: Set up interactive user
+  include_role:
+    name: user
+  vars:
+    username: "{{ role_vars_interactive_access.username }}"
+    password: "{{ role_vars_interactive_access.password }}"
+    ssh_public_key_file: "{{ role_vars_interactive_access.ssh_public_key_file }}"
+    user_groups: "{{ role_vars_interactive_access.user_groups }}"
+    uid: "{{ role_vars_interactive_access.uid }}"
+    sudoer: "{{ role_vars_interactive_access.sudoer }}"
+    comment: "interactive user {{ role_vars_interactive_access.username }}"
 
-- name: Grant sudo privilege
-  copy:
-    content: "{{ username }} ALL=(ALL) ALL"
-    dest: "/etc/sudoers.d/{{ username }}"
-    mode: "600"
-  when: sudoer
-
-- name: Remove sudo privilege
-  file:
-    path: "/etc/sudoers.d/{{ username }}"
-    state: absent
-  when: not sudoer
-  
 - name: Install screen tool
   dnf:
     name: screen

@@ -157,5 +157,6 @@
   vars:
     username: "{{ interactive_username }}"
     password: "{{ interactive_password }}"
+    sudoer: yes
   roles:
     - role: interactive_access
