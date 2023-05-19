@@ -1,9 +1,0 @@
-# redirect http to https
-server {
-  listen 80;
-  listen [::]:80;
- 
-  server_name	{{ item }} *.{{ item }};  
-  
-  return 301 https://$host$request_uri;
-}
