@@ -1,0 +1,54 @@
+- name: Set up acme folder
+  become: yes
+  file:
+    path: "{{ certs_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    recurse: yes
+    state: directory
+
+- name: Create acme.sh daemon container
+  become: yes
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ acme_container }}"
+    image: docker.io/neilpang/acme.sh
+    label:
+      io.containers.autoupdate: registry
+      PODMAN_SYSTEMD_UNIT: "container-{{ acme_container }}.service"
+    env:
+      CF_Account_ID: "{{ acme_cloudflare_account_id }}"
+      CF_Token: "{{ acme_cloudflare_api_token }}"
+    volume:
+      - "{{ certs_path }}:/acme.sh:z"
+    command: daemon
+    state: created
+    generate_systemd:
+      path: "/home/{{ podman_username }}/.config/systemd/user"
+
+- name: Enable and start acme service
+  become: yes
+  become_user: "{{ podman_username }}"
+  systemd:
+    name: "container-{{ acme_container }}.service"
+    scope: user
+    daemon_reload: yes
+    enabled: yes
+    state: started
+
+- name: Request new certificates
+  become: yes
+  become_user: "{{ podman_username }}"
+  shell: 
+    cmd: "podman exec {{ acme_container }} --issue --server letsencrypt --dns dns_cf -d {{ item }} -d *.{{ item }}"
+    creates: "{{ certs_path }}/{{ item }}_ecc/{{ item }}.key"
+  loop: "{{ domains }}"
+  when: request_new_certs
+
+- name: Set up cron job to renew certificates
+  become: yes
+  become_user: "{{ podman_username }}"
+  cron:
+    name: renew acme.sh certificates
+    special_time: daily
+    job: "podman exec {{ acme_container }} --renew-all --server letsencrypt --dns dns_cf"

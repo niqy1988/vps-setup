@@ -1,9 +1,11 @@
-# nginx
-username: "{{ podman_username }}"
-app_path: /app/nginx
-certs_path: "{{ certs_path }}"
+# nginx config
+nginx_path: /app/nginx
+
+# certifincates
+certs_path: /app/certs
+domains: 
+  - sample.com
+  - sample.net
 
 # podman
-container: nginx
-networks: 
-  - "{{ podman_network }}"
+nginx_container: nginx

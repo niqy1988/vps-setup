@@ -2,84 +2,102 @@
 - name: Set up nginx folder
   become: yes
   file:
-    path: "{{ app_path }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    path: "{{ nginx_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
     recurse: yes
     state: directory
 
-- name: Set up nginx subfolders
+- name: Set up nginx folders
   become: yes
-  become_user: "{{ username }}"
-  file:
-    path: "{{ app_path }}/{{ item }}"
-    state: directory
-  loop:
-    - conf.d
-    - stream.d
-    - logs
+  become_user: "{{ podman_username }}"
+  block:
+    - name: Set up basic nginx folders
+      file:
+        path: "{{ nginx_path }}/{{ item }}"
+        state: directory
+      loop:
+        - conf.d
+        - stream.d
+        - logs
+    - name: Set up domain config folders
+      file:
+        path: "{{ nginx_path }}/conf.d/{{ item }}"
+        state: directory
+      loop: "{{ domains }}"
 
-- name: Copy nginx.conf
+- name: config nginx
   become: yes
-  become_user: "{{ username }}"
-  copy:
-    src: nginx.conf
-    dest: "{{ app_path }}"
-
+  become_user: "{{ podman_username }}"
+  block:
+    - name: base config
+      copy:
+        src: nginx.conf
+        dest: "{{ nginx_path }}"
+    - name: Reject invalid ssl handshakes
+      copy:
+        src: ssl_reject_handshake.conf
+        dest: "{{ nginx_path }}/conf.d/ssl_reject_handshake.conf"
+    - name: Set up https redirect
+      template:
+        src: ssl_redirect.conf.j2
+        dest: "{{ nginx_path }}/conf.d/{{ item }}/ssl_redirect.conf"
+      loop: "{{ domains }}"
+    
 - name: Set up certs folder
   become: yes
   file:
     path: "{{ certs_path }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
     state: directory
 
 ### Read facts
-- name: Read network and port facts
-  set_fact:
-    ports_list: "{{ (ansible_local.podman_ports.tcp + ansible_local.podman_ports.tcp) | unique }}"
-    publish_ports: >
-      {{ 
-        ansible_local.podman_ports.tcp | default([]) | unique 
-        | map('string') | map('regex_replace', '([0-9]+)', '\1:\1/tcp') 
-        + 
-        ansible_local.podman_ports.udp | default([]) | unique 
-        | map('string') | map('regex_replace', '([0-9]+)', '\1:\1/udp')
-      }}
+# - name: Read network and port facts
+#   set_fact:
+#     ports_list: "{{ (ansible_local.podman_ports.tcp + ansible_local.podman_ports.tcp) | unique }}"
+#     publish_ports: >
+#       {{ 
+#         ansible_local.podman_ports.tcp | default([]) | unique 
+#         | map('string') | map('regex_replace', '([0-9]+)', '\1:\1/tcp') 
+#         + 
+#         ansible_local.podman_ports.udp | default([]) | unique 
+#         | map('string') | map('regex_replace', '([0-9]+)', '\1:\1/udp')
+#       }}
 
 ### Set up podman container
 - name: Create nginx container
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   containers.podman.podman_container:
-    name: "{{ container }}"
+    name: "{{ nginx_container }}"
     image: docker.io/nginx:alpine
     label:
       io.containers.autoupdate: registry
-      PODMAN_SYSTEMD_UNIT: "container-{{ container }}.service"
-    publish: "{{ publish_ports }}"
-    network: "{{ networks }}"
+      PODMAN_SYSTEMD_UNIT: "container-{{ nginx_container }}.service"
+    publish:
+      - 443:443/tcp
+      - 80:80/tcp
+    network: "{{ podman_network }}"
     volume:
-      - "{{ app_path }}/nginx.conf:/etc/nginx/nginx.conf:ro"
-      - "{{ app_path }}/conf.d:/etc/nginx/conf.d:ro"
-      - "{{ app_path }}/stream.d:/etc/nginx/stream.d:ro"
-      - "{{ certs_path }}:/etc/nginx/certs:ro"
-      - "{{ app_path }}/logs:/var/log/nginx"
-    recreate: yes
+      - "{{ nginx_path }}/nginx.conf:/etc/nginx/nginx.conf:z"
+      - "{{ nginx_path }}/conf.d:/etc/nginx/conf.d:z"
+      - "{{ nginx_path }}/stream.d:/etc/nginx/stream.d:z"
+      - "{{ certs_path }}:/etc/nginx/certs:z"
+      - "{{ nginx_path }}/logs:/var/log/nginx:z"
     state: created
-    healthcheck: "netstat -ntlp | grep -q :{{ ports_list | first | string }}"
+    healthcheck: "netstat -ntlp | grep -q :443"
     healthcheck_interval: 10s
     healthcheck_timeout: 2s
     healthcheck_retries: 3
     generate_systemd:
-      path: "/home/{{ username }}/.config/systemd/user"
-      restart_policy: always
+      path: "/home/{{ podman_username }}/.config/systemd/user"
 
 - name: Start nginx service
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   systemd:
-    name: "container-{{ container }}.service"
+    name: "container-{{ nginx_container }}.service"
     scope: user
     daemon_reload: yes
     enabled: yes
@@ -89,13 +107,15 @@
   wait_for:
     port: "{{ item }}"
     timeout: 5
-  loop: "{{ ports_list }}"
+  loop:
+    - 80
+    - 443
 
 ### Cron job to reload nginx config
 - name: Set up nginx reload cron job
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   cron:
     name: reload nginx config
     special_time: hourly
-    job: podman exec {{ container }} nginx -s reload
+    job: podman exec {{ nginx_container }} nginx -s reload

@@ -1,0 +1,10 @@
+---
+dependencies:
+  - role: podman
+  - role: acme
+  - role: firewall_service
+    service_name: nginx
+    tcp_ports:
+      - 80
+      - 443
+    udp_ports: []

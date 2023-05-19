@@ -1,0 +1,12 @@
+# acme.sh config
+certs_path: /app/certs
+acme_cloudflare_account_id: 8dce9afxxxxxxxxxxxxxxxxx6a6e14
+acme_cloudflare_api_token: sampleAPIkey
+
+domains:
+  - sample_domain.com
+  - sample_domain.net
+request_new_certs: yes
+
+# podman config
+acme_container: acme.sh
