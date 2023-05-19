@@ -1,18 +1,13 @@
 # qbittorrent
-username: "{{ podman_username }}"
-app_path: /app/qbittorrent
+qbittorrent_path: /app/qbittorrent
 download_path: /data/Downloads
   
 # podman
-container: qbittorrent
-networks: 
-  - "{{ podman_network }}"
-direct_port: 6881
+qbittorrent_container: qbittorrent
+qbittorrent_direct_port: 6881
 
 # browser access
-domains: "{{ host_domains }}"
+domains:
+  - sample.com
+  - sample.net
 server_prefix: bt
-
-# nginx
-nginx_path: "{{ nginx_path }}"
-nginx_user: "{{ podman_username }}"

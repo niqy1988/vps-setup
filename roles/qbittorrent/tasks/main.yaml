@@ -1,106 +1,75 @@
 - name: Create qBittorrent folder
   become: yes
   file:
-    path: "{{ app_path }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    path: "{{ qbittorrent_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
     recurse: yes
     state: directory
 
-- name: Set up qBittorrent folder
+- name: Create download folder
   become: yes
-  become_user: "{{ username }}"
-  block:
-    - name: Set up folders to mount into container 
-      file:
-        path: "{{ app_path }}/{{ item }}"
-        state: directory
-      loop:
-        - config
-        - incomplete
-        - torrents
-
-
-### Network and ports
-- name: Set up podman ports
-  import_role:
-    name: register_ports
-  vars:
-    tcp_ports: 
-      - "{{ direct_port }}"
-    udp_ports:
-      - "{{ direct_port }}"
-    purge_ports: no
-
+  file:
+    path: "{{ download_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    recurse: yes
+    state: directory
 
 ### Podman container and service
 - name: Create qBittorrent container
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   containers.podman.podman_container:
-    name: "{{ container }}"
+    name: "{{ qbittorrent_container }}"
     image: docker.io/linuxserver/qbittorrent
     label:
       io.containers.autoupdate: registry
-      PODMAN_SYSTEMD_UNIT: "container-{{ container }}.service"
+      PODMAN_SYSTEMD_UNIT: "container-{{ qbittorrent_container }}.service"
     env:
       PUID: "0"
       PGID: "0"
-    network: "{{ networks }}"
+    network: "{{ podman_network }}"
+    publish:
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/tcp"
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/udp"
     volume:
-      - "{{ app_path }}/config:/config"
-      - "{{ app_path }}/incomplete:/downloads/incomplete"
-      - "{{ app_path }}/torrents:/downloads/torrents"
-      - "{{ download_path }}:/downloads/finished"
-    entrypoint: "/bin/sh"
-    command:
-      - -c
-      - /init
-    recreate: yes
+      - "{{ qbittorrent_path }}:/config:z"
+      - "{{ download_path }}:{{ download_path }}:z"
+    # entrypoint: "/bin/sh"
+    # command:
+    #   - -c
+    #   - /init
+    # recreate: yes
     state: created
     healthcheck: "netstat -ntlp | grep -q :8080"
     healthcheck_interval: 10s
     healthcheck_timeout: 2s
     healthcheck_retries: 3
     generate_systemd:
-      path: "/home/{{ username }}/.config/systemd/user"
+      path: "/home/{{ podman_username }}/.config/systemd/user"
 
 - name: Enable and start qBittorrent service
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   systemd:
-    name: "container-{{ container }}.service"
+    name: "container-{{ qbittorrent_container }}.service"
     scope: user
     daemon_reload: yes
     enabled: yes
     state: started
 
+- name: Sanity check for direct port listened
+  wait_for:
+    port: "{{ qbittorrent_direct_port }}"
+    timeout: 5
 
-### nginx
-- name: Create nginx folder
+- name: Create nginx rule to access webui
   become: yes
-  file:
-    path: "{{ nginx_path }}"
-    owner: "{{ nginx_user }}"
-    group: "{{ nginx_user }}"
-    recurse: yes
-    state: directory
-
-- name: Set up nginx site rules
-  become: yes
-  become_user: "{{ nginx_user }}"
-  block:
-    - name: Generate nginx config for qBittorrent direct access
-      template:
-        src: qbittorrent_direct.conf.j2
-        dest: "{{ nginx_path }}/stream.d/qbittorrent_direct.conf"
-    - name: Create site folders
-      file:
-        path: "{{ nginx_path }}/conf.d/{{ item }}"
-        state: directory
-      loop: "{{ domains }}"
-    - name: Generate nginx config for qBittorrent sites
-      template:
-        src: qbittorrent.conf.j2
-        dest: "{{ nginx_path }}/conf.d/{{ item }}/qbittorrent.conf"
-      loop: "{{ domains }}"
+  become_user: "{{ podman_username }}"
+  template:
+    src: qbittorrent.conf.j2
+    dest: "{{ nginx_path }}/conf.d/{{ item }}/qbittorrent.conf"
+    setype: container_file_t
+  loop: "{{ domains }}"
+  notify: "Reload nginx"

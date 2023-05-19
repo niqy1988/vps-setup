@@ -5,8 +5,8 @@ server {
 
   server_name {{ server_prefix }}.{{ item }};
 
-  ssl_certificate       /etc/nginx/certs/{{ item }}/fullchain.pem;
-  ssl_certificate_key   /etc/nginx/certs/{{ item }}/privkey.pem;
+  ssl_certificate       /etc/nginx/certs/{{ item }}_ecc/fullchain.cer;
+  ssl_certificate_key   /etc/nginx/certs/{{ item }}_ecc/{{ item }}.key;
 
   ssl_stapling on;
   ssl_stapling_verify on;
@@ -15,7 +15,7 @@ server {
   client_max_body_size 64M;
 
   location / {
-    proxy_pass http://{{ container }}:8080;
+    proxy_pass http://{{ qbittorrent_container }}:8080;
     proxy_redirect off;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
