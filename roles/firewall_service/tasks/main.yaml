@@ -1,0 +1,20 @@
+### Set up firewall
+- name: Set up service for firewalld
+  become: yes
+  template:
+    src: service.xml.j2
+    dest: "/etc/firewalld/services/{{ service_name }}.xml"
+  notify:
+    - Reload firewalld
+
+- name: Flush handlers
+  meta: flush_handlers
+    
+- name: Enable service in firewalld
+  become: yes
+  ansible.posix.firewalld:
+    service: "{{ service_name }}"
+    state: enabled
+    immediate: yes
+    permanent: yes
+    

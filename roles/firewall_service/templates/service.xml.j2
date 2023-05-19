@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <service>
 
-  <short>podman</short>
-  <description> Expose podman published ports. </description>
+  <short>{{ service_name }}</short>
+  <description> Expose {{ service_name }} ports. </description>
 
   {% for tcp_port in tcp_ports %}
   <port protocol="tcp" port="{{ tcp_port }}"/>
