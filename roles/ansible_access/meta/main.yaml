@@ -1,0 +1,8 @@
+---
+dependencies:
+  - role: user
+    username: "{{ ansible_username }}"
+    uid: "{{ ansible_uid }}"
+    ssh_public_key_file: "{{ ansible_ssh_public_key_file }}"
+    sudoer: yes
+    comment: ansible remote user

@@ -1,0 +1,10 @@
+---
+dependencies:
+  - role: user
+    username: "{{ interactive_username }}"
+    password: "{{ interactive_password }}"
+    ssh_public_key_file: "{{ interactive_ssh_public_key_file }}"
+    user_groups: "{{ interactive_user_groups }}"
+    uid: "{{ interactive_uid }}"
+    sudoer: "{{ interactive_sudoer }}"
+    comment: "interactive user {{ interactive_username }}"

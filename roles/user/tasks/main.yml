@@ -29,6 +29,15 @@
     - subuid
     - subgid
 
+# Set ansible remote temp folder
+- name: Create ansible remote temp folder
+  file: 
+    path: "/home/{{ username }}/.ansible/tmp"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: yes
+    state: directory
+
 # ssh public key for remote login
 - name: Add ssh public key
   ansible.posix.authorized_key:
@@ -56,6 +65,11 @@
         path: "/home/{{ username }}/.bashrc"
         regexp: "^export XDG_RUNTIME_DIR="
         line: 'export XDG_RUNTIME_DIR="/run/user/{{ uid }}"'
+    - name: Export DBUS_SESSION_BUS_ADDRESS when su
+      lineinfile: 
+        path: "/home/{{ username }}/.bashrc"
+        regexp: "^export DBUS_SESSION_BUS_ADDRESS="
+        line: 'export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/{{ uid }}/bus"'
   when: linger
 
 - name: Remove user linger
@@ -68,6 +82,11 @@
       lineinfile: 
         path: "/home/{{ username }}/.bashrc"
         regexp: "^export XDG_RUNTIME_DIR="
+        state: absent
+    - name: Export DBUS_SESSION_BUS_ADDRESS when su
+      lineinfile: 
+        path: "/home/{{ username }}/.bashrc"
+        regexp: "^export DBUS_SESSION_BUS_ADDRESS="
         state: absent
   when: not linger
 

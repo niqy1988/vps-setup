@@ -1,20 +1,3 @@
-- name: set scoped var for current role
-  set_fact:
-    role_vars_ansible_access:
-      username: "{{ username }}"
-      uid: "{{ uid }}"
-      ssh_public_key_file: "{{ ssh_public_key_file }}"
-
-- name: Set up ansible user
-  include_role:
-    name: user
-  vars:
-    username: "{{ role_vars_ansible_access.username }}"
-    uid: "{{ role_vars_ansible_access.uid }}"
-    ssh_public_key_file: "{{ role_vars_ansible_access.ssh_public_key_file }}"
-    sudoer: yes
-    comment: ansible remote user
-
 - name: Set up ansible folder
   file:
     path: /etc/ansible

@@ -5,9 +5,6 @@
   remote_user: "{{ bootstrap_username | default('root') }}"
   become: yes
   vars:
-    username: "{{ ansible_username }}"
-    uid: "{{ ansible_uid }}"
-    ssh_public_key_file: "{{ ansible_ssh_public_key_file }}"
     ansible_ssh_private_key_file: "{{ bootstrap_ssh_private_key_file | default(root_ssh_private_key_file) }}"
   roles:
     - role: ansible_access
@@ -189,8 +186,6 @@
   hosts: dev
   become: yes
   vars:
-    username: "{{ interactive_username }}"
-    password: "{{ interactive_password }}"
-    sudoer: yes
+    interactive_sudoer: yes
   roles:
     - role: interactive_access
