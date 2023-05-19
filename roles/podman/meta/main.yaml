@@ -1,0 +1,10 @@
+---
+dependencies:
+  - role: user
+    username: "{{ podman_username }}"
+    uid: "{{ podman_uid }}"
+    user_groups:
+      - systemd-journal
+    linger: yes
+    comment: podman user
+      

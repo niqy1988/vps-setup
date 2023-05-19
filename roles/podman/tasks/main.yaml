@@ -3,9 +3,12 @@
     name: net.ipv4.ip_unprivileged_port_start
     value: '0'
 
-- name: Install podman
+- name: Install podman with supporting packages
   dnf:
-    name: podman
+    name: 
+      - podman
+      - podman-plugins
+      - systemd-container
     state: present
     
 - name: Install netstat for health check
@@ -17,3 +20,9 @@
   pip: 
     name: podman
     state: present
+
+- name: Create podman network
+  become: yes
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_network: 
+    name: "{{ podman_network }}"
