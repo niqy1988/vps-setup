@@ -44,7 +44,7 @@
     volume:
       - "{{ plex_path }}/config:/config:z"
       - "{{ plex_path }}/transcode:/transcode:z"
-      - "{{ media_path }}:/Media:z"
+      - "{{ media_path }}:{{ media_path }}:z"
     state: created
     generate_systemd:
       path: "/home/{{ podman_username }}/.config/systemd/user"
