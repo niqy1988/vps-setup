@@ -1,18 +1,10 @@
 # plex
-username: "{{ podman_username }}"
-app_path: /app/plex
+plex_path: /app/plex
 media_path: /data/Media
 
 # podman
-container: plex-server
-networks: 
-  - "{{ podman_network }}"
-direct_port: 32480
+plex_container: plex-server
+plex_direct_port: 32400
 
 # network
-domains: "{{ host_domains }}"
-server_prefix: plex
-
-# nginx
-nginx_path: "{{ nginx_path }}"
-nginx_user: "{{ podman_username }}"
+plex_domain_prefix: plex

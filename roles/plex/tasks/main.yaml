@@ -2,20 +2,20 @@
 - name: Setup PLEX folders
   become: yes
   file:
-    path: "{{ app_path }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    path: "{{ item }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
     recurse: yes
     state: directory
   loop:
-    - "{{ app_path }}"
-    - "{{ app_path }}/config"
-    - "{{ app_path }}/transcode"
+    - "{{ plex_path }}"
+    - "{{ plex_path }}/config"
+    - "{{ plex_path }}/transcode"
     - "{{ media_path }}"
 
 - name: Check existing PLEX preference file
   stat:
-    path: "{{ app_path }}/config/Library/Application Support/Plex Media Server/Preferences.xml"
+    path: "{{ plex_path }}/config/Library/Application Support/Plex Media Server/Preferences.xml"
   register: pref_stat
 
 - name: Input PLEX claim token
@@ -24,77 +24,53 @@
   register: plex_claim_token
   when: not pref_stat.stat.exists
 
-
-### Network and ports
-- name: Set up podman ports
-  import_role:
-    name: register_ports
-  vars:
-    tcp_ports: 
-      - "{{ direct_port }}"
-    purge_ports: no
-
-
 ### Podman container and service
 - name: Create PLEX container
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   containers.podman.podman_container:
-    name: "{{ container }}"
+    name: "{{ plex_container }}"
     image: docker.io/plexinc/pms-docker
     label:
       io.containers.autoupdate: registry
-      PODMAN_SYSTEMD_UNIT: "container-{{ container }}.service"
+      PODMAN_SYSTEMD_UNIT: "container-{{ plex_container }}.service"
     env:
       PLEX_CLAIM: "{{ plex_claim_token.user_input | default('') }}"
       PLEX_UID: "0"
       PLEX_GID: "0"
-    network: "{{ networks }}"
+    network: "{{ podman_network }}"
+    publish:
+      - "{{ plex_direct_port }}:32400/tcp"
     volume:
-      - "{{ app_path }}/config:/config"
-      - "{{ app_path }}/transcode:/transcode"
-      - "{{ media_path }}:/Media"
-    recreate: yes
+      - "{{ plex_path }}/config:/config:z"
+      - "{{ plex_path }}/transcode:/transcode:z"
+      - "{{ media_path }}:/Media:z"
     state: created
     generate_systemd:
-      path: "/home/{{ username }}/.config/systemd/user"
+      path: "/home/{{ podman_username }}/.config/systemd/user"
 
 - name: Enable and start PLEX service
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   systemd:
-    name: "container-{{ container }}.service"
+    name: "container-{{ plex_container }}.service"
     scope: user
     daemon_reload: yes
     enabled: yes
     state: started
     
+- name: Sanity check for direct port listened
+  wait_for:
+    port: "{{ plex_direct_port }}"
+    timeout: 5
 
 ### nginx
-- name: Create nginx folder
+- name: Create nginx rule to access PLEX webui
   become: yes
-  file:
-    path: "{{ nginx_path }}"
-    owner: "{{ nginx_user }}"
-    group: "{{ nginx_user }}"
-    recurse: yes
-    state: directory
-
-- name: Set up nginx site rules
-  become: yes
-  become_user: "{{ nginx_user }}"
-  block:
-    - name: Generate nginx config for PLEX direct access
-      template:
-        src: plex_direct.conf.j2
-        dest: "{{ nginx_path }}/stream.d/plex_direct.conf"
-    - name: Create site folders
-      file:
-        path: "{{ nginx_path }}/conf.d/{{ item }}"
-        state: directory
-      loop: "{{ domains }}"
-    - name: Generate nginx config for PLEX sites
-      template:
-        src: plex.conf.j2
-        dest: "{{ nginx_path }}/conf.d/{{ item }}/plex.conf"
-      loop: "{{ domains }}"
+  become_user: "{{ podman_username }}"
+  template:
+    src: plex.conf.j2
+    dest: "{{ nginx_path }}/conf.d/{{ item }}/plex.conf"
+    setype: container_file_t
+  loop: "{{ domains }}"
+  notify: "Reload nginx"
