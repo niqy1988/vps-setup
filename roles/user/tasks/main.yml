@@ -6,17 +6,22 @@
     gid: "{{ uid | int }}"
     state: present
 
+- name: create hashed password
+  set_fact:
+    hashed_password: "{{ password | password_hash('sha512') }}"
+  when: password is defined
+
 - name: Set up user
   user:
     name: "{{ username }}"
-    password: "{{ (password | length > 0) | ternary(password | password_hash('sha512'), '!') }}"
+    password: "{{ hashed_password | default('!') }}"
     update_password: on_create
     uid: "{{ uid | int }}"
     group: "{{ username }}"
     groups: "{{ user_groups }}"
     shell: /bin/bash
     create_home: yes
-    password_lock: "{{ password | length == 0 }}"
+    password_lock: "{{ password is not defined }}"
     comment: "{{ comment }}"
     state: present
 
@@ -45,13 +50,13 @@
     key: "{{ lookup('file', ssh_public_key_file) }}"
     exclusive: yes
     state: present
-  when: ssh_public_key_file | length > 0
+  when: ssh_public_key_file is defined
 
 - name: Remove ssh public key
   file: 
     path: "/home/{{ username }}/.ssh/authorized_keys"
     state: absent
-  when: ssh_public_key_file | length == 0
+  when: ssh_public_key_file is not defined
 
 # user session linger
 - name: Set up user linger
