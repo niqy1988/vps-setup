@@ -7,7 +7,4 @@ qbittorrent_container: qbittorrent
 qbittorrent_direct_port: 6881
 
 # browser access
-domains:
-  - sample.com
-  - sample.net
-server_prefix: bt
+qbittorrent_domain_prefix: bt

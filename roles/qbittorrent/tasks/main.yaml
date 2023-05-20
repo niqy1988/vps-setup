@@ -1,20 +1,14 @@
-- name: Create qBittorrent folder
+- name: Create relevant folders
   become: yes
   file:
-    path: "{{ qbittorrent_path }}"
+    path: "{{ item }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
     recurse: yes
     state: directory
-
-- name: Create download folder
-  become: yes
-  file:
-    path: "{{ download_path }}"
-    owner: "{{ podman_username }}"
-    group: "{{ podman_username }}"
-    recurse: yes
-    state: directory
+  loop:
+    - "{{ qbittorrent_path }}"
+    - "{{ download_path }}"
 
 ### Podman container and service
 - name: Create qBittorrent container
@@ -36,11 +30,6 @@
     volume:
       - "{{ qbittorrent_path }}:/config:z"
       - "{{ download_path }}:{{ download_path }}:z"
-    # entrypoint: "/bin/sh"
-    # command:
-    #   - -c
-    #   - /init
-    # recreate: yes
     state: created
     healthcheck: "netstat -ntlp | grep -q :8080"
     healthcheck_interval: 10s

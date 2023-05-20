@@ -1,11 +1,3 @@
 # nginx config
 nginx_path: /app/nginx
-
-# certifincates
-certs_path: /app/certs
-domains: 
-  - sample.com
-  - sample.net
-
-# podman
 nginx_container: nginx
