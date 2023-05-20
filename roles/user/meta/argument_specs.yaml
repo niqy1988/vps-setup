@@ -16,6 +16,7 @@ argument_specs:
       password:
         type: str
         required: no
+        no_log: yes
         description: password of the user, default to ! (password locked)
 
       ssh_public_key_file:
@@ -25,21 +26,25 @@ argument_specs:
 
       uid:
         type: int
+        required: no
         default: 100000
         description: uid of the user
 
       user_groups: 
         type: list
         elements: str
+        required: no
         default: []
         description: additional groups the user belongs to
 
       sudoer:
         type: bool
-        default: no
+        required: no
+        default: false
         description: whether user has sudo privilege
 
       linger:
         type: bool
-        default: no
+        required: no
+        default: false
         description: whether user has a linger session (for systemd)

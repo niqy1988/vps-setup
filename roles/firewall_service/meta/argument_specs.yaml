@@ -11,11 +11,13 @@ argument_specs:
       tcp_ports:
         type: list
         elements: int
+        required: no
         default: []
         description: exposed tcp ports
 
       udp_ports:
         type: list
         elements: int
+        required: no
         default: []
         description: exposed udp ports
