@@ -1,6 +1,5 @@
 # xray
-username: "{{ podman_username }}"
-app_path: /app/xray
+xray_path: /app/xray
 
 xray_clients:
   - id: 00000000-0000-0000-0000-000000000000
@@ -8,13 +7,8 @@ xray_clients:
     email: sample@domain.net
 
 # podman
-container: xray
+xray_container: xray
 xray_port: 44380
 
 # www
-domains: "{{ host_domains }}"
 xray_path: /stream/pass
-
-# nginx
-nginx_path: "{{ nginx_path }}"
-nginx_user: "{{ podman_username }}"

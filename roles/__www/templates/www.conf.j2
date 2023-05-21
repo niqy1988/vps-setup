@@ -4,8 +4,8 @@ server {
 
   server_name www.{{ item }};
 
-  ssl_certificate       /etc/nginx/certs/{{ item }}/fullchain.pem;
-  ssl_certificate_key   /etc/nginx/certs/{{ item }}/privkey.pem;
+  ssl_certificate       /etc/nginx/certs/{{ item }}_ecc/fullchain.cer;
+  ssl_certificate_key   /etc/nginx/certs/{{ item }}_ecc/{{ item }}.key;
 
   ssl_stapling on;
   ssl_stapling_verify on;

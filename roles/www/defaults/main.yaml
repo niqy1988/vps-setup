@@ -1,6 +1,0 @@
-# Website
-domains: "{{ host_domains }}"
-
-# nginx
-nginx_path: "{{ nginx_path }}"
-nginx_user: "{{ podman_username }}"

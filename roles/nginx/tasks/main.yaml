@@ -22,11 +22,13 @@
         - logs
     - name: Set up domain config folders
       file:
-        path: "{{ nginx_path }}/conf.d/{{ item }}"
+        path: "{{ nginx_path }}/conf.d/{{ item }}/www"
         state: directory
+        setype: container_file_t
       loop: "{{ domains }}"
+  notify: Reload nginx
 
-- name: config nginx
+- name: Create nginx config files
   become: yes
   become_user: "{{ podman_username }}"
   block:
@@ -34,16 +36,26 @@
       copy:
         src: nginx.conf
         dest: "{{ nginx_path }}"
+        setype: container_file_t
     - name: Reject invalid ssl handshakes
       copy:
         src: ssl_reject_handshake.conf
         dest: "{{ nginx_path }}/conf.d/ssl_reject_handshake.conf"
+        setype: container_file_t
     - name: Set up https redirect
       template:
         src: ssl_redirect.conf.j2
         dest: "{{ nginx_path }}/conf.d/{{ item }}/ssl_redirect.conf"
+        setype: container_file_t
       loop: "{{ domains }}"
-    
+    - name: Set up www config
+      template:
+        src: www.conf.j2
+        dest: "{{ nginx_path }}/conf.d/{{ item }}/www.conf"
+        setype: container_file_t
+      loop: "{{ domains }}"
+  notify: Reload nginx
+
 - name: Set up certs folder
   become: yes
   file:
@@ -51,19 +63,7 @@
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
     state: directory
-
-### Read facts
-# - name: Read network and port facts
-#   set_fact:
-#     ports_list: "{{ (ansible_local.podman_ports.tcp + ansible_local.podman_ports.tcp) | unique }}"
-#     publish_ports: >
-#       {{ 
-#         ansible_local.podman_ports.tcp | default([]) | unique 
-#         | map('string') | map('regex_replace', '([0-9]+)', '\1:\1/tcp') 
-#         + 
-#         ansible_local.podman_ports.udp | default([]) | unique 
-#         | map('string') | map('regex_replace', '([0-9]+)', '\1:\1/udp')
-#       }}
+  notify: Reload nginx
 
 ### Set up podman container
 - name: Create nginx container
