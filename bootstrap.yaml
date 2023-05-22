@@ -2,9 +2,9 @@
 
 - name: Set up ansible remote user
   hosts: all
-  remote_user: "{{ bootstrap_username | default('root') }}"
   become: yes
   vars:
+    ansible_user: "{{ bootstrap_username | default('root') }}"
     ansible_ssh_private_key_file: "{{ bootstrap_ssh_private_key_file | default(root_ssh_private_key_file) }}"
   roles:
     - role: ansible_access
