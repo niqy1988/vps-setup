@@ -14,5 +14,5 @@ server {
   client_max_body_size 64M;
 
   # Locations
-  include conf.d/{{ item }}/www/*.conf;
+  include /etc/nginx/conf.d/{{ item }}/www/*.conf;
 }

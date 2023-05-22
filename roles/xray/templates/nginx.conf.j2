@@ -1,5 +1,5 @@
 # Xray Proxy Config
-location {{ xray_path }} {
+location {{ xray_url_path }} {
   proxy_intercept_errors on;
   error_page 400 = @xray_error;
 

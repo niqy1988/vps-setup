@@ -2,89 +2,66 @@
 - name: Set up xray folder
   become: yes
   file:
-    path: "{{ app_path }}"
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    path: "{{ xray_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
     recurse: yes
     state: directory
 
 - name: Set up xray configs
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   block:
     - name: Generate server config
       template:
         src: server_config.json.j2
-        dest: "{{ app_path }}/server_config.json"
+        dest: "{{ xray_path }}/server_config.json"
+        setype: container_file_t
     - name: Set up log folder
       file:
-        path: "{{ app_path }}/log"
+        path: "{{ xray_path }}/log"
         state: directory
-
-
-### nginx config
-- name: Set up nginx www folder
-  import_role:
-    name: www
-
-- name: Generate nginx config for xray
-  become: yes
-  become_user: "{{ nginx_user }}"
-  template:
-    src: nginx.conf.j2
-    dest: "{{ nginx_path }}/conf.d/{{ item }}/www/xray.conf"
-  loop: "{{ domains }}"
-
-
-### Firewall for udp full-cone support
-- name: Create firewalld service rule
-  become: yes
-  copy:
-    src: xray.xml
-    dest: /etc/firewalld/services
-  notify: Reload firewalld
-
-- meta: flush_handlers
-
-- name: Enable firewalld service rule
-  become: yes
-  ansible.posix.firewalld:
-    service: xray
-    state: enabled
-    immediate: yes
-    permanent: yes
-
 
 ### Podman container and service
 - name: Create xray container
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   containers.podman.podman_container:
-    name: "{{ container }}"
+    name: "{{ xray_container }}"
     image: docker.io/teddysun/xray
     label:
       io.containers.autoupdate: registry
-      PODMAN_SYSTEMD_UNIT: "container-{{ container }}.service"
+      PODMAN_SYSTEMD_UNIT: "container-{{ xray_container }}.service"
     network: host
     volumes:
-      - "{{ app_path }}/server_config.json:/etc/xray/config.json:ro"
-      - "{{ app_path }}/log:/var/log/xray"
-    recreate: yes
+      - "{{ xray_path }}/server_config.json:/etc/xray/config.json:ro"
+      - "{{ xray_path }}/log:/var/log/xray"
     state: created
     healthcheck: "netstat -ntlp | grep -q :{{ xray_port }}"
     healthcheck_interval: 10s
     healthcheck_timeout: 2s
     healthcheck_retries: 3
     generate_systemd:
-      path: "/home/{{ username }}/.config/systemd/user"
+      path: "/home/{{ podman_username }}/.config/systemd/user"
       restart_policy: always
 
 - name: Enable and start xray service
   become: yes
-  become_user: "{{ username }}"
+  become_user: "{{ podman_username }}"
   systemd:
-    name: "container-{{ container }}.service"
+    name: "container-{{ xray_container }}.service"
     scope: user
     daemon_reload: yes
     enabled: yes
     state: started
+
+### nginx config
+- name: Generate nginx config for xray
+  become: yes
+  become_user: "{{ podman_username }}"
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_path }}/conf.d/{{ item }}/www/xray.conf"
+    setype: container_file_t
+  loop: "{{ domains }}"
+  notify: Reload nginx

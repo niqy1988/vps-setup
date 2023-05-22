@@ -11,4 +11,4 @@ xray_container: xray
 xray_port: 44380
 
 # www
-xray_path: /stream/pass
+xray_url_path: /stream/pass

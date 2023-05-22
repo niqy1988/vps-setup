@@ -16,6 +16,7 @@
       file:
         path: "{{ nginx_path }}/{{ item }}"
         state: directory
+        seuser: system_u
       loop:
         - conf.d
         - stream.d
@@ -24,7 +25,7 @@
       file:
         path: "{{ nginx_path }}/conf.d/{{ item }}/www"
         state: directory
-        setype: container_file_t
+        seuser: system_u
       loop: "{{ domains }}"
   notify: Reload nginx
 
@@ -63,6 +64,7 @@
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
     state: directory
+    seuser: system_u
   notify: Reload nginx
 
 ### Set up podman container
