@@ -1,4 +1,9 @@
+# ansible config
+ansible.cfg
+
 # ansible hosts
 /inventory
 /files
+
+# sandbox roles
 sandbox.yaml
