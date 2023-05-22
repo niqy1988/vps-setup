@@ -20,6 +20,8 @@
     - name: Set up log folder
       file:
         path: "{{ xray_path }}/log"
+        seuser: system_u
+        setype: container_file_t
         state: directory
 
 ### Podman container and service

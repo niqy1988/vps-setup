@@ -1,9 +1,11 @@
 - name: Disable priviledged port
+  become: yes
   sysctl:
     name: net.ipv4.ip_unprivileged_port_start
     value: '0'
 
 - name: Install podman with supporting packages
+  become: yes
   dnf:
     name: 
       - podman
@@ -12,6 +14,7 @@
     state: present
     
 - name: Install netstat for health check
+  become: yes
   dnf:
     name: net-tools
     state: present
