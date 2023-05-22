@@ -8,8 +8,8 @@
 - name: Set up facts folder
   file:
     path: /etc/ansible/facts.d
-    owner: "{{ username }}"
-    group: "{{ username }}"
+    owner: "{{ ansible_username }}"
+    group: "{{ ansible_username }}"
     recurse: yes
     state: directory
 
