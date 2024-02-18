@@ -1,5 +1,5 @@
 - name: Set up nginx folder
-  become: yes
+  become: true
   file:
     path: "{{ nginx_path }}"
     owner: "{{ nginx_user }}"
@@ -7,7 +7,7 @@
     state: directory
 
 - name: Set up nginx website folders
-  become: yes
+  become: true
   become_user: "{{ nginx_user }}"
   file:
     path: "{{ nginx_path }}/conf.d/{{ item }}/www"
@@ -15,7 +15,7 @@
   loop: "{{ domains }}"
 
 - name: Generate nginx config for website
-  become: yes
+  become: true
   become_user: "{{ nginx_user }}"
   template:
     src: www.conf.j2
@@ -28,4 +28,4 @@
   vars:
     tcp_ports:
       - 443
-    purge_ports: no
+    purge_ports: false

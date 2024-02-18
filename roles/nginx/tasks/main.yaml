@@ -1,15 +1,15 @@
 ### Set up workding directories
 - name: Set up nginx folder
-  become: yes
+  become: true
   file:
     path: "{{ nginx_path }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
-    recurse: yes
+    recurse: true
     state: directory
 
 - name: Set up nginx folders
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   block:
     - name: Set up basic nginx folders
@@ -30,7 +30,7 @@
   notify: Reload nginx
 
 - name: Create nginx config files
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   block:
     - name: base config
@@ -58,7 +58,7 @@
   notify: Reload nginx
 
 - name: Set up certs folder
-  become: yes
+  become: true
   file:
     path: "{{ certs_path }}"
     owner: "{{ podman_username }}"
@@ -69,7 +69,7 @@
 
 ### Set up podman container
 - name: Create nginx container
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   containers.podman.podman_container:
     name: "{{ nginx_container }}"
@@ -96,13 +96,13 @@
       path: "/home/{{ podman_username }}/.config/systemd/user"
 
 - name: Start nginx service
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   systemd:
     name: "container-{{ nginx_container }}.service"
     scope: user
-    daemon_reload: yes
-    enabled: yes
+    daemon_reload: true
+    enabled: true
     state: started
 
 - name: Sanity check for all ports listened
@@ -115,7 +115,7 @@
 
 ### Cron job to reload nginx config
 - name: Set up nginx reload cron job
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   cron:
     name: reload nginx config

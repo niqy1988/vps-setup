@@ -8,7 +8,7 @@
 
 - name: print all hostnames
   hosts: all
-  become: yes
+  become: true
   tasks:
     - debug:
         msg: "hostname is: {{ inventory_hostname }}"

@@ -1,15 +1,15 @@
 ### xray config
 - name: Set up xray folder
-  become: yes
+  become: true
   file:
     path: "{{ xray_path }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
-    recurse: yes
+    recurse: true
     state: directory
 
 - name: Set up xray configs
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   block:
     - name: Generate server config
@@ -26,7 +26,7 @@
 
 ### Podman container and service
 - name: Create xray container
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   containers.podman.podman_container:
     name: "{{ xray_container }}"
@@ -48,13 +48,13 @@
       restart_policy: always
 
 - name: Enable and start xray service
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   systemd:
     name: "container-{{ xray_container }}.service"
     scope: user
-    daemon_reload: yes
-    enabled: yes
+    daemon_reload: true
+    enabled: true
     state: started
 
 - name: Sanity check for xray port listened
@@ -64,7 +64,7 @@
 
 ### nginx config
 - name: Generate nginx config for xray
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   template:
     src: nginx.conf.j2

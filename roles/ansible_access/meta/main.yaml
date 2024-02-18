@@ -4,5 +4,5 @@ dependencies:
     username: "{{ ansible_username }}"
     uid: "{{ ansible_uid }}"
     ssh_public_key_file: "{{ ansible_ssh_public_key_file }}"
-    sudoer: yes
+    sudoer: true
     comment: ansible remote user

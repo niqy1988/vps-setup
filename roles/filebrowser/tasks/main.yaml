@@ -1,15 +1,15 @@
 - name: Create filebrowser folder
-  become: yes
+  become: true
   file:
     path: "{{ app_path }}"
     owner: "{{ username }}"
     group: "{{ username }}"
-    recurse: yes
-    follow: no
+    recurse: true
+    follow: false
     state: directory
 
 - name: Set up configs
-  become: yes
+  become: true
   become_user: "{{ username }}"
   block: 
     - name: Copy config file
@@ -50,7 +50,7 @@
 
 ### Podman container and service
 - name: Create filebrowser container
-  become: yes
+  become: true
   become_user: "{{ username }}"
   containers.podman.podman_container:
     name: "{{ container }}"
@@ -60,25 +60,25 @@
       PODMAN_SYSTEMD_UNIT: "container-{{ container }}.service"
     network: "{{ networks }}"
     volume: "{{ volume_mounts }}"
-    recreate: yes
+    recreate: true
     state: created
     generate_systemd:
       path: "/home/{{ username }}/.config/systemd/user"
 
 - name: Enable and start filebrowser service
-  become: yes
+  become: true
   become_user: "{{ username }}"
   systemd:
     name: "container-{{ container }}.service"
     scope: user
-    daemon_reload: yes
-    enabled: yes
+    daemon_reload: true
+    enabled: true
     state: started
 
 
 ### nginx
 - name: Create nginx folder
-  become: yes
+  become: true
   file:
     path: "{{ nginx_path }}"
     owner: "{{ nginx_user }}"
@@ -86,7 +86,7 @@
     state: directory
 
 - name: Set up nginx site rules
-  become: yes
+  become: true
   become_user: "{{ nginx_user }}"
   block:
     - name: Create site folders

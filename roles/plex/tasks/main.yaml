@@ -1,11 +1,11 @@
 ### Set up PLEX config
 - name: Setup PLEX folders
-  become: yes
+  become: true
   file:
     path: "{{ item }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
-    recurse: yes
+    recurse: true
     state: directory
   loop:
     - "{{ plex_path }}"
@@ -26,7 +26,7 @@
 
 ### Podman container and service
 - name: Create PLEX container
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   containers.podman.podman_container:
     name: "{{ plex_container }}"
@@ -50,13 +50,13 @@
       path: "/home/{{ podman_username }}/.config/systemd/user"
 
 - name: Enable and start PLEX service
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   systemd:
     name: "container-{{ plex_container }}.service"
     scope: user
-    daemon_reload: yes
-    enabled: yes
+    daemon_reload: true
+    enabled: true
     state: started
     
 - name: Sanity check for direct port listened
@@ -66,7 +66,7 @@
 
 ### nginx
 - name: Create nginx rule to access PLEX webui
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   template:
     src: plex.conf.j2

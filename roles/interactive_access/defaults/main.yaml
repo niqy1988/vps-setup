@@ -1,6 +1,5 @@
-interactive_username: interactive_user
-intercative_password: interactive_passwd
+intercative_password: !
 interactive_ssh_public_key_file: ~/.ssh/id_rsa.pub
-interactive_user_groups: []
 interactive_uid: 100000
-interactive_sudoer: no
+interactive_user_groups: []
+interactive_sudoer: false

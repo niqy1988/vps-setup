@@ -1,5 +1,5 @@
 - name: Install fuse + rclone
-  become: yes
+  become: true
   dnf:
     name: 
       - fuse
@@ -7,7 +7,7 @@
     state: present
 
 - name: Set allow_other in fuse
-  become: yes
+  become: true
   lineinfile:
     path: /etc/fuse.conf
     regexp: user_allow_other
@@ -15,12 +15,12 @@
     state: present
 
 - name: Set up rclone folder
-  become: yes
+  become: true
   file:
     path: "{{ rclone_config_path }}"
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
-    recurse: yes
+    recurse: true
     state: directory
 
 - name: Set up rclone config file
@@ -53,29 +53,29 @@
   loop: "{{ rclone_mounts }}"
 
 - name: Create rclone service
-  become: yes
+  become: true
   template:
     src: service/rclone@.service.j2
     dest: /etc/systemd/system/rclone@.service
     mode: "644"
 
 - name: Create rclone service target
-  become: yes
+  become: true
   template:
     src: service/rclone.target.j2
     dest: /etc/systemd/system/rclone.target
     mode: "644"
     
 - name: Enable rclone service
-  become: yes
+  become: true
   systemd:
     name: rclone@.service
-    enabled: yes
+    enabled: true
 
 - name: Start rclone services
-  become: yes
+  become: true
   systemd:
     name: rclone.target
-    enabled: yes
-    daemon_reload: yes
+    enabled: true
+    daemon_reload: true
     state: restarted

@@ -7,12 +7,12 @@
     uid_offset: 999
 
 - name: Set up data folder
-  become: yes
+  become: true
   file:
     path: "{{ mysql_data_path }}"
     owner: "{{ mysql_data_owner }}"
     group: "{{ mysql_data_owner }}"
-    recurse: yes
+    recurse: true
     state: directory
 
 - name: Set up docker networks
@@ -34,12 +34,12 @@
       - "{{ mysql_data_path }}:/var/lib/mysql"
     networks: "{{ mysql_networks }}"
     network_mode: default
-    purge_networks: yes
-    networks_cli_compatible: yes
+    purge_networks: true
+    networks_cli_compatible: true
     container_default_behavior: no_defaults
     restart_policy: always
-    pull: yes
-    recreate: yes
+    pull: true
+    recreate: true
     healthcheck:
       test:
         - CMD-SHELL

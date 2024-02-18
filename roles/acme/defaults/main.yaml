@@ -6,7 +6,7 @@ acme_cloudflare_api_token: sampleAPIkey
 domains:
   - sample_domain.com
   - sample_domain.net
-request_new_certs: yes
+request_new_certs: true
 
 # podman config
 acme_container: acme.sh

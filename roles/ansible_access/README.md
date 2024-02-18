@@ -1,6 +1,6 @@
 # Set up ansible remote user
 
-> This role requires root access (`become: yes`)
+> This role requires root access (`become: true`)
 
 Set up a remote sudoer account for ansible to connect to
 

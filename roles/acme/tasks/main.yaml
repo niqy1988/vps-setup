@@ -1,14 +1,14 @@
 - name: Set up acme folder
-  become: yes
+  become: true
   file:
     path: "{{ certs_path }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
-    recurse: yes
+    recurse: true
     state: directory
 
 - name: Create acme.sh daemon container
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   containers.podman.podman_container:
     name: "{{ acme_container }}"
@@ -27,17 +27,17 @@
       path: "/home/{{ podman_username }}/.config/systemd/user"
 
 - name: Enable and start acme service
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   systemd:
     name: "container-{{ acme_container }}.service"
     scope: user
-    daemon_reload: yes
-    enabled: yes
+    daemon_reload: true
+    enabled: true
     state: started
 
 - name: Request new certificates
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   shell: 
     cmd: "podman exec {{ acme_container }} --issue --server letsencrypt --dns dns_cf -d {{ item }} -d *.{{ item }}"
@@ -46,7 +46,7 @@
   when: request_new_certs
 
 - name: Set up cron job to renew certificates
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   cron:
     name: renew acme.sh certificates

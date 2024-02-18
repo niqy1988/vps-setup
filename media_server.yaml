@@ -2,7 +2,7 @@
 
 - name: Update existing packages
   hosts: media
-  become: yes
+  become: true
   tasks:
     - name: Update packages
       dnf:
@@ -11,7 +11,7 @@
 
 - name: Set up Docker environment
   hosts: media
-  become: yes
+  become: true
   roles:
     - role: docker
 
@@ -36,7 +36,7 @@
   hosts: media
   vars:
     nginx_networks: "{{ media_networks }}"
-    nginx_purge_networks: no
-    nginx_run: yes
+    nginx_purge_networks: false
+    nginx_run: true
   roles:
     - role: nginx

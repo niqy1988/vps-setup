@@ -1,6 +1,6 @@
 ### Set up firewall
 - name: Set up service for firewalld
-  become: yes
+  become: true
   template:
     src: service.xml.j2
     dest: "/etc/firewalld/services/{{ service_name }}.xml"
@@ -11,10 +11,10 @@
   meta: flush_handlers
     
 - name: Enable service in firewalld
-  become: yes
+  become: true
   ansible.posix.firewalld:
     service: "{{ service_name }}"
     state: enabled
-    immediate: yes
-    permanent: yes
+    immediate: true
+    permanent: true
     

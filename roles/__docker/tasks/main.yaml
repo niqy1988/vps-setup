@@ -46,7 +46,7 @@
 - name: Start docker service
   systemd:
     name: docker
-    enabled: yes
+    enabled: true
     state: started
 
 - name: Install python + pip
@@ -67,7 +67,7 @@
   user:
     name: "{{ ansible_user }}"
     groups: docker
-    append: yes
+    append: true
 
 - name: Reset SSH connection to apply group changes
   meta: reset_connection
@@ -82,6 +82,6 @@
     command: --label-enable
     container_default_behavior: no_defaults
     restart_policy: always
-    pull: yes
-    recreate: yes
+    pull: true
+    recreate: true
     

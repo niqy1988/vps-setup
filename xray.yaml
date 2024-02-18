@@ -2,7 +2,7 @@
 
 - name: Update existing packages
   hosts: xray
-  become: yes
+  become: true
   tasks:
     - name: Update packages
       dnf:
@@ -11,7 +11,7 @@
 
 - name: Set up Docker environment
   hosts: xray
-  become: yes
+  become: true
   roles:
     - role: docker
 
@@ -35,9 +35,9 @@
   vars:
     nginx_networks:
       - name: bridge
-    nginx_purge_networks: no
+    nginx_purge_networks: false
     nginx_contents: "{{ www_static_file_contents }}"
-    nginx_purge_contents: no
-    nginx_run: yes
+    nginx_purge_contents: false
+    nginx_run: true
   roles:
     - role: nginx

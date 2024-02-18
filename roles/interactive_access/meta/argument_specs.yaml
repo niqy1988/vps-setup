@@ -3,48 +3,39 @@ argument_specs:
   main:
     short_description: set up a new user 
     options:
-      username:
+      interactive_username:
         type: str
         required: true
         description: name of the user
 
-      comment:
-        type: str
-        required: true
-        description: user account description
-
-      password:
+      intercative_password:
         type: str
         required: false
         no_log: true
+        default: !
         description: password of the user, default to ! (password locked)
 
-      ssh_public_key_file:
+      interactive_ssh_public_key_file:
         type: str
         required: false
-        description: login ssh public key file, default to no (no ssh login)
+        default: ~/.ssh/id_rsa.pub
+        description: login ssh public key file, default to ~/.ssh/id_rsa.pub
 
-      uid:
+      interactive_uid:
         type: int
         required: false
         default: 100000
-        description: uid of the user
+        description: uid/gid of the user
 
-      user_groups: 
+      interactive_user_groups: 
         type: list
         elements: str
         required: false
         default: []
         description: additional groups the user belongs to
 
-      sudoer:
+      interactive_sudoer:
         type: bool
         required: false
         default: false
         description: whether user has sudo privilege
-
-      linger:
-        type: bool
-        required: false
-        default: false
-        description: whether user has a linger session (for systemd)

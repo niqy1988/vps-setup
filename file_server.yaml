@@ -2,7 +2,7 @@
 
 - name: Update existing packages
   hosts: file
-  become: yes
+  become: true
   tasks:
     - name: Update packages
       dnf:
@@ -11,7 +11,7 @@
 
 - name: Set up Docker environment
   hosts: file
-  become: yes
+  become: true
   roles:
     - role: docker
 
@@ -38,7 +38,7 @@
   hosts: file
   vars:
     nginx_networks: "{{ file_networks }}"
-    nginx_purge_networks: no
-    nginx_run: yes
+    nginx_purge_networks: false
+    nginx_run: true
   roles:
     - role: nginx

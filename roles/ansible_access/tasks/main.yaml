@@ -10,7 +10,7 @@
     path: /etc/ansible/facts.d
     owner: "{{ ansible_username }}"
     group: "{{ ansible_username }}"
-    recurse: yes
+    recurse: true
     state: directory
 
 - name: Reset SSH connection to apply changes

@@ -6,7 +6,7 @@ rclone_mounts:
     remote: sample
     mount_path: /mnt/sample
     dir: shared
-    polling: yes
+    polling: true
     vfs_cache_size: 50G
   - name: sample2
     config: another_sample.conf

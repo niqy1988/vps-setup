@@ -1,11 +1,11 @@
 - name: Disable priviledged port
-  become: yes
+  become: true
   sysctl:
     name: net.ipv4.ip_unprivileged_port_start
     value: '0'
 
 - name: Install podman with supporting packages
-  become: yes
+  become: true
   dnf:
     name: 
       - podman
@@ -14,7 +14,7 @@
     state: present
     
 - name: Install netstat for health check
-  become: yes
+  become: true
   dnf:
     name: net-tools
     state: present
@@ -25,7 +25,7 @@
     state: present
 
 - name: Create podman network
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   containers.podman.podman_network: 
     name: "{{ podman_network }}"

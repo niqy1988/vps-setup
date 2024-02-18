@@ -1,10 +1,10 @@
 - name: Create relevant folders
-  become: yes
+  become: true
   file:
     path: "{{ item }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
-    recurse: yes
+    recurse: true
     state: directory
   loop:
     - "{{ qbittorrent_path }}"
@@ -12,7 +12,7 @@
 
 ### Podman container and service
 - name: Create qBittorrent container
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   containers.podman.podman_container:
     name: "{{ qbittorrent_container }}"
@@ -39,13 +39,13 @@
       path: "/home/{{ podman_username }}/.config/systemd/user"
 
 - name: Enable and start qBittorrent service
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   systemd:
     name: "container-{{ qbittorrent_container }}.service"
     scope: user
-    daemon_reload: yes
-    enabled: yes
+    daemon_reload: true
+    enabled: true
     state: started
 
 - name: Sanity check for direct port listened
@@ -54,7 +54,7 @@
     timeout: 5
 
 - name: Create nginx rule to access webui
-  become: yes
+  become: true
   become_user: "{{ podman_username }}"
   template:
     src: qbittorrent.conf.j2

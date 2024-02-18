@@ -5,19 +5,19 @@ argument_specs:
     options:
       service_name:
         type: str
-        required: yes
+        required: true
         description: name of the service
 
       tcp_ports:
         type: list
         elements: int
-        required: no
+        required: false
         default: []
         description: exposed tcp ports
 
       udp_ports:
         type: list
         elements: int
-        required: no
+        required: false
         default: []
         description: exposed udp ports

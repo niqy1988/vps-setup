@@ -2,7 +2,7 @@
 
 - name: Update existing packages
   hosts: wordpress
-  become: yes
+  become: true
   tasks:
     - name: Update packages
       dnf:
@@ -11,7 +11,7 @@
 
 - name: Set up Docker environment
   hosts: wordpress
-  become: yes
+  become: true
   roles:
     - role: docker
 
@@ -22,7 +22,7 @@
 
 - name: Set up www data path
   hosts: wordpress
-  become: yes
+  become: true
   tasks:
     - file:
         path: "{{ www_data_path }}"
@@ -67,9 +67,9 @@
   hosts: wordpress
   vars:
     nginx_networks: "{{ www_networks }}"
-    nginx_purge_networks: no
+    nginx_purge_networks: false
     nginx_contents: "{{ www_static_file_contents }}"
-    nginx_purge_contents: no
-    nginx_run: yes
+    nginx_purge_contents: false
+    nginx_run: true
   roles:
     - role: nginx

@@ -5,6 +5,6 @@ dependencies:
     uid: "{{ podman_uid }}"
     user_groups:
       - systemd-journal
-    linger: yes
+    linger: true
     comment: podman user
       

@@ -1,7 +1,7 @@
 ---
 # create user and group
 - name: Set up user group
-  become: yes
+  become: true
   group:
     name: "{{ username }}"
     gid: "{{ uid | int }}"
@@ -13,7 +13,7 @@
   when: password is defined
 
 - name: Set up user
-  become: yes
+  become: true
   user:
     name: "{{ username }}"
     password: "{{ hashed_password | default('!') }}"
@@ -22,13 +22,13 @@
     group: "{{ username }}"
     groups: "{{ user_groups }}"
     shell: /bin/bash
-    create_home: yes
+    create_home: true
     password_lock: "{{ password is not defined }}"
     comment: "{{ comment }}"
     state: present
 
 - name: Set subuid and subgid range
-  become: yes
+  become: true
   lineinfile:
     path: "/etc/{{ item }}"
     regexp: "^{{ username }}"
@@ -39,28 +39,28 @@
 
 # Set ansible remote temp folder
 - name: Create ansible remote temp folder
-  become: yes
+  become: true
   become_user: "{{ username }}"
   file: 
     path: "/home/{{ username }}/.ansible/tmp"
     owner: "{{ username }}"
     group: "{{ username }}"
-    recurse: yes
+    recurse: true
     state: directory
 
 # ssh public key for remote login
 - name: Add ssh public key
-  become: yes
+  become: true
   become_user: "{{ username }}"
   ansible.posix.authorized_key:
     user: "{{ username }}"
     key: "{{ lookup('file', ssh_public_key_file) }}"
-    exclusive: yes
+    exclusive: true
     state: present
   when: ssh_public_key_file is defined
 
 - name: Remove ssh public key
-  become: yes
+  become: true
   become_user: "{{ username }}"
   file: 
     path: "/home/{{ username }}/.ssh/authorized_keys"
@@ -71,19 +71,19 @@
 - name: Set up user linger
   block:
     - name: Enable user linger
-      become: yes
+      become: true
       shell: 
         cmd: "loginctl enable-linger {{ username }}"
         creates: "/var/lib/systemd/linger/{{ username }}"
     - name: Export XDG_RUNTIME_DIR when su
-      become: yes
+      become: true
       become_user: "{{ username }}"
       lineinfile:
         path: "/home/{{ username }}/.bashrc"
         regexp: "^export XDG_RUNTIME_DIR="
         line: 'export XDG_RUNTIME_DIR="/run/user/{{ uid }}"'
     - name: Export DBUS_SESSION_BUS_ADDRESS when su
-      become: yes
+      become: true
       become_user: "{{ username }}"
       lineinfile: 
         path: "/home/{{ username }}/.bashrc"
@@ -94,19 +94,19 @@
 - name: Remove user linger
   block:
     - name: Disable user linger
-      become: yes
+      become: true
       shell: 
         cmd: "loginctl disable-linger {{ username }}"
         removes: "/var/lib/systemd/linger/{{ username }}"
     - name: Do not set XDG_RUNTIME_DIR when su
-      become: yes
+      become: true
       become_user: "{{ username }}"
       lineinfile: 
         path: "/home/{{ username }}/.bashrc"
         regexp: "^export XDG_RUNTIME_DIR="
         state: absent
     - name: Export DBUS_SESSION_BUS_ADDRESS when su
-      become: yes
+      become: true
       become_user: "{{ username }}"
       lineinfile: 
         path: "/home/{{ username }}/.bashrc"
@@ -116,7 +116,7 @@
 
 # set up sudo
 - name: Grant sudo privilege
-  become: yes
+  become: true
   copy:
     content: "{{ username }} ALL=(ALL) ALL"
     dest: "/etc/sudoers.d/{{ username }}"
@@ -124,7 +124,7 @@
   when: sudoer and password is defined
 
 - name: Grant no password sudo privilege
-  become: yes
+  become: true
   copy:
     content: "{{ username }} ALL=(ALL) NOPASSWD:ALL"
     dest: "/etc/sudoers.d/{{ username }}"
@@ -132,7 +132,7 @@
   when: sudoer and password is not defined
 
 - name: Remove sudo privilege
-  become: yes
+  become: true
   file:
     path: "/etc/sudoers.d/{{ username }}"
     state: absent

@@ -1,7 +1,7 @@
 ---
 - name: Reload firewalld
-  become: yes
+  become: true
   systemd:
     name: firewalld
-    enabled: yes
+    enabled: true
     state: reloaded

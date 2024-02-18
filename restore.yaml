@@ -9,7 +9,7 @@
 
 - name: Install unarchive tools
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Install unzip and tar
       dnf:
@@ -20,21 +20,21 @@
 
 - name: Restore backups
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Restore ansible environments
       unarchive:
-        remote_src: yes
+        remote_src: true
         src: "{{ backup_path }}/ansible.tgz"
         dest: /etc
     - name: Restore local service configs
       unarchive:
-        remote_src: yes
+        remote_src: true
         src: "{{ backup_path }}/local.tgz"
         dest: /var
     - name: Restore served contentes
       unarchive:
-        remote_src: yes
+        remote_src: true
         src: "{{ backup_path }}/srv.tgz"
         dest: /
       
