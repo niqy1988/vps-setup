@@ -31,7 +31,8 @@ argument_specs:
         type: list
         elements: str
         required: false
-        default: []
+        default:
+          - users
         description: additional groups the user belongs to
 
       interactive_sudoer:

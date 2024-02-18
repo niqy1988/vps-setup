@@ -178,5 +178,7 @@
   become: true
   vars:
     interactive_sudoer: true
+    interactive_user_groups:
+      - users
   roles:
     - role: interactive_access
