@@ -2,12 +2,13 @@
 
 > This role requires root access (`become: true`)
 
-Set up a remote account for interactive shell access
+Set up a user account on the target machine
 
-Requires `username` and `password` variables defined separately to run
+Requires `username` and `comment` variables defined separately to run
 
-Default ssh public key is `~/.ssh/id_rsa.pub`, which can be changed with `ssh_public_key_file` variable
+either `password` or `ssh_public_key_file` has to be set, or there's no way to login as the user
 
-Default user group is the same as username, which can be overriden with `user_groups` list variable
+Default user group is the same as username
+additional user groups can be added with `user_groups` list variable
 
-Whether user has sudo access is controlled by `sudoer` variable (default: `no`)
+Whether user has sudo access is controlled by `sudoer` variable (default: `false`)

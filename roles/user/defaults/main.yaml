@@ -1,5 +1,6 @@
 uid: 100000
-user_groups: []
+user_groups:
+  - users
 
 sudoer: false
 linger: false

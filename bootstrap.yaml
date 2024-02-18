@@ -17,11 +17,12 @@
       file:
         path: /app
         state: directory
-    - name: Create data folder, default to be owned by nobody
+    - name: Create data folder, default to be owned by "users" group
       file: 
-      loop:
-        - /app
-        - /data
+        path: /data
+        state: directory
+        group: users
+        mode: 02775
     
 - name: Use official YUM repositories mirrorlist
   hosts: all
