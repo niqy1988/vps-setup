@@ -40,7 +40,6 @@
 # Set ansible remote temp folder
 - name: Create ansible remote temp folder
   become: true
-  become_user: "{{ username }}"
   file: 
     path: "/home/{{ username }}/.ansible/tmp"
     owner: "{{ username }}"
