@@ -4,3 +4,6 @@
 
 # sandbox roles
 sandbox.yaml
+.codecc
+.idea
+.vscode

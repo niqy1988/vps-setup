@@ -57,6 +57,11 @@
     enabled: yes
     state: started
 
+- name: Sanity check for xray port listened
+  wait_for:
+    port: "{{ xray_port }}"
+    timeout: 5
+
 ### nginx config
 - name: Generate nginx config for xray
   become: yes
