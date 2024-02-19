@@ -23,6 +23,14 @@
         state: directory
         group: users
         mode: 02775
+    - name: Sets default ACL for data folder
+      acl:
+        path: /data
+        entity: users
+        etype: group
+        permissions: rwx
+        default: true
+        state: present
     
 - name: Use official YUM repositories mirrorlist
   hosts: all

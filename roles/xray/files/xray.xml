@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<service>
-  <short>Xray</short>
-  <description>Xray with UDP FullCone support</description>
-  <port protocol="udp" port="1024-65535"/>
-</service>

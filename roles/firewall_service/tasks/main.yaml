@@ -17,4 +17,6 @@
     state: enabled
     immediate: true
     permanent: true
+  notify:
+  - Reload firewalld
     

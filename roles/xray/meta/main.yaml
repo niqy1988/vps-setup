@@ -2,3 +2,7 @@
 dependencies:
   - role: podman
   - role: nginx
+  # - role: firewall_service
+  #   service_name: xray
+  #   tcp_ports: []
+  #   udp_ports: 1024-65535
