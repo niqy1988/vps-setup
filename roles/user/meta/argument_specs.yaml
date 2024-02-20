@@ -17,7 +17,7 @@ argument_specs:
         type: str
         required: false
         no_log: true
-        description: password of the user, default to ! (password locked)
+        description: password of the user, default to none (password locked)
 
       ssh_public_key_file:
         type: str

@@ -21,9 +21,35 @@
             }
         }
     ],
+    "routing": {
+        "domainStrategy": "IPIfNonMatch",
+        "domainMatcher": "hybrid",
+        "rules": [
+            {
+                "type": "field",
+                "ip": ["::0/0"],
+                "outboundTag": "v6"
+            }
+        ]
+    },
     "outbounds": [
         {
-            "protocol": "freedom"
+            "tag": "v4",
+            "protocol": "freedom",
+            "streamSettings": {
+                "sockopt": {
+                    "domainStrategy": "UseIPv4"
+                }
+            }
+        },
+        {
+            "tag": "v6",
+            "protocol": "freedom",
+            "streamSettings": {
+                "sockopt": {
+                    "domainStrategy": "UseIPv6"
+                }
+            }
         }
     ]
 }

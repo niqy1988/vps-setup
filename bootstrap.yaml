@@ -143,6 +143,40 @@
         value: bbr
         state: present
 
+- name: Enable IPv6 on Contabo hosts
+  hosts: contabo
+  become: true
+  tasks:
+    - name: read IPv6 settings from ifcfg-eth0
+      slurp:
+        src: /etc/sysconfig/network-scripts/ifcfg-eth0
+      register: ipv6_cfg
+    - name: set IPv6 facts
+      copy:
+        content: "[Default]\n{{ ipv6_cfg['content'] | b64decode | regex_replace('\\\"', '') }}"
+        dest: /etc/ansible/facts.d/ipv6_cfg.fact
+    - name: gathering facts
+      setup:
+        filter: ansible_local
+    - name: enable IPv6 support
+      sysctl:
+        name: net.ipv6.conf.all.disable_ipv6
+        value: '0'
+        state: present
+    - name: set IPv6 address and gateway
+      nmcli:
+        type: ethernet
+        conn_name: "{{ ansible_local.ipv6_cfg.Default.ipv6_defaultdev }}"
+        ip6: "{{ ansible_local.ipv6_cfg.Default.ipv6addr }}"
+        gw6: "{{ ansible_local.ipv6_cfg.Default.ipv6_defaultgw }}"
+        autoconnect: true
+        state: present
+      notify: 
+        - Bring up connection
+  handlers:
+    - name: Bring up connection
+      shell: "nmcli c up {{ ansible_local.ipv6_cfg.Default.ipv6_defaultdev }}"
+
 - name: Initialize firewalld
   hosts: all
   become: true
