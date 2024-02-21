@@ -117,7 +117,23 @@
       dnf:
         name: "*"
         state: latest
-        
+
+- name: Setup daily logrotate
+  hosts: all
+  become: true
+  tasks:
+    - name: Install logrotate
+      dnf:
+        name: logrotate
+        state: present
+    - name: Setup daily cron job for logrotate
+      cron:
+        name: rotate logs daily
+        cron_file: logrotate_daily
+        special_time: daily
+        user: root
+        job: logrotate /etc/logrotate.conf
+
 - name: Disable ssh login by password and empty passwords
   hosts: all
   become: true

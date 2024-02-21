@@ -1,0 +1,10 @@
+{{ xray_path }}/log/access.log {{ xray_path }}/log/error.log {
+    rotate 90
+    daily
+    dateext
+    olddir {{ xray_path }}/log/old
+    nocompress
+    nocreate
+    notifempty
+    missingok
+}

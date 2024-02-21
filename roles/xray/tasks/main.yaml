@@ -23,6 +23,10 @@
         seuser: system_u
         setype: container_file_t
         state: directory
+    - name: Set up old log folder
+      file:
+        path: "{{ xray_path }}/log/old"
+        state: directory
 
 ### Podman container and service
 - name: Create xray container
@@ -61,6 +65,12 @@
   wait_for:
     port: "{{ xray_port }}"
     timeout: 5
+
+- name: Setup logrotate
+  become: true
+  template:
+    src: logrotate.j2
+    dest: "/etc/logrotate.d/{{ xray_container }}_log"
 
 ### nginx config
 - name: Generate nginx config for xray

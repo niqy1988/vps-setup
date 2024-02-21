@@ -20,7 +20,8 @@
       loop:
         - conf.d
         - stream.d
-        - logs
+        - log
+        - log/old
     - name: Set up domain config folders
       file:
         path: "{{ nginx_path }}/conf.d/{{ item }}/www"
@@ -86,7 +87,7 @@
       - "{{ nginx_path }}/conf.d:/etc/nginx/conf.d:z"
       - "{{ nginx_path }}/stream.d:/etc/nginx/stream.d:z"
       - "{{ certs_path }}:/etc/nginx/certs:z"
-      - "{{ nginx_path }}/logs:/var/log/nginx:z"
+      - "{{ nginx_path }}/log:/var/log/nginx:z"
     state: created
     healthcheck: "netstat -ntlp | grep -q :443"
     healthcheck_interval: 10s
@@ -112,6 +113,12 @@
   loop:
     - 80
     - 443
+
+- name: Setup logrotate
+  become: true
+  template:
+    src: logrotate.j2
+    dest: "/etc/logrotate.d/{{ nginx_container }}_log"
 
 ### Cron job to reload nginx config
 - name: Set up nginx reload cron job
