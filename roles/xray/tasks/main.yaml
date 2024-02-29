@@ -49,7 +49,9 @@
     healthcheck_retries: 3
     generate_systemd:
       path: "/home/{{ podman_username }}/.config/systemd/user"
-      restart_policy: always
+      new: true
+      no_header: true
+      force: true
 
 - name: Enable and start xray service
   become: true

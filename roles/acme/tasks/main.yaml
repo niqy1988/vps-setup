@@ -25,6 +25,9 @@
     state: created
     generate_systemd:
       path: "/home/{{ podman_username }}/.config/systemd/user"
+      new: true
+      no_header: true
+      force: true
 
 - name: Enable and start acme service
   become: true

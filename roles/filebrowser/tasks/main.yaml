@@ -64,6 +64,9 @@
     state: created
     generate_systemd:
       path: "/home/{{ username }}/.config/systemd/user"
+      new: true
+      no_header: true
+      force: true
 
 - name: Enable and start filebrowser service
   become: true
