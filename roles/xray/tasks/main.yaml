@@ -27,6 +27,8 @@
       file:
         path: "{{ xray_path }}/log/old"
         state: directory
+  notify:
+    - Restart xray
 
 ### Podman container and service
 - name: Create xray container
@@ -52,8 +54,10 @@
       new: true
       no_header: true
       force: true
+  notify:
+    - Restart xray
 
-- name: Enable and start xray service
+- name: Create xray service
   become: true
   become_user: "{{ podman_username }}"
   systemd:
@@ -61,12 +65,8 @@
     scope: user
     daemon_reload: true
     enabled: true
-    state: started
-
-- name: Sanity check for xray port listened
-  wait_for:
-    port: "{{ xray_port }}"
-    timeout: 5
+  notify:
+    - Restart xray
 
 - name: Setup logrotate
   become: true

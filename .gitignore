@@ -10,3 +10,7 @@ sandbox.yaml
 .idea
 .vscode
 build.yml
+
+# python cache
+__pycache__/
+*.py[cod]

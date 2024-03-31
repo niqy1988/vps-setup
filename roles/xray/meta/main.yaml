@@ -2,6 +2,7 @@
 dependencies:
   - role: podman
   - role: nginx
+  - role: wgcf
   # - role: firewall_service
   #   service_name: xray
   #   tcp_ports: []

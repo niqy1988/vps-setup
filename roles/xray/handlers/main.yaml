@@ -1,0 +1,15 @@
+---
+- name: Bounce xray service
+  become: true
+  become_user: "{{ podman_username }}"
+  systemd:
+    name: "container-{{ xray_container }}.service"
+    scope: user
+    state: restarted
+  listen: Restart xray
+    
+- name: Sanity check for xray port listened
+  wait_for:
+    port: "{{ xray_port }}"
+    timeout: 5
+  listen: Restart xray

@@ -7,10 +7,6 @@
       - wireguard-tools
     state: present
 
-- set_fact:
-    cf_login_url: 
-    cf_warp_url: ""
-
 - name: Set up wireguard keypair
   block:
     - name: Generate private key if not exist
@@ -31,17 +27,8 @@
 - name: Set up install serial number
   set_fact:
     wgcf_serial_number: "{{ ansible_local.wgcf.wgcf_serial_number | default(lookup('community.general.random_string', length=12, special=false)) }}"
-    
-- name: print local facts
-  block:
-    - debug:
-        var: wg_private_key
-    - debug:
-        var: wg_public_key
-    - debug:
-        var: wgcf_serial_number
 
-- name: Register new device
+- name: Register new device if no device config available
   block:
     - name: Login to Warp with Service Auth 
       uri:
@@ -52,10 +39,10 @@
           CF-Access-Client-Secret: "{{ wgcf_service_auth_client_secret }}"
         status_code: 
           - 302
-      register: sa_login
+      register: sa_login_resp
     - name: Parse login to get jwt token
       set_fact:
-        jwt_token: "{{ sa_login.location | urlsplit('query') | split('=') | last }}"
+        jwt_token: "{{ (sa_login_resp.location | url_query).token[0] }}"
     - name: Register new device
       uri:
         url: https://zero-trust-client.cloudflareclient.com/v0a2483/reg
@@ -75,45 +62,45 @@
           model: "{{ ansible_fqdn }}"
           serial_number: "{{ wgcf_serial_number }}"
         body_format: json
-      register: warp_device_reg
-    - name: print reg result
-      debug:
-        var: warp_device_reg
+      register: device_reg_resp
+  when: ansible_local.wgcf.wgcf_device_reg is undefined
+- name: Set device register result as variable
+  set_fact:
+    wgcf_device_reg: "{{ ansible_local.wgcf.wgcf_device_reg | default(device_reg_resp.json) }}"
 
+- name: Generate wireguard config for xray
+  set_fact:
+    wgcf_xray_config:
+      tag: wgcf_v6
+      protocol: wireguard
+      settings:
+        secretKey: "{{ wg_private_key }}"
+        address: 
+          - "{{ wgcf_device_reg.config.interface.addresses.v4 }}"
+          - "{{ wgcf_device_reg.config.interface.addresses.v6 }}"
+        peers:
+          - publicKey: "{{ wgcf_device_reg.config.peers[0].public_key }}"
+            endpoint: "{{ wgcf_device_reg.config.peers[0].endpoint.v6 | replace(':0', ':') }}{{ wgcf_device_reg.config.peers[0].endpoint.ports[0] }}"
+            allowedIPs: 
+              - 0.0.0.0/0
+              - ::/0
+        reserved: "{{ wgcf_device_reg.config.client_id | decode_wgcf_reserved }}"
+        kernelMode: false
+        domainStrategy: ForceIPv6v4
 
-
-    # - name: Get device information
-    #   ansible.builtin.shell: "curl {{ warp_url }}/v0/reg/{{ wg_id }} -H 'Authorization: Bearer {{ token_id }}'"  
-    #   register: regDeviceRaw2
-    #   when: token_id != ""
-
-    # - set_fact:
-    #     regDev: "{{ regDeviceRaw.stdout if regDeviceRaw.stdout is defined else regDeviceRaw2.stdout | from_json }}"
-    
-    # - name: Failed
-    #   ansible.builtin.fail: 
-    #     msg: "Failed when register device to cloudflare warp {{ regDev }}"
-    #   when: regDev.success == false 
-
-    # - set_fact: 
-    #     client_device: "{{ regDev.result }}"
-    #   when: regDev.success == true
-
-    # - name: Get Warp Device IP Address
-    #   ansible.builtin.shell: "curl {{ api_url }}/accounts/{{ organization_id }}/devices/{{ client_device.id | replace('t.','') }}/ip -H 'Authorization: Bearer {{ cf_api_token }}'" 
-    #   register: warpIPRaw
-    #   when: client_device.id != "" 
-
-    # - set_fact:
-    #     warpIP: "{{ warpIPRaw.stdout | from_json }}"
-    #   when: client_device.id != "" 
-
-    # - set_fact:
-    #     warp: "{{ warpIP.result.result }}"
-    #   when: warpIP.success == true 
-
-    # - name: Genereate Wireguard Config 
-    #   become: yes
-    #   ansible.builtin.template:
-    #     src: wireguard.j2
-    #     dest: /etc/wireguard/wgcf.conf
+- name: Save generated config to ansible facts
+  block:
+    - name: Create fact
+      set_fact:
+        wgcf_fact:
+          wg_private_key: "{{ wg_private_key }}"
+          wg_public_key: "{{ wg_public_key }}"
+          wgcf_serial_number: "{{ wgcf_serial_number }}"
+          wgcf_device_reg: "{{ wgcf_device_reg }}"
+          wgcf_xray_config: "{{ wgcf_xray_config }}"
+    - name: Persist fact to host
+      copy:
+        content: "{{ wgcf_fact | to_nice_json }}"
+        dest: /etc/ansible/facts.d/wgcf.fact
+    - name: Reload facts
+      setup:        

@@ -27,8 +27,13 @@
         "rules": [
             {
                 "type": "field",
+                "ip": ["0.0.0.0/0"],
+                "outboundTag": "v4"
+            },
+            {
+                "type": "field",
                 "ip": ["::0/0"],
-                "outboundTag": "v6"
+                "outboundTag": "{{ ansible_local.wgcf.wgcf_xray_config is defined | ternary('wgcf_v6', 'v6') }}"
             }
         ]
     },
@@ -51,5 +56,8 @@
                 }
             }
         }
+        {% if ansible_local.wgcf.wgcf_xray_config is defined %}
+        ,{{ ansible_local.wgcf.wgcf_xray_config | to_nice_json }}
+        {% endif %}
     ]
 }
