@@ -34,7 +34,7 @@
   become_user: "{{ podman_username }}"
   containers.podman.podman_container:
     name: "{{ xray_container }}"
-    image: docker.io/teddysun/xray
+    image: ghcr.io/xtls/xray-core
     label:
       io.containers.autoupdate: registry
       PODMAN_SYSTEMD_UNIT: "container-{{ xray_container }}.service"

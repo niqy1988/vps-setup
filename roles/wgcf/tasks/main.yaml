@@ -1,0 +1,119 @@
+---
+
+- name: Install requirement
+  become: true 
+  dnf:
+    name:
+      - wireguard-tools
+    state: present
+
+- set_fact:
+    cf_login_url: 
+    cf_warp_url: ""
+
+- name: Set up wireguard keypair
+  block:
+    - name: Generate private key if not exist
+      shell: "wg genkey"
+      register: wg_genkey_out
+      when: ansible_local.wgcf.wg_private_key is undefined
+    - name: set private key as variable
+      set_fact:
+        wg_private_key: "{{ ansible_local.wgcf.wg_private_key | default(wg_genkey_out.stdout) }}"
+    - name: Generate public key if not exist
+      shell: "echo '{{ wg_private_key }}' | wg pubkey"
+      register: wg_pubkey_out
+      when: ansible_local.wgcf.wg_public_key is undefined
+    - name: set public key as variable
+      set_fact:
+        wg_public_key: "{{ ansible_local.wgcf.wg_public_key | default(wg_pubkey_out.stdout) }}"
+
+- name: Set up install serial number
+  set_fact:
+    wgcf_serial_number: "{{ ansible_local.wgcf.wgcf_serial_number | default(lookup('community.general.random_string', length=12, special=false)) }}"
+    
+- name: print local facts
+  block:
+    - debug:
+        var: wg_private_key
+    - debug:
+        var: wg_public_key
+    - debug:
+        var: wgcf_serial_number
+
+- name: Register new device
+  block:
+    - name: Login to Warp with Service Auth 
+      uri:
+        url: "https://{{ wgcf_organization_name }}.cloudflareaccess.com/warp"
+        follow_redirects: none
+        headers:
+          CF-Access-Client-Id: "{{ wgcf_service_auth_client_id }}"
+          CF-Access-Client-Secret: "{{ wgcf_service_auth_client_secret }}"
+        status_code: 
+          - 302
+      register: sa_login
+    - name: Parse login to get jwt token
+      set_fact:
+        jwt_token: "{{ sa_login.location | urlsplit('query') | split('=') | last }}"
+    - name: Register new device
+      uri:
+        url: https://zero-trust-client.cloudflareclient.com/v0a2483/reg
+        method: POST
+        headers:
+          User-Agent: okhttp/3.12.1
+          Content-Type: application/json
+          Accept: application/json; charset=UTF-8
+          CF-Client-Version: a-6.16-2483
+          CF-Access-Jwt-Assertion: "{{ jwt_token }}"
+        body:
+          name: "{{ inventory_hostname }}"
+          locale: en_US
+          key: "{{ wg_public_key }}"
+          os_version: "{{ ansible_distribution_version }}"
+          manufacturer: "{{ ansible_distribution }}"
+          model: "{{ ansible_fqdn }}"
+          serial_number: "{{ wgcf_serial_number }}"
+        body_format: json
+      register: warp_device_reg
+    - name: print reg result
+      debug:
+        var: warp_device_reg
+
+
+
+    # - name: Get device information
+    #   ansible.builtin.shell: "curl {{ warp_url }}/v0/reg/{{ wg_id }} -H 'Authorization: Bearer {{ token_id }}'"  
+    #   register: regDeviceRaw2
+    #   when: token_id != ""
+
+    # - set_fact:
+    #     regDev: "{{ regDeviceRaw.stdout if regDeviceRaw.stdout is defined else regDeviceRaw2.stdout | from_json }}"
+    
+    # - name: Failed
+    #   ansible.builtin.fail: 
+    #     msg: "Failed when register device to cloudflare warp {{ regDev }}"
+    #   when: regDev.success == false 
+
+    # - set_fact: 
+    #     client_device: "{{ regDev.result }}"
+    #   when: regDev.success == true
+
+    # - name: Get Warp Device IP Address
+    #   ansible.builtin.shell: "curl {{ api_url }}/accounts/{{ organization_id }}/devices/{{ client_device.id | replace('t.','') }}/ip -H 'Authorization: Bearer {{ cf_api_token }}'" 
+    #   register: warpIPRaw
+    #   when: client_device.id != "" 
+
+    # - set_fact:
+    #     warpIP: "{{ warpIPRaw.stdout | from_json }}"
+    #   when: client_device.id != "" 
+
+    # - set_fact:
+    #     warp: "{{ warpIP.result.result }}"
+    #   when: warpIP.success == true 
+
+    # - name: Genereate Wireguard Config 
+    #   become: yes
+    #   ansible.builtin.template:
+    #     src: wireguard.j2
+    #     dest: /etc/wireguard/wgcf.conf
