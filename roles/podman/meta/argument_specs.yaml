@@ -1,0 +1,22 @@
+---
+argument_specs:
+  main:
+    short_description: set up a new user 
+    options:
+      podman_username:
+        type: str
+        required: false
+        default: podman_apps
+        description: user to run podman apps
+
+      podman_uid:
+        type: int
+        required: false
+        default: 1000000
+        description: uid/gid of the podman user
+
+      podman_network:
+        type: str
+        required: false
+        default: podman_network
+        description: default podman network name

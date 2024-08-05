@@ -18,5 +18,5 @@
     immediate: true
     permanent: true
   notify:
-  - Reload firewalld
-    
+    - Reload firewalld
+  
