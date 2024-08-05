@@ -71,7 +71,7 @@
 - name: Enable and start filebrowser service
   become: true
   become_user: "{{ username }}"
-  systemd:
+  systemd_service:
     name: "container-{{ container }}.service"
     scope: user
     daemon_reload: true

@@ -2,7 +2,7 @@
 - name: Bounce xray service
   become: true
   become_user: "{{ podman_username }}"
-  systemd:
+  systemd_service:
     name: "container-{{ xray_container }}.service"
     scope: user
     state: restarted

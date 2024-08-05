@@ -44,7 +44,7 @@
     dest: /etc/docker/daemon.json
 
 - name: Start docker service
-  systemd:
+  systemd_service:
     name: docker
     enabled: true
     state: started

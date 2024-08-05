@@ -218,7 +218,7 @@
       notify:
         - Reload firewalld
     - name: Start firewalld service
-      systemd:
+      systemd_service:
         name: firewalld
         enabled: true
         state: started
@@ -226,7 +226,7 @@
         - Reload firewalld
   handlers:
     - name: Reload firewalld
-      systemd:
+      systemd_service:
         name: firewalld
         enabled: true
         state: reloaded

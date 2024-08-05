@@ -68,13 +68,13 @@
     
 - name: Enable rclone service
   become: true
-  systemd:
+  systemd_service:
     name: rclone@.service
     enabled: true
 
 - name: Start rclone services
   become: true
-  systemd:
+  systemd_service:
     name: rclone.target
     enabled: true
     daemon_reload: true

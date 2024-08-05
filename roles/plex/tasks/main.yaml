@@ -55,7 +55,7 @@
 - name: Enable and start PLEX service
   become: true
   become_user: "{{ podman_username }}"
-  systemd:
+  systemd_service:
     name: "container-{{ plex_container }}.service"
     scope: user
     daemon_reload: true

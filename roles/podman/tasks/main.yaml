@@ -33,9 +33,11 @@
 - name: Enable podman auto-update service
   become: true
   become_user: "{{ podman_username }}"
-  systemd:
-    name: podman-auto-update.{service,timer}
+  systemd_service:
+    name: "podman-auto-update.{{ item }}"
     scope: user
     daemon_reload: true
     enabled: true
-    
+  loop:
+    - service
+    - timer
