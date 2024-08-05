@@ -29,3 +29,13 @@
   become_user: "{{ podman_username }}"
   containers.podman.podman_network: 
     name: "{{ podman_network }}"
+
+- name: Enable podman auto-update service
+  become: true
+  become_user: "{{ podman_username }}"
+  systemd:
+    name: podman-auto-update.{service,timer}
+    scope: user
+    daemon_reload: true
+    enabled: true
+    
