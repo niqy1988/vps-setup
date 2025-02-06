@@ -12,3 +12,11 @@
   tasks:
     - debug:
         msg: "hostname is: {{ inventory_hostname }}"
+
+- name: print ansible username
+  hosts: all
+  become: true
+  tasks:
+    - name: Print all available facts
+      debug:
+        var: "ansible username is {{ ansible_user }}"

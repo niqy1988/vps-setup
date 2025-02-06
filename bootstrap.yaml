@@ -168,11 +168,15 @@
         name: net.ipv6.conf.all.disable_ipv6
         value: '0'
         state: present
-      notify: 
-        - Bring up connection
-  handlers:
-    - name: Bring up connection
-      shell: "nmcli c up eth0"
+    - name: apply network-scripts
+      shell:
+        cmd: |
+          nmcli connection load {{ item }} 
+          nmcli connection up filename {{ item }}
+          touch {{ item }}.done
+        creates: "{{ item }}.done"
+      loop:
+        - /etc/sysconfig/network-scripts/ifcfg-eth0
 
 - name: Initialize firewalld
   hosts: all
