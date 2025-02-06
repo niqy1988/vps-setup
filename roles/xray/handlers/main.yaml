@@ -7,9 +7,13 @@
     scope: user
     state: restarted
   listen: Restart xray
-    
+  notify: 
+    - Reload nginx
+
 - name: Sanity check for xray port listened
   wait_for:
     port: "{{ xray_port }}"
     timeout: 5
   listen: Restart xray
+  notify: 
+    - Reload nginx

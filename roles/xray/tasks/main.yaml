@@ -83,4 +83,5 @@
     dest: "{{ nginx_path }}/conf.d/{{ item }}/www/xray.conf"
     setype: container_file_t
   loop: "{{ domains }}"
-  notify: Reload nginx
+  notify: 
+    - Reload nginx

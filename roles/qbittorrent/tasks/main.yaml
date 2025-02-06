@@ -64,4 +64,5 @@
     dest: "{{ nginx_path }}/conf.d/{{ item }}/qbittorrent.conf"
     setype: container_file_t
   loop: "{{ domains }}"
-  notify: "Reload nginx"
+  notify: 
+    - Reload nginx

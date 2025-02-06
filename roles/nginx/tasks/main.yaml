@@ -28,7 +28,8 @@
         state: directory
         seuser: system_u
       loop: "{{ domains }}"
-  notify: Reload nginx
+  notify: 
+    - Reload nginx
 
 - name: Create nginx config files
   become: true
@@ -56,7 +57,8 @@
         dest: "{{ nginx_path }}/conf.d/{{ item }}/www.conf"
         setype: container_file_t
       loop: "{{ domains }}"
-  notify: Reload nginx
+  notify: 
+    - Reload nginx
 
 - name: Set up certs folder
   become: true
@@ -66,7 +68,8 @@
     group: "{{ podman_username }}"
     state: directory
     seuser: system_u
-  notify: Reload nginx
+  notify: 
+    - Reload nginx
 
 ### Set up podman container
 - name: Create nginx container

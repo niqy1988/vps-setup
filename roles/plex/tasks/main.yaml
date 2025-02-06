@@ -5,6 +5,8 @@
     path: "{{ item }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
+    seuser: system_u
+    setype: container_file_t
     recurse: true
     state: directory
   loop:
@@ -51,8 +53,10 @@
       new: true
       no_header: true
       force: true
+  notify:
+    - Restart plex
 
-- name: Enable and start PLEX service
+- name: Create PLEX service
   become: true
   become_user: "{{ podman_username }}"
   systemd_service:
@@ -60,12 +64,8 @@
     scope: user
     daemon_reload: true
     enabled: true
-    state: started
-    
-- name: Sanity check for direct port listened
-  wait_for:
-    port: "{{ plex_direct_port }}"
-    timeout: 5
+  notify: 
+    - Restart plex
 
 ### nginx
 - name: Create nginx rule to access PLEX webui
@@ -76,4 +76,5 @@
     dest: "{{ nginx_path }}/conf.d/{{ item }}/plex.conf"
     setype: container_file_t
   loop: "{{ domains }}"
-  notify: "Reload nginx"
+  notify: 
+    - Reload nginx
