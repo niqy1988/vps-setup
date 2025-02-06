@@ -24,6 +24,15 @@
     name: podman
     state: present
 
+- name: set default_rootless_network_cmd=slirp4netns
+  become: true
+  community.general.ini_file:
+    path: /etc/containers/containers.conf
+    section: network
+    option: default_rootless_network_cmd
+    value: '"slirp4netns"'
+    backup: true
+
 - name: Create podman network
   become: true
   become_user: "{{ podman_username }}"
