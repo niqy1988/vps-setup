@@ -3,8 +3,6 @@ server {
   listen 443 ssl;
   listen [::]:443 ssl;
 
-  http2 on;
-
   server_name {{ plex_domain_prefix }}.{{ item }};
 
   ssl_certificate       /etc/nginx/certs/{{ item }}_ecc/fullchain.cer;
