@@ -8,8 +8,9 @@
       dnf:
         name: "*"
         state: latest
+        best: false
 
-- name: Set up Docker environment
+- name: Set up xray
   hosts: xray
   roles:
     - role: xray

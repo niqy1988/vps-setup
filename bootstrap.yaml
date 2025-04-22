@@ -117,6 +117,7 @@
       dnf:
         name: "*"
         state: latest
+        best: false
 
 - name: Setup daily logrotate
   hosts: all

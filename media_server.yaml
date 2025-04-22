@@ -8,6 +8,7 @@
       dnf:
         name: "*"
         state: latest
+        best: false
 
 - name: Set up Docker environment
   hosts: media

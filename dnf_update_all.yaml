@@ -8,3 +8,4 @@
       dnf:
         name: "*"
         state: latest
+        best: false
