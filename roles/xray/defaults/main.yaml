@@ -9,6 +9,7 @@ xray_clients:
 # podman
 xray_container: xray
 xray_port: 44380
+xray_stats_port: 44388
 
 # www
 xray_url_path: /stream/pass

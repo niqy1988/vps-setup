@@ -45,7 +45,7 @@
       - "{{ xray_path }}/server_config.json:/etc/xray/config.json:ro"
       - "{{ xray_path }}/log:/var/log/xray"
     state: created
-    healthcheck: "netstat -ntlp | grep -q :{{ xray_port }}"
+    healthcheck: "xray api statsquery --server=localhost:{{ xray_stats_port }}"
     healthcheck_interval: 10s
     healthcheck_timeout: 2s
     healthcheck_retries: 3

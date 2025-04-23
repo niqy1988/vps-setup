@@ -4,8 +4,23 @@
         "error": "/var/log/xray/error.log",
         "loglevel": "warning"
     },
+    "stats": {},
+    "policy": {
+        "system": {
+            "statsInboundUplink": true,
+            "statsInboundDownlink": true,
+            "statsOutboundUplink": true,
+            "statsOutboundDownlink": true
+        }
+    },
+    "api": {
+        "tag": "api",
+        "listen": "localhost:{{ xray_stats_port }}",
+        "services": ["StatsService"]
+    },
     "inbounds": [
         {
+            "tag": "vless",
             "port": {{ xray_port }},
             "protocol": "vless",
             "settings": {
