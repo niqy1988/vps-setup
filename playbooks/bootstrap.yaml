@@ -119,7 +119,6 @@
       package:
         name: "*"
         state: latest
-        best: false
 
 - name: Set up base file system structure
   hosts: all

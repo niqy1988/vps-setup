@@ -1,5 +1,4 @@
 ---
-
 - name: Update existing packages
   hosts: xray
   become: true
@@ -8,7 +7,6 @@
       package:
         name: "*"
         state: latest
-        best: false
 
 - name: Set up xray
   hosts: xray

@@ -1,5 +1,4 @@
 ---
-
 - name: Update existing packages
   hosts: wordpress
   become: true
@@ -8,7 +7,6 @@
       package:
         name: "*"
         state: latest
-        best: false
 
 - name: Set up Docker environment
   hosts: wordpress
@@ -49,7 +47,7 @@
   hosts: wordpress
   vars:
     wordpress_container_name: "{{ www_wp_container }}"
-    wordpress_data_path: "{{ www_wp_data_path }}" 
+    wordpress_data_path: "{{ www_wp_data_path }}"
     wordpress_data_owner: "{{ www_wp_owner }}"
     wordpress_networks: "{{ www_networks }}"
     wordpress_db_host: "{{ www_db_container }}"

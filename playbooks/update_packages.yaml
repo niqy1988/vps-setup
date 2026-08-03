@@ -1,5 +1,4 @@
 ---
-
 - name: dnf upgrade all
   hosts: all
   become: true
@@ -8,4 +7,3 @@
       package:
         name: "*"
         state: latest
-        best: false
