@@ -8,15 +8,10 @@
         name: "*"
         state: latest
 
-- name: Set up rclone drives
-  hosts: seedbox
-  roles:
-    - role: rclone
-
-- name: Set up SSL certificates
-  hosts: seedbox
-  roles:
-    - role: certbot
+# - name: Set up rclone drives
+#   hosts: seedbox
+#   roles:
+#     - role: rclone
 
 - name: Set up qBittorrent
   hosts: seedbox
