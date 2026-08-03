@@ -1,4 +1,4 @@
-intercative_password: !
+interactive_password: "!"
 # ssh public key (text) has no default; set interactive_ssh_public_key in inventory group_vars
 interactive_uid: 100000
 interactive_user_groups:
