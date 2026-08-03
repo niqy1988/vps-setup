@@ -35,6 +35,9 @@ Ansible 的可复用角色，包含 tasks、handlers、templates、defaults、me
 ### bootstrap
 初始化所有 VPS 基础环境的 playbook（`bootstrap.yaml`），包括 SSH 密钥登录、firewalld、BBR、/app 和 /data 目录等。
 
+### SSH 认证
+Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自动发现密钥：优先使用本地 ssh agent 中已加载的密钥，也会自动尝试默认位置的私钥（如 `~/.ssh/id_ed25519`），无需（也不强制）依赖 ssh agent。公钥通过 `user` 角色以文本形式（`ssh_public_key`）部署到被管理机器的 authorized_keys。
+
 ## Host Groups
 
 | Group | Purpose |

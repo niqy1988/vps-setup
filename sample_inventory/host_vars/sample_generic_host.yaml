@@ -1,3 +1,3 @@
-# bootstrap connects as root via the local ssh agent; no key file needed
+# bootstrap connects as root; no private key file specified — OpenSSH auto-discovers the key (ssh agent or ~/.ssh/id_*)
 
 other_host_vars: some value

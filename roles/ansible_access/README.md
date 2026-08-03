@@ -13,9 +13,11 @@ Valid variables and default values:
 
 The ssh public key is provided as text (e.g. `ssh-ed25519 AAAA...`), not a file path.
 
-Consider setting up the same account as default in `~/.ansible.cfg` as follows:
+Consider setting up the same account as default in `ansible.cfg` as follows
+(no private key file is specified anywhere in this project; authentication is
+left to OpenSSH's automatic key discovery — keys from your local ssh agent, or
+private keys at default locations like `~/.ssh/id_ed25519`, will be tried):
 ```ini
 [defaults]
-remote_user      = ansible_remote
-private_key_file = ~/.ssh/ansible_id_rsa
+remote_user = ansible_remote
 ```

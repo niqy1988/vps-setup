@@ -1,4 +1,3 @@
 ansible_username: ansible_remote
 ansible_uid: 900000
-# ssh public key as text (not a file path); override in inventory/group_vars
-ansible_ssh_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NjustaexsamplePbUa6KGxujatwihavID09cIQcE1UC8x
+# ssh public key (text) has no default; set ansible_ssh_public_key in inventory group_vars

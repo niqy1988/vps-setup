@@ -1,6 +1,5 @@
 intercative_password: !
-# ssh public key as text (not a file path); override in inventory/group_vars
-interactive_ssh_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NjustaexsamplePbUa6KGxujatwihavID09cIQcE1UC8x
+# ssh public key (text) has no default; set interactive_ssh_public_key in inventory group_vars
 interactive_uid: 100000
 interactive_user_groups:
   - users
