@@ -9,4 +9,4 @@
 |  - Traefik manages its own certificates automatically (renewal handled by Traefik)
 |  - Other services no longer need to read certificate files — Traefik terminates TLS and forwards HTTP
 |  - `acme.json` is persisted via a bind mount volume, defined in the same `podman_container` `state: quadlet` module call as the Traefik container
-|  - The `acme/` role is preserved (marked as unused for hostdare_la)
+|  - The `acme/` role has been removed (2026-08-04) — it was unused, and Traefik now fully owns certificate management

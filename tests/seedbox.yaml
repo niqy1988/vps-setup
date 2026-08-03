@@ -8,12 +8,6 @@
         name: "*"
         state: latest
 
-- name: Set up Docker environment
-  hosts: seedbox
-  become: true
-  roles:
-    - role: docker
-
 - name: Set up rclone drives
   hosts: seedbox
   roles:
@@ -30,12 +24,3 @@
     qbittorrent_networks: "{{ bt_networks }}"
   roles:
     - role: qbittorrent
-
-- name: Set up nginx
-  hosts: seedbox
-  vars:
-    nginx_networks: "{{ bt_networks }}"
-    nginx_purge_networks: false
-    nginx_run: true
-  roles:
-    - role: nginx

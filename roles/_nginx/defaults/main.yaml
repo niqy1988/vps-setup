@@ -1,3 +1,0 @@
-# nginx config
-nginx_path: /app/nginx
-nginx_container: nginx

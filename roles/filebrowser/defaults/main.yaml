@@ -4,13 +4,9 @@ file_paths: "{{ host_exposed_files }}"
 
 # podman
 container: file-server
-networks: 
+networks:
   - "{{ podman_network }}"
 
 # browser access
 domains: "{{ host_domains }}"
 server_prefix: file
-
-# nginx
-nginx_path: "{{ nginx_path }}"
-nginx_user: "{{ podman_username }}"

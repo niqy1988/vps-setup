@@ -7,13 +7,9 @@
     scope: user
     state: restarted
   listen: Restart plex
-  notify: 
-    - Reload nginx
-    
+
 - name: Sanity check for plex direct port listened
   wait_for:
     port: "{{ plex_direct_port }}"
     timeout: 5
   listen: Restart plex
-  notify: 
-    - Reload nginx

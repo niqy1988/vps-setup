@@ -64,17 +64,5 @@
     scope: user
     daemon_reload: true
     enabled: true
-  notify: 
+  notify:
     - Restart plex
-
-### nginx
-- name: Create nginx rule to access PLEX webui
-  become: true
-  become_user: "{{ podman_username }}"
-  template:
-    src: plex.conf.j2
-    dest: "{{ nginx_path }}/conf.d/{{ item }}/plex.conf"
-    setype: container_file_t
-  loop: "{{ domains }}"
-  notify: 
-    - Reload nginx

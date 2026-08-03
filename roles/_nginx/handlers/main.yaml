@@ -1,5 +1,0 @@
----
-- name: Reload nginx
-  become: true
-  become_user: "{{ podman_username }}"
-  shell: podman exec {{ nginx_container }} nginx -s reload

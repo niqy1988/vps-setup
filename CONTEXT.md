@@ -60,8 +60,8 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 
 | # | Decision | Key Detail |
 |---|----------|------------|
-| 1 | Nginx role not used on hostdare_la | Preserved for backward compat |
-| 2 | Traefik ACME replaces acme.sh | Certificates managed by Traefik |
+| 1 | Nginx role not used on hostdare_la | Removed (_nginx role deleted) |
+| 2 | Traefik ACME replaces acme.sh | Certificates managed by Traefik; acme role removed |
 | 3 | Xray host network mode | UDP/QUIC compatibility |
 | 4 | Traefik routes to Xray | Not reverse fallback |
 | 5 | Route matching = PathPrefix only | Traefik only matches /stream/pass*, Xray handles sub-path splitting |
@@ -74,14 +74,37 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | 11 | Xray process runs as root in container | Container itself is rootless |
 | 12 | argument_specs as primary docs | defaults/main.yaml for fallback defaults |
 | 14 | wgcf routing reserved | Details deferred |
-| 15 | hostdare_la: podman + traefik + xray only | nginx not included |
+| 15 | hostdare_la: podman + traefik + xray only | nginx removed |
 | 16 | Firewall opened in traefik role handler | Port 80/443 after config deployed |
 | 17 | Cloudflare token via env var | From www.yaml, no vault needed yet |
 | 18 | Label-based service discovery | No traefik_dynamic.yml; routes in container .container Quadlet labels |
 | 19 | Traefik traefik.toml simplified | Only entrypoints, providers, ACME, buffering/streaming config |
 | 20 | Xray routing section kept | Future wgcf rules to be added |
 | 21 | Single port for WS + xHTTP | 44380; Xray handles sub-path protocol splitting, not Traefik |
-| 22 | No Nginx on hostdare_la | Unmatched paths return Traefik default 404/403 |
+| 22 | No Nginx on hostdare_la | _nginx role removed |
 | 23 | Container-defined routing | Each container's .container Quadlet has its own traefik.http.* labels |
 | 24 | Double health check | Quadlet healthcheck (systemd) + Traefik HTTP probe to Xray stats API |
 | 25 | Xray host network address | Traefik routes to 127.0.0.1:44380 for Xray backend |
+
+## Removed Roles & Cleanup Log (2026-08-04)
+
+### Deleted
+- `roles/_acme/` — acme.sh 证书管理，已被 Traefik ACME 取代
+- `roles/_nginx/` — nginx 反向代理，已被 Traefik 取代
+- 模板：`roles/plex/templates/plex.conf.j2`、`roles/qbittorrent/templates/qbittorrent.conf.j2`、`roles/filebrowser/templates/filebrowser.conf.j2`
+
+### Reference cleanup (by role / playbook)
+- `roles/plex/`：meta 移除 `nginx` 依赖；tasks 删除 "Create nginx rule" 任务；handlers 删除 `Reload nginx` notify
+- `roles/qbittorrent/`：meta 移除 `nginx` 依赖；tasks 删除 "Create nginx rule" 任务
+- `roles/filebrowser/`：defaults 删除自引用 `nginx_path`/`nginx_user`；tasks 删除 nginx site rules 段
+- `tests/`：`file_server.yaml`、`hath.yaml`、`media_server.yaml`、`seedbox.yaml`、`wordpress.yaml` 移除 `docker` 与 `nginx` 的 role play
+- `CONTEXT.md`：决策 #1/#2/#15/#22 更新
+- `docs/adr/0002-traefik-acme.md`：consequence 更新（acme role 已删除）
+
+### Known leftover issues
+- `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`；`rclone`（实际 role 为 `__rclone`，命名不匹配）
+
+### TODO
+- [ ] `filebrowser`/`plex`/`qbittorrent` 对外访问改由 Traefik 容器标签（`traefik.http.*`）+ Podman 完成，替代旧 nginx 反代（参照 `xray`/`traefik` 的 Quadlet labels 做法）
+- [ ] 清理/重写 `tests/` 目录，删除或迁移引用已不存在 role 的测试场景
+

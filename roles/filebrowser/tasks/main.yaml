@@ -11,7 +11,7 @@
 - name: Set up configs
   become: true
   become_user: "{{ username }}"
-  block: 
+  block:
     - name: Copy config file
       copy:
         src: config.json
@@ -36,7 +36,7 @@
   block:
     - name: config files and default mounts
       set_fact:
-        volume_mounts: 
+        volume_mounts:
           - "{{ app_path }}/config.json:/.filebrowser.json"
           - "{{ app_path }}/database.db:/database.db"
           - "{{ app_path }}/srv/temp:/srv/temp"
@@ -46,7 +46,6 @@
       set_fact:
         volume_mounts: "{{ volume_mounts + [ item.path ~ ':/srv/' ~ item.name ] }}"
       loop: "{{ file_paths }}"
-
 
 ### Podman container and service
 - name: Create filebrowser container
@@ -77,28 +76,3 @@
     daemon_reload: true
     enabled: true
     state: started
-
-
-### nginx
-- name: Create nginx folder
-  become: true
-  file:
-    path: "{{ nginx_path }}"
-    owner: "{{ nginx_user }}"
-    group: "{{ nginx_user }}"
-    state: directory
-
-- name: Set up nginx site rules
-  become: true
-  become_user: "{{ nginx_user }}"
-  block:
-    - name: Create site folders
-      file:
-        path: "{{ nginx_path }}/conf.d/{{ item }}"
-        state: directory
-      loop: "{{ domains }}"
-    - name: Generate nginx config for filebrowser
-      template:
-        src: filebrowser.conf.j2
-        dest: "{{ nginx_path }}/conf.d/{{ item }}/filebrowser.conf"
-      loop: "{{ domains }}"

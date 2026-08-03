@@ -8,12 +8,6 @@
         name: "*"
         state: latest
 
-- name: Set up Docker environment
-  hosts: wordpress
-  become: true
-  roles:
-    - role: docker
-
 - name: Set up SSL certificates
   hosts: wordpress
   roles:
@@ -61,14 +55,3 @@
   hosts: wordpress
   roles:
     - role: www
-
-- name: Set up nginx
-  hosts: wordpress
-  vars:
-    nginx_networks: "{{ www_networks }}"
-    nginx_purge_networks: false
-    nginx_contents: "{{ www_static_file_contents }}"
-    nginx_purge_contents: false
-    nginx_run: true
-  roles:
-    - role: nginx

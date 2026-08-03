@@ -8,12 +8,6 @@
         name: "*"
         state: latest
 
-- name: Set up Docker environment
-  hosts: file
-  become: true
-  roles:
-    - role: docker
-
 - name: Set up rclone drives
   hosts: file
   roles:
@@ -32,12 +26,3 @@
   hosts: file
   roles:
     - role: certbot
-
-- name: Set up nginx
-  hosts: file
-  vars:
-    nginx_networks: "{{ file_networks }}"
-    nginx_purge_networks: false
-    nginx_run: true
-  roles:
-    - role: nginx

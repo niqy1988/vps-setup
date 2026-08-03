@@ -8,12 +8,6 @@
         name: "*"
         state: latest
 
-- name: Set up Docker environment
-  hosts: media
-  become: true
-  roles:
-    - role: docker
-
 - name: Set up rclone drives
   hosts: media
   roles:
@@ -30,12 +24,3 @@
     plex_networks: "{{ media_networks }}"
   roles:
     - role: plex
-
-- name: Set up nginx
-  hosts: media
-  vars:
-    nginx_networks: "{{ media_networks }}"
-    nginx_purge_networks: false
-    nginx_run: true
-  roles:
-    - role: nginx
