@@ -1,4 +1,21 @@
 # ansible hosts
 /inventory
 /files
+
+# sandbox roles
 sandbox.yaml
+
+# dev tools
+.codecc
+.idea
+.vscode
+build.yml
+
+# python cache
+__pycache__/
+*.py[cod]
+### PreCI ###
+.codecc
+
+# macOS
+.DS_Store

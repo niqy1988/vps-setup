@@ -1,0 +1,17 @@
+# basic authentication
+http:
+  middlewares:
+    traefik-auth:
+{% if traefik_users | default([]) | length > 0 %}
+      basicAuth:
+        users:
+{% for user in traefik_users %}  
+          - "{{ user.username }}:{{ user.password | password_hash('blowfish') }}"
+{% endfor %}
+        removeHeader: true
+{% else %}
+      # no authentication with a noop middleware
+      headers:
+        customRequestHeaders:
+          X-Traefik-NoAuth: ""
+{% endif %}

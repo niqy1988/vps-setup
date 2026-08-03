@@ -1,7 +1,5 @@
 collections:
-  - name: community.general
   - name: ansible.posix
-
-roles:
-  - name: willshersystems.sshd
-  
+  - name: community.general
+  - name: containers.podman
+  - name: fedora.linux_system_roles

@@ -1,0 +1,10 @@
+{{ traefik_path }}/log/traefik.log {{ traefik_path }}/log/access.log {
+    rotate 90
+    daily
+    dateext
+    olddir {{ traefik_path }}/log/old
+    nocompress
+    nocreate
+    notifempty
+    missingok
+}

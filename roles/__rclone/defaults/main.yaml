@@ -1,0 +1,12 @@
+rclone_config_path: /var/local/rclone
+
+rclone_mounts:
+  - name: sample
+    config: sample.conf
+    remote: sample
+    mount_path: /mnt/sample
+    dir: shared
+    polling: true
+    vfs_cache_size: 50G
+  - name: sample2
+    config: another_sample.conf

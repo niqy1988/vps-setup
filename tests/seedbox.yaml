@@ -1,0 +1,43 @@
+---
+
+- name: Update existing packages
+  hosts: seedbox
+  become: true
+  tasks:
+    - name: Update packages
+      package:
+        name: "*"
+        state: latest
+        best: false
+
+- name: Set up Docker environment
+  hosts: seedbox
+  become: true
+  roles:
+    - role: docker
+
+- name: Set up rclone drives
+  hosts: seedbox
+  roles:
+    - role: rclone
+
+- name: Set up SSL certificates
+  hosts: seedbox
+  roles:
+    - role: certbot
+
+- name: Set up qBittorrent
+  hosts: seedbox
+  vars:
+    qbittorrent_networks: "{{ bt_networks }}"
+  roles:
+    - role: qbittorrent
+
+- name: Set up nginx
+  hosts: seedbox
+  vars:
+    nginx_networks: "{{ bt_networks }}"
+    nginx_purge_networks: false
+    nginx_run: true
+  roles:
+    - role: nginx

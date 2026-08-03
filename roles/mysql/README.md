@@ -1,1 +1,0 @@
-# Install and run MySQL(MariaDB) on docker

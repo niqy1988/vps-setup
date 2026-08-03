@@ -1,0 +1,9 @@
+---
+dependencies:
+  - role: podman
+  - role: nginx
+  - role: firewall_service
+    service_name: plex
+    tcp_ports:
+      - "{{ plex_direct_port }}"
+    udp_ports: []

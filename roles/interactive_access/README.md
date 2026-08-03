@@ -1,6 +1,6 @@
 # Set up interactive access account
 
-> This role requires root access (`become: yes`)
+> This role requires root access (`become: true`)
 
 Set up a remote account for interactive shell access
 

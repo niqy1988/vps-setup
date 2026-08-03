@@ -1,9 +1,0 @@
-domain_names:
-  - domain.net
-  - domain.com
-
-request_new_certs: yes
-
-certbot_path: /var/local/certbot
-
-nginx_config_path: /var/local/nginx

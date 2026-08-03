@@ -1,0 +1,11 @@
+traefik_container: traefik
+traefik_path: "/app/traefik"
+traefik_version: latest
+
+podman_network: podman_network
+
+certs_dir: "/app/certs"
+acme_email: ""
+cloudflare_dns_api_token: ""
+
+traefik_users: []

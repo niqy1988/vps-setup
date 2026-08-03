@@ -1,0 +1,21 @@
+{
+    "log": {
+        "access": "/var/log/xray/access.log",
+        "error": "/var/log/xray/xray.log",
+        "loglevel": "info"
+    },
+    "stats": {},
+    "policy": {
+        "system": {
+            "statsInboundUplink": true,
+            "statsInboundDownlink": true,
+            "statsOutboundUplink": true,
+            "statsOutboundDownlink": true
+        }
+    },
+    "api": {
+        "tag": "api",
+        "listen": "localhost:{{ xray_stats_port }}",
+        "services": ["StatsService"]
+    }
+}

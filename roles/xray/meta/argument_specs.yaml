@@ -1,0 +1,50 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy Xray as rootless container with VLESS + WebSocket/XHTTP support
+    options:
+      xray_container:
+        type: str
+        default: xray
+        required: false
+        description: Container name for Xray
+
+      xray_path:
+        type: str
+        default: /app/xray
+        description: Host path for Xray data and configuration files
+
+      xray_version:
+        type: str
+        default: latest
+        description: Version of Xray to use
+
+      xray_stats_port:
+        type: int
+        default: 80
+        description: Port for Xray Stats API (used for healthcheck and bandwidth tracking)
+
+      xray_url_path:
+        type: str
+        default: /xray/proxy
+        description: URL path prefix for WebSocket upgrade requests
+
+      xray_clients:
+        type: list
+        elements: dict
+        default: []
+        description: List of VLESS clients with id, level, and email fields
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: >
+          Cloudflare DNS API token to set up www DNS record

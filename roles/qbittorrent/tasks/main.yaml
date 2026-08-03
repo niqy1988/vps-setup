@@ -1,97 +1,68 @@
-- name: Create qBittorrent folder
-  become: yes
+- name: Create relevant folders
+  become: true
   file:
-    path: "{{ qbittorrent_data_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    recurse: yes
-    follow: no
+    path: "{{ item }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    recurse: true
     state: directory
+  loop:
+    - "{{ qbittorrent_path }}"
+    - "{{ download_path }}"
 
-- name: Set up qBittorrent folder
-  block:
-    - name: Set up folders to mount into docker
-      file:
-        path: "{{ qbittorrent_data_path }}/{{ item }}"
-        state: directory
-      loop:
-        - config
-        - downloads
-    - name: Set up downloads folder link destinations
-      file:
-        path: "{{ qbittorrent_data_path }}/downloads/{{ item.target | dirname }}"
-        state: directory
-      loop: "{{ qbittorrent_data_links }}"
-    - name: Set up data folder links
-      file:
-        path: "{{ qbittorrent_data_path }}/downloads/{{ item.target }}"
-        src: "{{ item.source }}"
-        state: link
-      loop: "{{ qbittorrent_data_links}}"
-
-- name: Create nginx folder
-  become: yes
-  file:
-    path: "{{ nginx_config_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    state: directory
-
-- name: Set up nginx site rules
-  block:
-    - name: Create site folders
-      file:
-        path: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}"
-        state: directory
-      loop: "{{ qbittorrent_domains }}"
-    - name: Generate nginx config for qBittorrent
-      template:
-        src: qbittorrent.conf.j2
-        dest: "{{ nginx_config_path }}/conf.d/{{ item.domain_name }}/qbittorrent.conf"
-      loop: "{{ qbittorrent_domains }}"
-
-- name: Set up docker networks
-  docker_network: 
-    name: "{{ item.name }}"
-  loop: "{{ qbittorrent_networks }}"
-
-- name: Start qBittorrent container
-  community.general.docker_container:
-    name: "{{ qbittorrent_container_name }}"
-    image: ghcr.io/linuxserver/qbittorrent
+### Podman container and service
+- name: Create qBittorrent container
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ qbittorrent_container }}"
+    image: docker.io/linuxserver/qbittorrent
+    label:
+      io.containers.autoupdate: registry
+      PODMAN_SYSTEMD_UNIT: "container-{{ qbittorrent_container }}.service"
     env:
       PUID: "0"
       PGID: "0"
-    mounts:
-      - source: "{{ qbittorrent_data_path }}/config"
-        target: /config
-        type: bind
-      - source: "{{ qbittorrent_data_path }}/downloads"
-        target: /downloads
-        type: bind
-      - source: /mnt
-        target: /mnt
-        type: bind
-        propagation: rslave
-      - source: /bin/netstat
-        target: /bin/netstat
-        type: bind
-        read_only: yes
-    ports:
-      - "{{ qbittorrent_bt_port }}:{{ qbittorrent_bt_port }}"
-      - "{{ qbittorrent_bt_port }}:{{ qbittorrent_bt_port }}/udp"
-    networks: "{{ qbittorrent_networks }}"
-    network_mode: default
-    purge_networks: yes
-    networks_cli_compatible: yes
-    container_default_behavior: no_defaults
-    restart_policy: always
-    pull: yes
-    recreate: yes
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - "netstat -ntlp | grep -q :8080"
-      interval: 10s
-      timeout: 2s
-      retries: 3
+    network: "{{ podman_network }}"
+    publish:
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/tcp"
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/udp"
+    volume:
+      - "{{ qbittorrent_path }}:/config:z"
+      - "{{ download_path }}:{{ download_path }}:z"
+    state: created
+    healthcheck: "netstat -ntlp | grep -q :8080"
+    healthcheck_interval: 10s
+    healthcheck_timeout: 2s
+    healthcheck_retries: 3
+    generate_systemd:
+      path: "/home/{{ podman_username }}/.config/systemd/user"
+      new: true
+      no_header: true
+      force: true
+
+- name: Enable and start qBittorrent service
+  become: true
+  become_user: "{{ podman_username }}"
+  systemd_service:
+    name: "container-{{ qbittorrent_container }}.service"
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Sanity check for direct port listened
+  wait_for:
+    port: "{{ qbittorrent_direct_port }}"
+    timeout: 5
+
+- name: Create nginx rule to access webui
+  become: true
+  become_user: "{{ podman_username }}"
+  template:
+    src: qbittorrent.conf.j2
+    dest: "{{ nginx_path }}/conf.d/{{ item }}/qbittorrent.conf"
+    setype: container_file_t
+  loop: "{{ domains }}"
+  notify: 
+    - Reload nginx

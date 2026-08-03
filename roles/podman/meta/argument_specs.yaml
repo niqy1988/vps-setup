@@ -1,0 +1,22 @@
+---
+argument_specs:
+  main:
+    short_description: Set up Podman environment for rootless container management
+    options:
+      podman_username:
+        type: str
+        required: false
+        default: podman_user
+        description: Username for the non-root Podman user
+
+      podman_uid:
+        type: int
+        required: false
+        default: 1000000
+        description: UID/GID for the Podman user
+
+      podman_network:
+        type: str
+        required: false
+        default: podman_network
+        description: Name of the default Podman network

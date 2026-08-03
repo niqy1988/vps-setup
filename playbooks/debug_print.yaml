@@ -1,0 +1,21 @@
+---
+- name: Print all local variables
+  hosts: localhost
+  tasks:
+    - debug:
+        var: hostvars[inventory_hostname]
+
+- name: Print all hostnames
+  hosts: all
+  become: true
+  tasks:
+    - debug:
+        msg: "hostname is: {{ inventory_hostname }}"
+
+- name: Print ansible username
+  hosts: all
+  become: true
+  tasks:
+    - name: Print all available facts
+      debug:
+        var: "ansible username is {{ ansible_user }}"

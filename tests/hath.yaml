@@ -1,0 +1,22 @@
+---
+
+- name: Update existing packages
+  hosts: hath
+  become: true
+  tasks:
+    - name: Update packages
+      package:
+        name: "*"
+        state: latest
+        best: false
+
+- name: Set up Docker environment
+  hosts: hath
+  become: true
+  roles:
+    - role: docker
+
+- name: Set up Hentai@Home server
+  hosts: hath
+  roles:
+    - role: hath

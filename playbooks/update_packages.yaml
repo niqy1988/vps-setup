@@ -1,0 +1,11 @@
+---
+
+- name: dnf upgrade all
+  hosts: all
+  become: true
+  tasks:
+    - name: Update packages
+      package:
+        name: "*"
+        state: latest
+        best: false

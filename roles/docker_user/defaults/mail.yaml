@@ -1,5 +1,0 @@
-username: docker-user
-comment: user/owner of docker mounts in host filesystem
-base_user: 
-uid_offset: 1000
-gid_offset:

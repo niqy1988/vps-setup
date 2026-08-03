@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+
+  <short>{{ service_name }}</short>
+  <description> Expose {{ service_name }} ports. </description>
+
+  {% for tcp_port in tcp_ports %}
+  <port protocol="tcp" port="{{ tcp_port }}"/>
+  {% endfor %}
+  
+  {% for udp_port in udp_ports %}
+  <port protocol="udp" port="{{ udp_port }}"/>
+  {% endfor %}
+
+</service>

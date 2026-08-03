@@ -1,0 +1,10 @@
+{{ nginx_path }}/log/access.log {{ nginx_path }}/log/error.log {
+    rotate 90
+    daily
+    dateext
+    olddir {{ nginx_path }}/log/old
+    nocompress
+    nocreate
+    notifempty
+    missingok
+}

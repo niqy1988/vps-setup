@@ -1,0 +1,7 @@
+{
+    "outbounds": [
+        {% if ansible_local.wgcf.wgcf_xray_config is defined %}
+        {{ ansible_local.wgcf.wgcf_xray_config | to_nice_json }}
+        {% endif %}
+    ]
+}
