@@ -1,1 +1,3 @@
-root_ssh_private_key_file: ~/.ssh/interactive_host_root_key
+# bootstrap connects as root via the local ssh agent; no key file needed
+
+interactive_ssh_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NjustaexsamplePbUa6KGxujatwihavID09cIQcE1UC8x

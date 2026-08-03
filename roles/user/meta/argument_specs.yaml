@@ -22,7 +22,7 @@ argument_specs:
       ssh_public_key:
         type: str
         required: false
-        description: login ssh public key (noy file path), default to no (no ssh login)
+        description: login ssh public key as text (not a file path), default to no (no ssh login)
 
       uid:
         type: int

@@ -53,10 +53,10 @@
   become_user: "{{ username }}"
   ansible.posix.authorized_key:
     user: "{{ username }}"
-    key: "{{ lookup('file', ssh_public_key_file) }}"
+    key: "{{ ssh_public_key }}"
     exclusive: true
     state: present
-  when: ssh_public_key_file is defined
+  when: ssh_public_key is defined
 
 - name: Remove ssh public key
   become: true
@@ -64,7 +64,7 @@
   file: 
     path: "/home/{{ username }}/.ssh/authorized_keys"
     state: absent
-  when: ssh_public_key_file is not defined
+  when: ssh_public_key is not defined
 
 # user session linger
 - name: Set up user linger

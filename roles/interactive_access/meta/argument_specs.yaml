@@ -14,11 +14,10 @@ argument_specs:
         no_log: true
         description: password of the user, default to none (password locked)
 
-      interactive_ssh_public_key_file:
+      interactive_ssh_public_key:
         type: str
         required: false
-        default: ~/.ssh/id_rsa.pub
-        description: login ssh public key file, default to ~/.ssh/id_rsa.pub
+        description: login ssh public key as text (not a file path)
 
       interactive_uid:
         type: int

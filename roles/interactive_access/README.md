@@ -6,7 +6,7 @@ Set up a remote account for interactive shell access
 
 Requires `username` and `password` variables defined separately to run
 
-Default ssh public key is `~/.ssh/id_rsa.pub`, which can be changed with `ssh_public_key_file` variable
+The ssh public key is provided as text (e.g. `ssh-ed25519 AAAA...`), not a file path; set it with the `interactive_ssh_public_key` variable
 
 Default user group is the same as username, which can be overriden with `user_groups` list variable
 
