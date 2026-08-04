@@ -33,7 +33,7 @@ role 列表：
 
 - ❌ 不写 inventory 里的实际配置值：真实用户名、UID/GID、端口、路径、
   rclone 远端名、域名、邮箱、token、SSH 公钥等——一律用中性占位代替。
-- ❌ 不引用真实 inventory 文件路径（`inventory/group_vars/...` 等）作为
+- ❌ 不引用真实 inventory 目录下的具体文件路径作为
   "本项目在哪覆盖"。
 - ✅ 需要范例时统一指向 `sample_inventory/` 目录（见下）。
 - ✅ 示例一律用中性占位（`example.com`、`<cf_dns_api_token>`、`<ssh_public_key>`、
@@ -113,3 +113,64 @@ sample_inventory/
 | `00a3233` | refactor: 提权下放到 role 内部 task 层级，不依赖 play 级 become |
 | `a3cce48` | docs: 补齐 9 个 role 中文 README + 完善 sample_inventory 示例 |
 | `4480521` | chore(traefik): 移除未使用的 certs_dir 死变量及相关文档 |
+| `3507319` | docs: 重写项目 README、CONTEXT 迁至 docs/、全量脱敏文档（README/docs/ADR/role README），脱敏经验见第七节 |
+
+## 七、全量脱敏经验（2026-08-04）
+
+> 本节沉淀对 `README.md`、`docs/`（含 ADR）与全部 role README 做全量脱敏的
+> 经验。**遵循脱敏规则：本文档不列任何实际值（敏感词清单只存本地记忆），
+> 以下仅作结构性描述。**
+
+### 1. 脱敏范围（不止 role README）
+
+所有会进 git 的文档都要脱敏：
+
+- 项目根文档：`README.md`；
+- `docs/` 下的架构/规范/lint 文档（`docs/CONTEXT.md`、`docs/adr/*` 等）；
+- 各 role / legacy role 的 `README.md`。
+
+### 2. 需要脱敏的值类别（替换为中性占位）
+
+以下**类别**的值一律视为泄漏（具体清单见本地记忆 `documentation.md`）：
+
+- 真实主机名 / 具体主机 ID（如部署范围里点名的某台主机）；
+- 机房 / 厂商分组名（暴露 VPS 供应商）；
+- 真实端口（含 `127.0.0.1:端口` 连写）；
+- 真实路径（如代理子路径前缀）；
+- 真实用户名 / 非默认的 UID-GID；
+- rclone 远端名、域名、邮箱、token、SSH 公钥（**含截断前缀**）。
+
+### 3. 替换原则
+
+- 端口优先用**角色变量名**表达（`xray_*_port`、`xray_stats_port`）；
+- 中性占位：`<xxx>`（如 `<ssh_public_key>`）、`example.com`；
+- 路径用 `sample_inventory/` 里的示例值（如 `/xray/proxy`）；
+- 主机枚举直接泛化（"`xray` 组全部主机"/"单台主机落地"）。
+
+### 4. 保留原则（不算泄漏）
+
+role 的 `defaults/main.yaml` 里**已公开的默认值**不算泄漏——它本就在 git 中，
+角色文档应如实记录默认值（如 `ansible_uid`），并与 `sample_inventory/` 保持一致。
+
+### 5. 易漏点
+
+- **主机组表格**：README / CONTEXT 的组列表若含机房/厂商分组名即泄漏；
+- **ADR 的 Scope / Decision 行**：常写"适用于主机 A/B/C"，需泛化；
+- **截断公钥**：示例中以 `ssh-ed25519` 开头的公钥前缀（即使未完整展示）同样敏感；
+- **`docs/` 本身**：架构文档（CONTEXT/ADR）最容易藏真实主机名/端口/路径。
+
+### 6. 结构性检查（不含敏感词，仅类别正则）
+
+```bash
+# 真实 inventory 路径引用残留（应只出现 sample_inventory/...）
+grep -rnE 'inventory/' README.md docs/ roles/*/README.md | grep -v 'sample_inventory' || echo "无残留"
+# 端口连写（127.0.0.1:端口）
+grep -rnE '127\.0\.0\.1:[0-9]+' README.md docs/ roles/*/README.md || echo "无端口连写"
+# SSH 公钥示例残留
+grep -rnE 'ssh-ed25519 [A-Za-z0-9+/]+' README.md docs/ roles/*/README.md || echo "无公钥示例"
+```
+
+### 7. 治理流程
+
+发现泄漏 → 替换为中性占位（变量名 / `<xxx>` / 泛化）→ 跑结构性 grep 校验 →
+与文档改动一并提交。
