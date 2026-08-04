@@ -1,0 +1,5 @@
+---
+dependencies:
+  - role: podman
+  - role: traefik
+  - role: rclone

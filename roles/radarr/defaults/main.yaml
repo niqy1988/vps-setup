@@ -1,0 +1,12 @@
+radarr_container: radarr
+radarr_path: /app/radarr
+radarr_version: latest
+radarr_subdomain: radarr
+radarr_port: 7878
+radarr_rclone_mount: ""
+radarr_media_path: /data/Media
+
+podman_network: podman_network # noqa: var-naming[no-role-prefix]
+
+domains: [] # noqa: var-naming[no-role-prefix]
+cloudflare_dns_api_token: "" # noqa: var-naming[no-role-prefix]

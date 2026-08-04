@@ -1,0 +1,9 @@
+---
+- name: Restart radarr
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ radarr_container }}"
+    scope: user
+    state: restarted
+  listen: Restart radarr

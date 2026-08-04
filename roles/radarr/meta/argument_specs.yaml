@@ -1,0 +1,68 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy Radarr as rootless Quadlet container with Traefik routing
+    options:
+      radarr_container:
+        type: str
+        default: radarr
+        required: false
+        description: Container name for Radarr
+
+      radarr_path:
+        type: str
+        default: /app/radarr
+        required: false
+        description: Host path for Radarr data and configuration files
+
+      radarr_version:
+        type: str
+        default: latest
+        required: false
+        description: Version of the Radarr image to deploy
+
+      radarr_subdomain:
+        type: str
+        default: radarr
+        required: false
+        description: Subdomain prefix used for Host routing and DNS record
+
+      radarr_port:
+        type: int
+        default: 7878
+        required: false
+        description: Container web port (not published; reached via Traefik)
+
+      radarr_rclone_mount:
+        type: str
+        default: ""
+        required: false
+        description: |
+          Name of the rclone mount whose <mount>/Media directory is exposed as
+          the media library (e.g. mydrive). Empty skips the cloud link and uses
+          a plain local directory instead.
+
+      radarr_media_path:
+        type: str
+        default: /data/Media
+        required: false
+        description: Media library root path (symlinked to the rclone mount when radarr_rclone_mount is set)
+
+      podman_network:
+        type: str
+        default: podman_network
+        required: false
+        description: Shared Podman network used by Radarr
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list for Host routing
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: Cloudflare DNS API token to set up the Radarr DNS record

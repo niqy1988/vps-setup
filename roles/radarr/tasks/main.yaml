@@ -1,0 +1,117 @@
+---
+- name: Set up radarr folder
+  become: true
+  ansible.builtin.file:
+    path: "{{ radarr_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+
+- name: Check media library path state
+  ansible.builtin.stat:
+    path: "{{ radarr_media_path }}"
+  register: radarr_media_path_stat
+
+- name: Fail if media library path is a real directory (migrate to cloud first)
+  ansible.builtin.fail:
+    msg: >-
+      {{ radarr_media_path }} is a real directory. Move its contents to
+      {{ radarr_rclone_mount }}:Media on the rclone mount, remove the local
+      directory, then re-run the playbook.
+  when:
+    - radarr_rclone_mount | default("") | length > 0
+    - radarr_media_path_stat.stat.exists
+    - radarr_media_path_stat.stat.isdir
+    - not radarr_media_path_stat.stat.islnk
+
+- name: Ensure media directory exists on rclone mount
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file: # noqa: risky-file-permissions
+    path: "/mnt/rclone/{{ radarr_rclone_mount }}/Media"
+    state: directory
+  when:
+    - radarr_rclone_mount | default("") | length > 0
+    - not (radarr_media_path_stat.stat.exists and radarr_media_path_stat.stat.isdir and not radarr_media_path_stat.stat.islnk)
+
+- name: Link media library directory
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    src: "/mnt/rclone/{{ radarr_rclone_mount }}/Media"
+    dest: "{{ radarr_media_path }}"
+    state: link
+  when:
+    - radarr_rclone_mount | default("") | length > 0
+    - not (radarr_media_path_stat.stat.exists and radarr_media_path_stat.stat.isdir and not radarr_media_path_stat.stat.islnk)
+
+- name: Ensure media library directory (local fallback)
+  become: true
+  ansible.builtin.file:
+    path: "{{ radarr_media_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+  when: radarr_rclone_mount | default("") | length == 0
+
+- name: Generate radarr Quadlet container definition
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ radarr_container }}"
+    image: "lscr.io/linuxserver/radarr:{{ radarr_version }}"
+    state: quadlet
+    timezone: Asia/Shanghai
+    user: "0:0"
+    group_add: keep-groups
+    network: "{{ podman_network }}.network"
+    volume:
+      - "{{ radarr_path }}:/config:Z"
+      - /data:/data
+      - /mnt/rclone:/mnt/rclone:rshared
+    env:
+      TZ: Asia/Shanghai
+      PUID: "0"
+      PGID: "0"
+    label:
+      io.containers.autoupdate: registry
+      traefik.enable: true
+      traefik.http.routers.radarr.rule: "{{ domains | service_rule(radarr_subdomain) }}"
+      traefik.http.routers.radarr.middlewares: traefik-auth@file
+      traefik.http.services.radarr.loadbalancer.server.port: "{{ radarr_port }}"
+    security_opt:
+      - no-new-privileges
+    quadlet_options: |
+      [Install]
+      WantedBy=default.target
+  notify:
+    - Restart radarr
+
+- name: Enable and start radarr container
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ radarr_container }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+  notify:
+    - Restart radarr
+
+- name: Setup CloudFlare DNS resolution
+  community.general.cloudflare_dns:
+    zone: "{{ item }}"
+    record: "{{ radarr_subdomain }}"
+    type: CNAME
+    value: "{{ item }}"
+    comment: radarr
+    proxied: true
+    solo: true
+    api_token: "{{ cloudflare_dns_api_token }}"
+    state: present
+  loop: "{{ domains }}"
+  when: cloudflare_dns_api_token | default("") | length > 0
