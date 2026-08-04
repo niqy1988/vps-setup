@@ -2,14 +2,16 @@
 - name: Print all local variables
   hosts: localhost
   tasks:
-    - debug:
+    - name: Print hostvars for this control node
+      ansible.builtin.debug:
         var: hostvars[inventory_hostname]
 
 - name: Print all hostnames
   hosts: all
   become: true
   tasks:
-    - debug:
+    - name: Print current hostname
+      ansible.builtin.debug:
         msg: "hostname is: {{ inventory_hostname }}"
 
 - name: Print ansible username
@@ -17,5 +19,5 @@
   become: true
   tasks:
     - name: Print all available facts
-      debug:
+      ansible.builtin.debug:
         var: "ansible username is {{ ansible_user }}"

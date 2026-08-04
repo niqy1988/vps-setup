@@ -1,9 +1,9 @@
 ---
-- name: dnf upgrade all
+- name: Upgrade all packages
   hosts: all
   become: true
   tasks:
     - name: Update packages
-      package:
+      ansible.builtin.package:
         name: "*"
-        state: latest
+        state: latest # noqa: package-latest
