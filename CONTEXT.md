@@ -27,7 +27,7 @@ Traefik 通过 Docker/ Podman provider 读取容器标签（`traefik.http.*`）�
 Xray 处理无法识别的流量时转发到其他目的地的机制。在当前架构中，Traefik 负责路由，Xray 不再需要 fallback 到 Traefix。
 
 ### playbook
-Ansible 按主机部署的 YAML 文件，如 `hostdare_la.yaml`。定义该主机运行的角色列表和执行顺序。
+Ansible 按主机组部署的 YAML 文件，位于 `playbooks/` 下（如 `all.yaml`、`xray.yaml`）。定义目标主机组运行的角色列表和执行顺序；已无 per-host playbook。
 
 ### role
 Ansible 的可复用角色，包含 tasks、handlers、templates、defaults、meta 等目录。如 `traefik/`, `xray/`, `podman/`。argument_specs.yaml 声明角色所需的外部变量。
@@ -48,7 +48,9 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | `toy` | 实验性/玩具用途的主机 |
 | `contabo` | Contabo 机房的主机 |
 
-## Service Deployment Matrix (hostdare_la)
+## Service Deployment Matrix (xray hosts)
+
+适用于 `xray` 组全部主机（`contabo_us`、`hostdare_cn2`、`hostdare_la`），由 `playbooks/xray.yaml`（经 `all.yaml` 引入）统一部署。该架构最初在 hostdare_la 落地，现已全面铺开。
 
 | Service | Role | Network | TLS | Service Discovery |
 |---------|------|---------|-----|-------------------|
@@ -60,7 +62,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 
 | # | Decision | Key Detail |
 |---|----------|------------|
-| 1 | Nginx role not used on hostdare_la | Removed (_nginx role deleted) |
+| 1 | Nginx role removed project-wide | _nginx role deleted; not used on any xray host |
 | 2 | Traefik ACME replaces acme.sh | Certificates managed by Traefik; acme role removed |
 | 3 | Xray host network mode | UDP/QUIC compatibility |
 | 4 | Traefik routes to Xray | Not reverse fallback |
@@ -74,14 +76,14 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | 11 | Xray process runs as root in container | Container itself is rootless |
 | 12 | argument_specs as primary docs | defaults/main.yaml for fallback defaults |
 | 14 | wgcf routing reserved | Details deferred |
-| 15 | hostdare_la: podman + traefik + xray only | nginx removed |
+| 15 | xray hosts: podman + traefik + xray only | nginx removed |
 | 16 | Firewall opened in traefik role handler | Port 80/443 after config deployed |
 | 17 | Cloudflare token via env var | From www.yaml, no vault needed yet |
 | 18 | Label-based service discovery | No traefik_dynamic.yml; routes in container .container Quadlet labels |
 | 19 | Traefik traefik.toml simplified | Only entrypoints, providers, ACME, buffering/streaming config |
 | 20 | Xray routing section kept | Future wgcf rules to be added |
 | 21 | Single port for WS + xHTTP | 44380; Xray handles sub-path protocol splitting, not Traefik |
-| 22 | No Nginx on hostdare_la | _nginx role removed |
+| 22 | No Nginx on any xray host | _nginx role removed project-wide |
 | 23 | Container-defined routing | Each container's .container Quadlet has its own traefik.http.* labels |
 | 24 | Double health check | Quadlet healthcheck (systemd) + Traefik HTTP probe to Xray stats API |
 | 25 | Xray host network address | Traefik routes to 127.0.0.1:44380 for Xray backend |
