@@ -6,8 +6,8 @@
 # 2) rclone_mounts 默认 []；下面为一个示范条目：
 #    - name 必填，须匹配 rclone_conf_src_dir 下的 <name>.conf
 #    - vfs_cache_mode / vfs_cache_size / vfs_cache_min_free_space 默认值
-#      来自模板：full / "off"（不限）/ "off"（不限），可覆盖
-rclone_user: rclone_user
+#      来自模板：full / "off"（不限）/ "off"（不限），可覆盖#    - vfs_read_ahead / vfs_read_chunk_size / vfs_read_chunk_streams /
+#      dir_cache_time 为可选读/目录缓存调优，仅显式设置时才写入挂载 envrclone_user: rclone_user
 rclone_uid: 600000
 rclone_mount_base: /mnt/rclone
 rclone_mounts:

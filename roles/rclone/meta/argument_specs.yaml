@@ -14,6 +14,10 @@ argument_specs:
             vfs_cache_mode: <mode> (optional, default full; off|minimal|writes|full)
             vfs_cache_size: <size> (e.g. 2G, optional, default off = unlimited)
             vfs_cache_min_free_space: <size> (optional, default off = unlimited)
+            vfs_read_ahead: <size> (optional, e.g. 256M; emitted only when set)
+            vfs_read_chunk_size: <size> (optional, e.g. 64M; emitted only when set)
+            vfs_read_chunk_streams: <int> (optional, e.g. 8; emitted only when set)
+            dir_cache_time: <duration> (optional, e.g. 1h; emitted only when set)
         options:
           name:
             type: str
@@ -32,6 +36,22 @@ argument_specs:
             type: str
             required: false
             description: Min free space to keep (e.g. 1G); quote 'off' for unlimited, actual default 'off' comes from task template
+          vfs_read_ahead:
+            type: str
+            required: false
+            description: rclone --vfs-read-ahead (e.g. 256M); sequential read pre-fetch, helps smooth Plex streaming; only emitted when set
+          vfs_read_chunk_size:
+            type: str
+            required: false
+            description: rclone --vfs-read-chunk-size (e.g. 64M); chunked remote read size; only emitted when set
+          vfs_read_chunk_streams:
+            type: str
+            required: false
+            description: rclone --vfs-read-chunk-streams (e.g. 8); parallel chunk streams for high-latency remotes; only emitted when set
+          dir_cache_time:
+            type: str
+            required: false
+            description: rclone --dir-cache-time (e.g. 1h); directory entry cache TTL; only emitted when set
 
       rclone_removed_mounts:
         type: list

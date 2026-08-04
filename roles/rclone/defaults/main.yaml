@@ -9,6 +9,8 @@ rclone_mount_base: /mnt/rclone
 #     vfs_cache_mode: <mode> (optional, default full; off|minimal|writes|full)
 #     vfs_cache_size: <size> (e.g. 2G, optional, default off = unlimited)
 #     vfs_cache_min_free_space: <size> (optional, default off = unlimited)
+#     vfs_read_ahead / vfs_read_chunk_size / vfs_read_chunk_streams / dir_cache_time:
+#       (optional, only emitted when set; help Plex streaming / library scans)
 rclone_mounts: []
 
 # Mount names whose config block and env file should be removed.
