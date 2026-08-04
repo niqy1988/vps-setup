@@ -34,12 +34,6 @@ argument_specs:
         default: []
         description: Domain list for ACME certificates
 
-      certs_dir:
-        type: str
-        default: "/app/certs"
-        required: false
-        description: Host path for SSL certificates
-
       acme_email:
         type: str
         default: ""

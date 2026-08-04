@@ -4,7 +4,6 @@ traefik_version: latest
 
 podman_network: podman_network  # noqa: var-naming[no-role-prefix]
 
-certs_dir: "/app/certs"  # noqa: var-naming[no-role-prefix]
 acme_email: ""  # noqa: var-naming[no-role-prefix]
 cloudflare_dns_api_token: ""  # noqa: var-naming[no-role-prefix]
 

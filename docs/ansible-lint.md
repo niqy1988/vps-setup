@@ -76,7 +76,7 @@
 ### traefik（`5bf381d`）
 - **FQCN 补全**：`systemd_service`/`file`/`copy`/`meta`/`template`/`command`（handlers 同）→ `ansible.builtin.*`。
 - **risky-file-permissions**：2 个目录 `file` 补 `mode: "0755"`、logrotate `template` 补 `mode: "0644"`。
-- **var-naming[no-role-prefix]**：`podman_network`、`certs_dir`、`acme_email`、`cloudflare_dns_api_token` 行尾内联 noqa（名字**保留待审查**，见「疑问 3」）。
+- **var-naming[no-role-prefix]**：`podman_network`、`acme_email`、`cloudflare_dns_api_token` 行尾内联 noqa（名字**保留待审查**，见「疑问 3」）。
 
 ### xray（`c76fac0`）
 - **FQCN 补全**：`file`/`template`/`systemd_service`（handlers 同）→ `ansible.builtin.*`。
@@ -106,7 +106,7 @@
 | `roles/ansible_access/defaults/main.yaml` | `var-naming[no-role-prefix]` | 通用 SSH 用户名/uid，不属该 role 专属 |
 | `roles/firewall_service/defaults/main.yaml`（tcp_ports/udp_ports） | `var-naming[no-role-prefix]` | 通用端口变量 |
 | `roles/interactive_access/defaults/main.yaml` | `var-naming[no-role-prefix]` | 交互用户参数保持通用名 |
-| `roles/traefik/defaults/main.yaml`（podman_network/certs_dir/acme_email/cloudflare_dns_api_token） | `var-naming[no-role-prefix]` | 跨 role 共用参数，保持通用名（待审查是否加 `traefik_` 前缀） |
+| `roles/traefik/defaults/main.yaml`（podman_network/acme_email/cloudflare_dns_api_token） | `var-naming[no-role-prefix]` | 跨 role 共用参数，保持通用名（待审查是否加 `traefik_` 前缀） |
 | `roles/xray/defaults/main.yaml`（domains/cloudflare_dns_api_token） | `var-naming[no-role-prefix]` | 与 traefik 共用 token 变量，不改名 |
 | `roles/podman/tasks/main.yaml`（`state: quadlet`） | `args[module]` | 官方 `choices` 含 `quadlet`，lint 误报（需本地装 `containers` 集合才能消掉，故 noqa） |
 
@@ -121,7 +121,7 @@
 
 1. **VS Code 里为什么还显示 lint error？** 扩展调用 ansible-lint 的方式（工作目录/单文件）读不到项目根 `.ansible-lint-ignore`。**结论**：弃用 ignore 文件，全部改用文件内**行尾内联 `# noqa`**，随文件生效，与调用方式无关。这是本项目统一约定。
 2. **用 `.ansible-lint-ignore` 还是内联 noqa？** 最初用 ignore 文件（会显示 `# ignored` 的 warning），后因疑问 1 改内联，达到真正的 **0 warning**。最终：内联 noqa。
-3. **要不要给公开参数加 role 前缀改名？** traefik 的 `podman_network`/`certs_dir`/`acme_email`/`cloudflare_dns_api_token`、xray 的 `domains`/`cloudflare_dns_api_token` 均**暂不改名**，用 noqa 豁免；traefik 提交信息标注 "names kept pending review"，待日后审查。
+3. **要不要给公开参数加 role 前缀改名？** traefik 的 `podman_network`/`acme_email`/`cloudflare_dns_api_token`、xray 的 `domains`/`cloudflare_dns_api_token` 均**暂不改名**，用 noqa 豁免；traefik 提交信息标注 "names kept pending review"，待日后审查。
 4. **`state: quadlet` 是不是非法值？** 查官方源码确认 `containers.podman.podman_network` 的 `choices = present/absent/quadlet`，`quadlet` **合法**。lint 报的 `args[module]` 是误报（因本地缺 `containers` 集合导致参数校验异常），用 `# noqa: args[module]` 豁免。
 5. **`-t fqcn,name` 组合查询为什么跑出 yaml 规则？** 6.22.2 的 bug：组合 tag 会异常触发 yaml 规则。**结论**：按 rule id 单独用 `-t fqcn`、`-t name` 更稳。
 6. **rclone 的 `off` 是不是非法值？** 用户纠正过：`--vfs-cache-max-size` / `--vfs-cache-min-free-space` 官方**默认就是 `off`**（表示不限制），传 `off` 完全合法。**教训**：改代码前先查官方文档，别凭记忆。

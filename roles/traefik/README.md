@@ -38,7 +38,6 @@ Dashboard 基本认证、日志轮转与 Cloudflare DNS 记录。
 | `traefik_version` | str | 否 | `latest` | Traefik 镜像版本 |
 | `podman_network` | str | 否 | `podman_network` | 共享的 Podman 网络名 |
 | `domains` | list\[str\] | 否 | `[]` | ACME 证书域名列表 |
-| `certs_dir` | str | 否 | `/app/certs` | 证书目录（**当前未被使用**，见下） |
 | `acme_email` | str | 否 | `""` | ACME 证书邮箱 |
 | `cloudflare_dns_api_token` | str | 否 | `""` | Cloudflare DNS API Token（DNS Challenge 与 DNS 记录） |
 | `traefik_users` | list\[dict\] | 否 | `[]` | Dashboard 基本认证用户，格式 `{username, password}`；为空则无认证 |
@@ -62,10 +61,6 @@ Dashboard 基本认证、日志轮转与 Cloudflare DNS 记录。
 ## 参数与 defaults 对照
 
 `argument_specs` 中所有 optional 变量均已在 `defaults/main.yaml` 定义 ✅。
-
-> ⚠️ **`certs_dir` 是死变量**：它定义在 `argument_specs.yaml` 与
-> `defaults/main.yaml`，但 `tasks/` 与 `templates/` 中**均未引用**——
-> 实际证书目录是 `{{ traefik_path }}/certs`。建议后续清理或恢复使用。
 
 ## 使用范例
 
