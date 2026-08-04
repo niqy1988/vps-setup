@@ -1,7 +1,6 @@
 ---
 - name: Set up ansible remote user
   hosts: all
-  become: true
   vars:
     ansible_user: "{{ bootstrap_username | default('root') }}"
   roles:
@@ -267,7 +266,6 @@
 
 - name: Set up interactive user
   hosts: interactive
-  become: true
   vars:
     interactive_sudoer: true
     interactive_user_groups:

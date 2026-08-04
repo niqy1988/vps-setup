@@ -1,4 +1,5 @@
 - name: Set up ansible folder
+  become: true
   ansible.builtin.file:
     path: /etc/ansible
     owner: root
@@ -7,6 +8,7 @@
     mode: "0755"
 
 - name: Set up facts folder
+  become: true
   ansible.builtin.file:
     path: /etc/ansible/facts.d
     owner: "{{ ansible_username }}"

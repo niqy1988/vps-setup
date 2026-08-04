@@ -1,9 +1,11 @@
 - name: Install screen tool
+  become: true
   ansible.builtin.package:
     name: screen
     state: present
 
 - name: Install tree tool
+  become: true
   ansible.builtin.package:
     name: tree
     state: present
