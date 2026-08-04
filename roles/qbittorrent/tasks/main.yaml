@@ -1,0 +1,120 @@
+---
+- name: Set up qbittorrent folder
+  become: true
+  ansible.builtin.file:
+    path: "{{ qbittorrent_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+
+- name: Set up qbittorrent config folder
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    path: "{{ qbittorrent_path }}/qBittorrent"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+
+- name: Ensure download directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ qbittorrent_download_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+
+- name: Check for existing qbittorrent config
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.stat:
+    path: "{{ qbittorrent_path }}/qBittorrent/qBittorrent.conf"
+  register: qbittorrent_conf_stat
+
+- name: Deploy initial qbittorrent config (first boot only)
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.template:
+    src: qBittorrent.conf.j2
+    dest: "{{ qbittorrent_path }}/qBittorrent/qBittorrent.conf"
+    mode: "0644"
+    setype: container_file_t
+  when: not qbittorrent_conf_stat.stat.exists
+
+- name: Deploy initial qbittorrent categories (first boot only)
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.template:
+    src: categories.json.j2
+    dest: "{{ qbittorrent_path }}/qBittorrent/categories.json"
+    mode: "0644"
+    setype: container_file_t
+  when:
+    - not qbittorrent_conf_stat.stat.exists
+    - qbittorrent_categories | length > 0
+
+- name: Generate qbittorrent Quadlet container definition
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ qbittorrent_container }}"
+    image: "lscr.io/linuxserver/qbittorrent:{{ qbittorrent_version }}"
+    state: quadlet
+    timezone: Asia/Shanghai
+    user: "0:0"
+    group_add: keep-groups
+    network: "{{ podman_network }}.network"
+    publish:
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/tcp"
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/udp"
+    volume:
+      - "{{ qbittorrent_path }}:/config:Z"
+      - "{{ qbittorrent_download_path }}:{{ qbittorrent_download_path }}"
+    env:
+      TZ: Asia/Shanghai
+      PUID: "0"
+      PGID: "0"
+    label:
+      io.containers.autoupdate: registry
+      traefik.enable: true
+      traefik.http.routers.qbittorrent.rule: "{{ domains | service_rule(qbittorrent_subdomain) }}"
+      traefik.http.routers.qbittorrent.middlewares: traefik-auth@file
+      traefik.http.services.qbittorrent.loadbalancer.server.port: "{{ qbittorrent_webui_port }}"
+    security_opt:
+      - no-new-privileges
+    quadlet_options: |
+      [Install]
+      WantedBy=default.target
+  notify:
+    - Restart qbittorrent
+
+- name: Enable and start qbittorrent container
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ qbittorrent_container }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+  notify:
+    - Restart qbittorrent
+
+- name: Setup CloudFlare DNS resolution
+  community.general.cloudflare_dns:
+    zone: "{{ item }}"
+    record: "{{ qbittorrent_subdomain }}"
+    type: CNAME
+    value: "{{ item }}"
+    comment: qbittorrent webui
+    proxied: true
+    solo: true
+    api_token: "{{ cloudflare_dns_api_token }}"
+    state: present
+  loop: "{{ domains }}"
+  when: cloudflare_dns_api_token | default("") | length > 0

@@ -1,0 +1,99 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy qBittorrent as rootless Quadlet container with Traefik routing
+    options:
+      qbittorrent_container:
+        type: str
+        default: qbittorrent
+        required: false
+        description: Container name for qBittorrent
+
+      qbittorrent_path:
+        type: str
+        default: /app/qbittorrent
+        required: false
+        description: Host path for qBittorrent configuration
+
+      qbittorrent_version:
+        type: str
+        default: latest
+        required: false
+        description: Version of the qBittorrent image to deploy
+
+      qbittorrent_subdomain:
+        type: str
+        default: bt
+        required: false
+        description: Subdomain prefix used for Host routing and DNS record
+
+      qbittorrent_webui_port:
+        type: int
+        default: 8080
+        required: false
+        description: Container WebUI port (not published; reached via Traefik)
+
+      qbittorrent_webui_username:
+        type: str
+        default: admin
+        required: false
+        description: WebUI username (also used by Sonarr/Radarr as API credential)
+
+      qbittorrent_webui_password:
+        type: str
+        default: ""
+        required: false
+        description: |
+          WebUI password, used to seed the PBKDF2 hash into the initial config.
+          Secret - set in inventory. Empty skips seeding (qBittorrent then
+          generates a random password on first boot and logs it).
+
+      qbittorrent_direct_port:
+        type: int
+        default: 6881
+        required: false
+        description: BitTorrent listening port (TCP+UDP), published on the host and opened in firewalld
+
+      qbittorrent_download_path:
+        type: str
+        default: /data/Downloads
+        required: false
+        description: Local download directory (real disk, never the rclone mount)
+
+      qbittorrent_categories:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description: |
+          Categories pre-seeded on first boot, mapping names to container save
+          paths (e.g. sonarr/radarr). Must match the categories configured in
+          Sonarr/Radarr download clients.
+        options:
+          name:
+            type: str
+            required: true
+            description: Category name
+          save_path:
+            type: str
+            required: true
+            description: Container save path for this category (under qbittorrent_download_path)
+
+      podman_network:
+        type: str
+        default: podman_network
+        required: false
+        description: Shared Podman network used by qBittorrent
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list for Host routing
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: Cloudflare DNS API token to set up the qBittorrent DNS record

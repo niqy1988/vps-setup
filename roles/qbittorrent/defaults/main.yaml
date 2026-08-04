@@ -1,0 +1,19 @@
+qbittorrent_container: qbittorrent
+qbittorrent_path: /app/qbittorrent
+qbittorrent_version: latest
+qbittorrent_subdomain: bt
+qbittorrent_webui_port: 8080
+qbittorrent_webui_username: admin
+qbittorrent_webui_password: ""
+qbittorrent_direct_port: 6881
+qbittorrent_download_path: /data/Downloads
+
+# categories to pre-seed on first boot, each item:
+#   - name: <category> (must match the category used by Sonarr/Radarr)
+#     save_path: <path> (container-internal save path, under qbittorrent_download_path)
+qbittorrent_categories: []
+
+podman_network: podman_network # noqa: var-naming[no-role-prefix]
+
+domains: [] # noqa: var-naming[no-role-prefix]
+cloudflare_dns_api_token: "" # noqa: var-naming[no-role-prefix]

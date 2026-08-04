@@ -1,0 +1,8 @@
+{
+{% for cat in qbittorrent_categories %}
+  "{{ cat.name }}": {
+    "savePath": "{{ cat.save_path }}",
+    "name": "{{ cat.name }}"
+  }{{ "," if not loop.last }}
+{% endfor %}
+}

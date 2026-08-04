@@ -1,0 +1,14 @@
+[LegalNotice]
+Accepted=true
+
+[Preferences]
+Session\Port={{ qbittorrent_direct_port }}
+Session\DefaultSavePath={{ qbittorrent_download_path }}
+WebUI\Port={{ qbittorrent_webui_port }}
+WebUI\Username={{ qbittorrent_webui_username }}
+{% if qbittorrent_webui_password | default("") | length > 0 %}
+WebUI\Password_PBKDF2="@ByteArray({{ qbittorrent_webui_password | qbittorrent_password_hash }})"
+{% endif %}
+# required when accessed through the Traefik reverse proxy
+WebUI\HostHeaderValidation=false
+WebUI\CSRFProtection=false
