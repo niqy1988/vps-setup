@@ -1,0 +1,39 @@
+{
+    "routing": {
+        "domainStrategy": "IPIfNonMatch",
+        "domainMatcher": "hybrid",
+        "rules": [
+            {
+                "type": "field",
+                "inboundTag": [
+                    "inbound-block"
+                ],
+                "outboundTag": "outbound-block"
+            },
+            {
+                "type": "field",
+                "inboundTag": [
+                    "xhttp-wg"
+                ],
+                "outboundTag": "{{ (ansible_local.wgcf.wgcf_xray_config is defined) | ternary('wgcf_v6', 'native') }}"
+            },
+            {
+                "type": "field",
+                "inboundTag": [
+                    "ws-v1"
+                ],
+                "outboundTag": "ipv4"
+            },
+            {
+                "type": "field",
+                "ip": ["::0/0"],
+                "outboundTag": "{{ (ansible_local.wgcf.wgcf_xray_config is defined) | ternary('wgcf_v6', 'native') }}"
+            },
+            {
+                "type": "field",
+                "ip": ["0.0.0.0/0"],
+                "outboundTag": "native"
+            }
+        ]
+    }
+}

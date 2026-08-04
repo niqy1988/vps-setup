@@ -1,0 +1,302 @@
+---
+- name: Set up ansible remote user
+  hosts: all
+  vars:
+    ansible_user: "{{ bootstrap_username | default('root') }}"
+  roles:
+    - role: ansible_access
+
+- name: Update timezone
+  hosts: all
+  become: true
+  tasks:
+    - name: Set timezone to Shanghai
+      community.general.timezone:
+        name: Asia/Shanghai
+      notify: Reboot the server and wait for it to return
+  handlers:
+    - name: Reboot the server and wait for it to return
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+
+- name: Use official YUM repositories mirrorlist
+  hosts: all
+  become: true
+  tasks:
+    - name: Find all official repo files
+      ansible.builtin.find:
+        paths: "/etc/yum.repos.d/"
+        patterns: "almalinux-*.repo"
+      register: repos
+    - name: Enable official mirrorlist
+      ansible.builtin.replace:
+        path: "{{ item.path }}"
+        regexp: '^#\s*mirrorlist'
+        replace: "mirrorlist"
+      loop: "{{ repos.files }}"
+      notify:
+        - Refresh dnf cache
+    - name: Disable mirror baseurl
+      ansible.builtin.replace:
+        path: "{{ item.path }}"
+        regexp: "^baseurl"
+        replace: "# baseurl"
+      loop: "{{ repos.files }}"
+      notify:
+        - Refresh dnf cache
+  handlers:
+    - name: Refresh dnf cache
+      ansible.builtin.command: dnf makecache
+      changed_when: false
+
+- name: Enable additional YUM repositories
+  hosts: all
+  become: true
+  tasks:
+    - name: Install PowerTools/crb
+      ansible.builtin.package:
+        name: yum-utils
+        state: present
+      notify:
+        - Refresh dnf cache
+    - name: Enable PowerTools/crb
+      community.general.ini_file:
+        path: /etc/yum.repos.d/almalinux-crb.repo
+        section: crb
+        option: enabled
+        value: 1
+        no_extra_spaces: true
+        create: false
+      notify:
+        - Refresh dnf cache
+    - name: Install EPEL
+      ansible.builtin.package:
+        name: epel-release
+        state: present
+      notify:
+        - Refresh dnf cache
+    - name: Enable EPEL
+      community.general.ini_file:
+        path: /etc/yum.repos.d/epel.repo
+        section: epel
+        option: enabled
+        value: 1
+        no_extra_spaces: true
+        create: false
+      notify:
+        - Refresh dnf cache
+  handlers:
+    - name: Refresh dnf cache
+      ansible.builtin.command: dnf makecache
+      changed_when: false
+
+- name: Install and update critical packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Chinese locale
+      ansible.builtin.package:
+        name: langpacks-core-zh_CN.noarch
+        state: present
+    - name: Install Python
+      ansible.builtin.package:
+        name:
+          - python3-pip
+          - python3-packaging
+        state: present
+    - name: Install ACL tools
+      ansible.builtin.package:
+        name: acl
+        state: present
+    - name: Install SELinux tools
+      ansible.builtin.package:
+        name:
+          - selinux-policy
+          - selinux-policy-targeted
+          - policycoreutils
+          - policycoreutils-python-utils
+        state: present
+    - name: Install firewalld
+      ansible.builtin.package:
+        name: firewalld
+        state: present
+    - name: Install logrotate
+      ansible.builtin.package:
+        name: logrotate
+        state: present
+    - name: Update existing packages
+      ansible.builtin.package:
+        name: "*"
+        state: latest # noqa: package-latest
+
+- name: Set up base file system structure
+  hosts: all
+  become: true
+  tasks:
+    - name: Create app folder
+      ansible.builtin.file:
+        path: /app
+        state: directory
+        mode: "0755"
+    - name: Create data folder, default to be owned by "users" group
+      ansible.builtin.file:
+        path: /data
+        state: directory
+        group: users
+        mode: "02775"
+    - name: Sets default ACL for data folder
+      ansible.posix.acl:
+        path: /data
+        entity: users
+        etype: group
+        permissions: rwx
+        default: true
+        state: present
+
+- name: Setup daily logrotate
+  hosts: all
+  become: true
+  tasks:
+    - name: Setup daily cron job for logrotate
+      ansible.builtin.cron:
+        name: rotate logs daily
+        cron_file: logrotate_daily
+        special_time: daily
+        user: root
+        job: logrotate /etc/logrotate.conf
+
+- name: Update ssh security configs
+  hosts: all
+  become: true
+  tasks:
+    - name: Find all existing sshd_config files
+      ansible.builtin.find:
+        paths: /etc/ssh/sshd_config.d/
+      register: sshd_config_files
+    - name: Remove everything except official configs
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ sshd_config_files.files }}"
+      when: >
+        item.path | basename not in [
+          '40-redhat-crypto-policies.conf',
+          '50-redhat.conf',
+          '00-default.conf'
+        ]
+      notify: Reload SSH Service
+    - name: Drop in custom ssh config
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/00-default.conf
+        content: |
+          # Security Settings
+          PermitEmptyPasswords no
+          PasswordAuthentication no
+          PermitRootLogin prohibit-password
+          PubkeyAuthentication yes
+
+          # Connection Lifecycles
+          LoginGraceTime 30s
+          ClientAliveInterval 30
+          ClientAliveCountMax 6
+          PerSourceMaxStartups 3
+
+          # Feature Disabling
+          X11Forwarding no
+          GSSAPIAuthentication no
+          PermitUserRC no
+        owner: root
+        group: root
+        mode: "0600"
+        validate: /usr/sbin/sshd -t -f %s
+      notify: Reload SSH Service
+  handlers:
+    - name: Reload SSH Service
+      ansible.builtin.systemd_service:
+        name: sshd
+        enabled: true
+        state: restarted
+
+- name: Enable TCP BBR congestion control algorithm
+  hosts: all
+  become: true
+  tasks:
+    - name: Set net.core.default_qdisc = fq
+      ansible.posix.sysctl:
+        name: net.core.default_qdisc
+        value: fq
+        state: present
+    - name: Set net.ipv4.tcp_congestion_control = bbr
+      ansible.posix.sysctl:
+        name: net.ipv4.tcp_congestion_control
+        value: bbr
+        state: present
+
+- name: Initialize firewalld
+  hosts: all
+  become: true
+  tasks:
+    - name: Default service rules
+      ansible.posix.firewalld:
+        service: "{{ item.service }}"
+        state: "{{ item.rule }}"
+        permanent: true
+      loop:
+        - service: ssh
+          rule: enabled
+        - service: dhcpv6-client
+          rule: enabled
+        - service: cockpit
+          rule: disabled
+      notify:
+        - Reload firewalld
+    - name: Start firewalld service
+      ansible.builtin.systemd_service:
+        name: firewalld
+        enabled: true
+        state: started
+      notify:
+        - Reload firewalld
+  handlers:
+    - name: Reload firewalld
+      ansible.builtin.systemd_service:
+        name: firewalld
+        enabled: true
+        state: reloaded
+
+- name: Set up interactive user
+  hosts: interactive
+  vars:
+    interactive_sudoer: true
+    interactive_user_groups:
+      - users
+  roles:
+    - role: interactive_access
+
+- name: Set up SELinux
+  hosts: all
+  become: true
+  tasks:
+    - name: Enable SELinux if its disabled
+      ansible.posix.selinux:
+        policy: targeted
+        state: permissive
+      when: >
+        (ansible_facts.selinux.status | default('')) == 'disabled' or
+        (ansible_facts.selinux.mode | default('')) == 'disabled' or
+        (ansible_facts.selinux.config_mode | default('')) == 'disabled'
+      register: selinux_enable
+    - name: Create autorelabel file if SELinux is enabled
+      ansible.builtin.file:
+        path: /.autorelabel
+        state: touch
+        mode: "0644"
+      when: (selinux_enable.reboot_required | default(false))
+    - name: Reboot the server and wait for it to return
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      when: (selinux_enable.reboot_required | default(false))
+    - name: Set SELinux mode
+      ansible.posix.selinux:
+        policy: targeted
+        state: "{{ selinux_mode | default('enforcing') }}"

@@ -1,38 +1,14 @@
-- name: Create interactive user
-  user:
-    name: "{{ username }}"
-    password: "{{ password | password_hash('sha512') }}"
-    comment: "interactive user"
-    groups: "{{ user_groups }}"
-    shell: /bin/bash
-    create_home: yes
-    update_password: on_create
-    state: present
-
-- name: Add authorized key
-  authorized_key:
-    user: "{{ username }}"
-    key: "{{ lookup('file', ssh_public_key_file) }}"
-    state: present
-
-- name: Grant sudo privilege
-  copy:
-    content: "{{ username }} ALL=(ALL) ALL"
-    dest: "/etc/sudoers.d/{{ username }}"
-    mode: "600"
-  when: sudoer
-
-- name: Remove sudo privilege
-  file:
-    path: "/etc/sudoers.d/{{ username }}"
-    state: absent
-  when: not sudoer
-
-- name: Reset SSH connection to apply changes
-  meta: reset_connection
-  
 - name: Install screen tool
-  dnf:
+  become: true
+  ansible.builtin.package:
     name: screen
     state: present
-    
+
+- name: Install tree tool
+  become: true
+  ansible.builtin.package:
+    name: tree
+    state: present
+
+- name: Reset SSH connection to apply changes
+  ansible.builtin.meta: reset_connection

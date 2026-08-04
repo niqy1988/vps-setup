@@ -1,0 +1,4 @@
+# --- wgcf（全部必填、无默认，用占位符替换） ---
+wgcf_organization_name: "<organization_name>"
+wgcf_service_auth_client_id: "<client_id>.access"
+wgcf_service_auth_client_secret: "<client_secret>"

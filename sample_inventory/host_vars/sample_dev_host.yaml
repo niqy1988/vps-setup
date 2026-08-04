@@ -1,0 +1,4 @@
+# bootstrap connects as root; no private key file specified — OpenSSH auto-discovers the key (ssh agent or ~/.ssh/id_*)
+# 属于 [dev] 组（sandbox，交互式访问）
+
+interactive_ssh_public_key: "<ssh_public_key>"

@@ -1,5 +1,6 @@
-username:
-password:
-ssh_public_key_file: ~/.ssh/id_rsa.pub
-user_groups: []
-sudoer: no
+interactive_password: "!" # noqa: var-naming[no-role-prefix]
+# ssh public key (text) has no default; set interactive_ssh_public_key in inventory group_vars
+interactive_uid: 100000 # noqa: var-naming[no-role-prefix]
+interactive_user_groups: # noqa: var-naming[no-role-prefix]
+  - users
+interactive_sudoer: false # noqa: var-naming[no-role-prefix]

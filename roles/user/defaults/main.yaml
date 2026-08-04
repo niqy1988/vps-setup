@@ -1,0 +1,6 @@
+uid: 100000 # noqa: var-naming[no-role-prefix]
+user_groups:
+  - users
+
+sudoer: false # noqa: var-naming[no-role-prefix]
+linger: false # noqa: var-naming[no-role-prefix]

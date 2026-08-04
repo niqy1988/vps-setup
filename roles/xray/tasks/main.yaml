@@ -1,85 +1,109 @@
-- name: Get ansible user info
-  getent:
-    database: passwd
-    key: "{{ ansible_user }}"
-
+### xray config
 - name: Set up xray folder
-  become: yes
-  file:
-    path: "{{ xray_data_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    recurse: yes
+  become: true
+  ansible.builtin.file:
+    path: "{{ xray_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
     state: directory
+    mode: "0755"
 
-- name: Generate xray server config
-  template:
-    src: server_config.json.j2
-    dest: "{{ xray_data_path }}/server_config.json"
-
-- name: Set up xray log folder
-  file:
-    path: "{{ xray_data_path }}/log"
+- name: Set up xray config and log folder
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    path: "{{ xray_path }}/{{ item }}"
+    setype: container_file_t
     state: directory
+    mode: "0755"
+  loop:
+    - config
+    - log
+    - log/old
+  notify:
+    - Restart xray
 
-- name: Set up nginx folder
-  become: yes
-  file:
-    path: "{{ nginx_config_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    state: directory
+- name: Add xray config files
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ xray_path }}/config/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    mode: "0644"
+    setype: container_file_t
+  loop: "{{ query('fileglob', '../templates/xray/*.j2') }}"
+  notify:
+    - Restart xray
 
-- name: Set up nginx site folders
-  file:
-    path: "{{ nginx_config_path }}/conf.d/{{ item }}/www"
-    state: directory
-  loop: "{{ xray_domains }}"
+- name: Generate xray Quadlet container definition
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ xray_container }}"
+    image: "ghcr.io/xtls/xray-core:{{ xray_version }}"
+    state: quadlet
+    timezone: Asia/Shanghai
+    user: 0:0
+    network: "{{ podman_network }}.network"
+    volume:
+      - "{{ xray_path }}/config:/usr/local/etc/xray:Z"
+      - "{{ xray_path }}/log:/var/log/xray:Z"
+    env:
+      TZ: Asia/Shanghai
+    healthcheck: "CMD xray api statsquery --server=localhost:{{ xray_stats_port }}"
+    label:
+      io.containers.autoupdate: registry
+      traefik.enable: true
+      traefik.http.routers.xray-ws.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}`)"
+      traefik.http.routers.xray-ws.service: xray-ws
+      traefik.http.services.xray-ws.loadbalancer.server.port: "{{ xray_ws_port }}"
+      traefik.http.routers.xray-ws-v1.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}/v1`)"
+      traefik.http.routers.xray-ws-v1.service: xray-ws-v1
+      traefik.http.services.xray-ws-v1.loadbalancer.server.port: "{{ xray_ws_v1_port }}"
+      traefik.http.routers.xray-xhttp-v2.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}/v2`)"
+      traefik.http.routers.xray-xhttp-v2.service: xray-xhttp-v2
+      traefik.http.services.xray-xhttp-v2.loadbalancer.server.port: "{{ xray_xhttp_v2_port }}"
+      traefik.http.routers.xray-xhttp-wg.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}/wg`)"
+      traefik.http.routers.xray-xhttp-wg.service: xray-xhttp-wg
+      traefik.http.services.xray-xhttp-wg.loadbalancer.server.port: "{{ xray_xhttp_wg_port }}"
+    read_only: true
+    security_opt:
+      - no-new-privileges
+    quadlet_options: |
+      [Install]
+      WantedBy=default.target
+  notify:
+    - Restart xray
 
-- name: Generate nginx config for xray
-  template:
-    src: nginx.conf.j2
-    dest: "{{ nginx_config_path }}/conf.d/{{ item }}/www/xray.conf"
-  loop: "{{ xray_domains }}"
+- name: Enable and start xray container
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ xray_container }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+  notify:
+    - Restart Xray
 
-- name: Create firewalld service rule
-  become: yes
-  copy:
-    src: xray.xml
-    dest: /usr/lib/firewalld/services
-    mode: "644"
-  notify: Reload firewalld
+- name: Setup logrotate
+  become: true
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: "/etc/logrotate.d/{{ xray_container }}_log"
+    mode: "0644"
 
-- meta: flush_handlers
-
-- name: Enable firewalld service rule
-  become: yes
-  ansible.posix.firewalld:
-    service: xray
-    state: enabled
-    immediate: yes
-    permanent: yes
-
-- name: Start xray container
-  community.general.docker_container:
-    name: "{{ xray_container_name }}"
-    image: teddysun/xray
-    volumes:
-      - "{{ xray_data_path }}/server_config.json:/etc/xray/config.json:ro"
-      - "{{ xray_data_path }}/log:/var/log/xray"
-    user: "{{ getent_passwd[ansible_user][1] }}:{{ getent_passwd[ansible_user][2] }}"
-    userns_mode: host 
-    network_mode: host
-    purge_networks: yes
-    networks_cli_compatible: yes
-    container_default_behavior: no_defaults
-    restart_policy: always
-    pull: yes
-    recreate: yes
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - "netstat -ntlp | grep -q :{{ xray_port }}"
-      interval: 10s
-      timeout: 2s
-      retries: 3
+- name: Setup CloudFlare DNS resolution
+  community.general.cloudflare_dns:
+    zone: "{{ item }}"
+    record: www
+    type: CNAME
+    value: "{{ item }}"
+    comment: web service
+    proxied: true
+    solo: true
+    api_token: "{{ cloudflare_dns_api_token }}"
+    state: present
+  loop: "{{ domains }}"
+  when: cloudflare_dns_api_token | default("") | length > 0

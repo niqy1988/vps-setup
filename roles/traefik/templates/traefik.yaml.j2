@@ -1,0 +1,64 @@
+# log
+log:
+  level: INFO
+  filePath: /var/log/traefik/traefik.log     # Internal container path
+accessLog:
+  filePath: /var/log/traefik/access.log     # Internal container path
+  fields:
+    names:
+      StartUTC: drop
+
+# service entry points and tls termination
+entryPoints:
+  web:
+    address: ":80"
+    asDefault: false
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    asDefault: true
+    http:
+      tls:
+        certResolver: cloudflareResolver
+        domains:
+{% for domain in domains %}  
+          - main: "{{ domain }}"
+            sans:
+              - "*.{{ domain }}"
+{% endfor %}
+
+# service providers
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    watch: true
+    defaultRule: "{{ domains | service_rule('{{ .Name }}') }}"
+  file:
+    directory: "/etc/traefik/config.d"
+    watch: true
+
+# dashboard
+api:
+  dashboard: true
+  insecure: false
+
+# healthcheck
+ping: {}
+
+# acme resolver
+certificatesResolvers:
+  cloudflareResolver:
+    acme:
+      email: "{{ acme_email }}"
+      storage: /acme/acme.json             # Internal container path
+      dnsChallenge:
+        provider: cloudflare
+        # Optional: reduce validation failures caused by DNS propagation delay.
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"

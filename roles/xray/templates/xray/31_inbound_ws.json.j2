@@ -1,0 +1,48 @@
+{
+    "inbounds": [
+        {
+            "tag": "ws",
+            "port": {{ xray_ws_port }},
+            "protocol": "vless",
+            "settings": {
+                "decryption": "none",
+                "clients": {{ xray_clients | to_nice_json }},
+                "fallbacks": [
+                    {
+                        "dest": "@blackhole",
+                        "xver": 0
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "none",
+                "wsSettings": {
+                    "path": "{{ xray_url_path }}"
+                }
+            }
+        },
+        {
+            "tag": "ws-v1",
+            "port": {{ xray_ws_v1_port }},
+            "protocol": "vless",
+            "settings": {
+                "decryption": "none",
+                "clients": {{ xray_clients | to_nice_json }},
+                "fallbacks": [
+                    {
+                        "dest": "@blackhole",
+                        "xver": 0
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "security": "none",
+                "wsSettings": {
+                    "path": "{{ xray_url_path }}/v1"
+                }
+            }
+        }
+    ]
+}

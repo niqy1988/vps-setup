@@ -1,0 +1,75 @@
+- name: Install podman with supporting packages
+  become: true
+  ansible.builtin.package:
+    name:
+      - podman
+      - systemd-container
+    state: present
+
+- name: Install netstat for health check
+  become: true
+  ansible.builtin.package:
+    name: net-tools
+    state: present
+
+- name: Install podman-py for ansible access
+  ansible.builtin.pip:
+    name: podman
+    state: present
+
+- name: Allow usual http ports to be unprivileged
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_unprivileged_port_start
+    value: '80'
+    state: present
+
+- name: Setup quadlet directory
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    path: "/home/{{ podman_username }}/.config/containers/systemd"
+    recurse: true
+    state: directory
+
+- name: Setup default podman bridge network
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_network:
+    name: "{{ podman_network }}"
+    state: quadlet  # noqa: args[module]
+    ipv6: true
+  notify:
+    - Create podman network
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable podman auto-update service
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "podman-auto-update.{{ item }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started
+  loop:
+    - service
+    - timer
+
+- name: Enable podman socket service
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: podman.socket
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Install SELinux tools
+  become: true
+  ansible.builtin.package:
+    name: udica
+    state: present

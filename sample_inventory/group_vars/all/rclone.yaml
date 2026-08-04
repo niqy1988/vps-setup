@@ -1,0 +1,17 @@
+# rclone 配置示例（默认值与角色 defaults/main.yaml 一致）。
+#
+# 1) 每个 remote 一个 .conf 文件放在 <rclone_conf_src_dir>/<name>.conf
+#    （示例见 ../rclone/conf.d/sample.conf），
+#    内容为该 remote 的 INI section（token 等敏感信息放这里，勿入库）。
+# 2) rclone_mounts 默认 []；下面为一个示范条目：
+#    - name 必填，须匹配 rclone_conf_src_dir 下的 <name>.conf
+#    - vfs_cache_mode / vfs_cache_size / vfs_cache_min_free_space 默认值
+#      来自模板：full / "off"（不限）/ "off"（不限），可覆盖
+rclone_user: rclone_user
+rclone_uid: 600000
+rclone_mount_base: /mnt/rclone
+rclone_mounts:
+  - name: "<remote>"
+    vfs_cache_mode: full
+    vfs_cache_size: "off"
+    vfs_cache_min_free_space: "off"

@@ -1,0 +1,14 @@
+---
+- name: Update existing packages
+  hosts: xray
+  become: true
+  tasks:
+    - name: Update packages
+      ansible.builtin.package:
+        name: "*"
+        state: latest # noqa: package-latest
+
+- name: Set up xray
+  hosts: xray
+  roles:
+    - role: xray

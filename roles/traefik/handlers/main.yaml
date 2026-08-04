@@ -1,0 +1,30 @@
+---
+- name: Reload firewalld
+  become: true
+  ansible.builtin.systemd_service:
+    name: firewalld
+    enabled: true
+    state: reloaded
+  listen: Reload firewalld
+
+- name: Bounce traefik service
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ traefik_container }}"
+    scope: user
+    state: restarted
+  listen: Restart traefik
+
+- name: Enable traefik_container.cil to SELinux policy
+  become: true
+  ansible.builtin.command:
+    argv:
+      - semodule
+      - -i
+      - "{{ traefik_path }}/traefik_container.cil"
+      - /usr/share/udica/templates/base_container.cil
+      - /usr/share/udica/templates/net_container.cil
+      - /usr/share/udica/templates/home_container.cil
+    removes: "{{ traefik_path }}/traefik_container.cil"
+  listen: Enable traefik_container SELinux policy

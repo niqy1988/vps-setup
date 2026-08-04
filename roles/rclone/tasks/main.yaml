@@ -1,81 +1,163 @@
-- name: Install fuse + rclone
-  become: yes
-  dnf:
-    name: 
-      - fuse
+---
+- name: Install rclone and fuse3 packages
+  become: true
+  ansible.builtin.package:
+    name:
       - rclone
+      - fuse3
     state: present
 
-- name: Set allow_other in fuse
-  become: yes
-  lineinfile:
+- name: Allow non-root users to use allow_other in fuse
+  become: true
+  ansible.builtin.lineinfile:
     path: /etc/fuse.conf
-    regexp: user_allow_other
     line: user_allow_other
+    regexp: '^#?\s*user_allow_other'
+    mode: "0644"
+    create: true
+
+- name: Create rclone config directory
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.file:
+    path: "/home/{{ rclone_user }}/.config/rclone"
+    owner: "{{ rclone_user }}"
+    group: "{{ rclone_user }}"
+    mode: "0700"
+    state: directory
+
+- name: Create rclone env directory
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.file:
+    path: "/home/{{ rclone_user }}/.config/rclone/mounts"
+    owner: "{{ rclone_user }}"
+    group: "{{ rclone_user }}"
+    mode: "0700"
+    state: directory
+
+- name: Write rclone remote config blocks
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.blockinfile:
+    path: "/home/{{ rclone_user }}/.config/rclone/rclone.conf"
+    block: "{{ lookup('file', rclone_conf_src_dir ~ '/' ~ item.name ~ '.conf') }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: {{ item.name }}.conf"
+    create: true
+    mode: "0600"
+    owner: "{{ rclone_user }}"
+    group: "{{ rclone_user }}"
+  loop: "{{ rclone_mounts }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Write rclone vfs cache env files
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.template:
+    src: vfs_cache.env.j2
+    dest: "/home/{{ rclone_user }}/.config/rclone/mounts/{{ item.name }}.env"
+    mode: "0600"
+    owner: "{{ rclone_user }}"
+    group: "{{ rclone_user }}"
+  loop: "{{ rclone_mounts }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: rclone_env_files
+
+- name: Remove rclone remote config blocks no longer needed
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.blockinfile:
+    path: "/home/{{ rclone_user }}/.config/rclone/rclone.conf"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: {{ item }}.conf"
+    state: absent
+  loop: "{{ rclone_removed_mounts }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Remove rclone env files no longer needed
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.file:
+    path: "/home/{{ rclone_user }}/.config/rclone/mounts/{{ item }}.env"
+    state: absent
+  loop: "{{ rclone_removed_mounts }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Create rclone mount base directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ rclone_mount_base }}"
+    group: users
+    mode: "02775"
+    setype: container_file_t
+    state: directory
+
+- name: Set default ACL on rclone mount base directory
+  become: true
+  ansible.posix.acl:
+    path: "{{ rclone_mount_base }}"
+    entity: users
+    etype: group
+    permissions: rwx
+    default: true
     state: present
 
-- name: Set up rclone folder
-  become: yes
-  file:
-    path: "{{ rclone_config_path }}"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    recurse: yes
+- name: Create systemd user directory
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.file:
+    path: "/home/{{ rclone_user }}/.config/systemd/user"
+    owner: "{{ rclone_user }}"
+    group: "{{ rclone_user }}"
+    mode: "0700"
     state: directory
 
-- name: Set up rclone config file
-  template:
-    src: config/rclone.conf.j2
-    dest: "{{ rclone_config_path }}/rclone.conf"
+- name: Write rclone systemd template
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.template:
+    src: rclone@.service.j2
+    dest: "/home/{{ rclone_user }}/.config/systemd/user/rclone@.service"
+    owner: "{{ rclone_user }}"
+    group: "{{ rclone_user }}"
+    mode: "0644"
 
-- name: Set up script folders
-  file:
-    path: "{{ rclone_config_path }}/{{ item }}"
-    state: directory
-  loop: 
-    - mount
-    - unmount
-
-- name: Set up mount scripts
-  template:
-    src: script/mount.sh.j2
-    dest: "{{ rclone_config_path }}/mount/{{ item.name }}.sh"
-    mode: +x
-  when: item.mount_path is defined
+- name: Enable and start rclone mount services
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.systemd_service:
+    name: "rclone@{{ item.name }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started
   loop: "{{ rclone_mounts }}"
+  loop_control:
+    label: "{{ item.name }}"
 
-- name: Set up unmount scripts
-  template:
-    src: script/unmount.sh.j2
-    dest: "{{ rclone_config_path }}/unmount/{{ item.name }}.sh"
-    mode: +x
-  when: item.mount_path is defined
-  loop: "{{ rclone_mounts }}"
-
-- name: Create rclone service
-  become: yes
-  template:
-    src: service/rclone@.service.j2
-    dest: /etc/systemd/system/rclone@.service
-    mode: "644"
-
-- name: Create rclone service target
-  become: yes
-  template:
-    src: service/rclone.target.j2
-    dest: /etc/systemd/system/rclone.target
-    mode: "644"
-    
-- name: Enable rclone service
-  become: yes
-  systemd:
-    name: rclone@.service
-    enabled: yes
-
-- name: Start rclone services
-  become: yes
-  systemd:
-    name: rclone.target
-    enabled: yes
-    daemon_reload: yes
+- name: Restart rclone services whose vfs cache size changed
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.systemd_service:
+    name: "rclone@{{ item.item.name }}"
+    scope: user
     state: restarted
+  loop: "{{ rclone_env_files.results | selectattr('changed') | list }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+
+- name: Stop rclone services no longer needed
+  become: true
+  become_user: "{{ rclone_user }}"
+  ansible.builtin.systemd_service:
+    name: "rclone@{{ item }}"
+    scope: user
+    daemon_reload: true
+    enabled: false
+    state: stopped
+  loop: "{{ rclone_removed_mounts }}"
+  loop_control:
+    label: "{{ item }}"

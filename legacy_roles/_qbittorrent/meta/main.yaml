@@ -1,0 +1,9 @@
+---
+dependencies:
+  - role: podman
+  - role: firewall_service
+    service_name: qbittorrent
+    tcp_ports:
+      - "{{ qbittorrent_direct_port }}"
+    udp_ports:
+      - "{{ qbittorrent_direct_port }}"

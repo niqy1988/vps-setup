@@ -1,0 +1,4 @@
+---
+- name: Purge and recreate podman network
+  ansible.builtin.include_tasks: recreate_network.yaml
+  listen: Create podman network

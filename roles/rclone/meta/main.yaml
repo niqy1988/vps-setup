@@ -1,0 +1,9 @@
+---
+dependencies:
+  - role: user
+    username: "{{ rclone_user }}"
+    uid: "{{ rclone_uid }}"
+    user_groups:
+      - users
+    linger: true
+    comment: rclone mount user

@@ -1,0 +1,15 @@
+---
+- name: Bounce plex service
+  become: true
+  become_user: "{{ podman_username }}"
+  systemd_service:
+    name: "container-{{ plex_container }}.service"
+    scope: user
+    state: restarted
+  listen: Restart plex
+
+- name: Sanity check for plex direct port listened
+  wait_for:
+    port: "{{ plex_direct_port }}"
+    timeout: 5
+  listen: Restart plex

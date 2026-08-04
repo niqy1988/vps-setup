@@ -1,0 +1,139 @@
+---
+# Traefik role tasks
+- name: Set up traefik folder
+  become: true
+  ansible.builtin.file:
+    path: "{{ traefik_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    mode: "0755"
+    setype: container_file_t
+    state: directory
+
+- name: Set up folder to store config/certs/log
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    path: "{{ traefik_path }}/{{ item }}"
+    mode: "0755"
+    setype: container_file_t
+    state: directory
+  loop:
+    - config
+    - config/config.d
+    - certs
+    - log
+    - log/old
+
+- name: Deploy traefik_container SELinux module
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.copy:
+    src: traefik_container.cil
+    dest: "{{ traefik_path }}/traefik_container.cil"
+    mode: "0644"
+  notify:
+    - Enable traefik_container SELinux policy
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Deploy traefik.yaml configuration
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.template:
+    src: traefik.yaml.j2
+    dest: "{{ traefik_path }}/config/traefik.yaml"
+    mode: "0644"
+    setype: container_file_t
+  notify:
+    - Restart traefik
+
+- name: Deploy traefik_auth middleware
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.template:
+    src: traefik_auth.yaml.j2
+    dest: "{{ traefik_path }}/config/config.d/traefik_auth.yaml"
+    mode: "0644"
+    setype: container_file_t
+
+- name: Generate traefik Quadlet container definition
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ traefik_container }}"
+    image: "docker.io/library/traefik:{{ traefik_version }}"
+    state: quadlet
+    timezone: Asia/Shanghai
+    command: "--configFile=/etc/traefik/traefik.yaml"
+    network: "{{ podman_network }}.network"
+    publish:
+      - "80:80"
+      - "443:443"
+    volume:
+      - "{{ traefik_path }}/config:/etc/traefik:Z"
+      - "{{ traefik_path }}/log:/var/log/traefik:Z"
+      - "{{ traefik_path }}/certs:/acme:Z"
+      - "/run/user/{{ podman_uid }}/podman/podman.sock:/var/run/docker.sock:ro"
+    env:
+      TZ: Asia/Shanghai
+      CF_DNS_API_TOKEN: "{{ cloudflare_dns_api_token }}"
+    healthcheck: CMD traefik healthcheck
+    label:
+      io.containers.autoupdate: registry
+      traefik.enable: true
+      traefik.http.routers.traefik-dashboard.service: api@internal
+      traefik.http.routers.traefik-dashboard.middlewares: traefik-auth@file
+    read_only: true
+    security_opt:
+      - no-new-privileges
+      - label=type:traefik_container.process
+    quadlet_options: |
+      [Install]
+      WantedBy=default.target
+  notify:
+    - Restart traefik
+
+- name: Enable and start traefik container
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ traefik_container }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Enable HTTP and HTTPS service in firewalld
+  become: true
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    state: enabled
+    permanent: true
+  loop:
+    - http
+    - https
+  notify:
+    - Reload firewalld
+
+- name: Setup logrotate
+  become: true
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: "/etc/logrotate.d/{{ traefik_container }}_log"
+    mode: "0644"
+
+- name: Setup CloudFlare DNS resolution
+  community.general.cloudflare_dns:
+    zone: "{{ item }}"
+    record: traefik
+    type: CNAME
+    value: "{{ item }}"
+    comment: traefik dashboard
+    proxied: true
+    solo: true
+    api_token: "{{ cloudflare_dns_api_token }}"
+    state: present
+  loop: "{{ domains }}"
+  when: cloudflare_dns_api_token | default("") | length > 0

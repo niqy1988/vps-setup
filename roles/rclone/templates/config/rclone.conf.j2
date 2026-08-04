@@ -1,5 +1,0 @@
-{% for rclone_drive in rclone_mounts %}
-# Configuration for {{ rclone_drive.name }}
-{{ lookup('file', rclone_drive.config) }}
-
-{% endfor %}

@@ -1,0 +1,21 @@
+---
+- name: Update existing packages
+  hosts: media
+  become: true
+  tasks:
+    - name: Update packages
+      package:
+        name: "*"
+        state: latest
+
+# - name: Set up rclone drives
+#   hosts: media
+#   roles:
+#     - role: rclone
+
+- name: Set up PLEX server
+  hosts: media
+  vars:
+    plex_networks: "{{ media_networks }}"
+  roles:
+    - role: plex

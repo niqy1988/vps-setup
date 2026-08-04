@@ -1,0 +1,57 @@
+- name: Create relevant folders
+  become: true
+  file:
+    path: "{{ item }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    recurse: true
+    state: directory
+  loop:
+    - "{{ qbittorrent_path }}"
+    - "{{ download_path }}"
+
+### Podman container and service
+- name: Create qBittorrent container
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ qbittorrent_container }}"
+    image: docker.io/linuxserver/qbittorrent
+    label:
+      io.containers.autoupdate: registry
+      PODMAN_SYSTEMD_UNIT: "container-{{ qbittorrent_container }}.service"
+    env:
+      PUID: "0"
+      PGID: "0"
+    network: "{{ podman_network }}"
+    publish:
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/tcp"
+      - "{{ qbittorrent_direct_port }}:{{ qbittorrent_direct_port }}/udp"
+    volume:
+      - "{{ qbittorrent_path }}:/config:z"
+      - "{{ download_path }}:{{ download_path }}:z"
+    state: created
+    healthcheck: "netstat -ntlp | grep -q :8080"
+    healthcheck_interval: 10s
+    healthcheck_timeout: 2s
+    healthcheck_retries: 3
+    generate_systemd:
+      path: "/home/{{ podman_username }}/.config/systemd/user"
+      new: true
+      no_header: true
+      force: true
+
+- name: Enable and start qBittorrent service
+  become: true
+  become_user: "{{ podman_username }}"
+  systemd_service:
+    name: "container-{{ qbittorrent_container }}.service"
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started
+
+- name: Sanity check for direct port listened
+  wait_for:
+    port: "{{ qbittorrent_direct_port }}"
+    timeout: 5

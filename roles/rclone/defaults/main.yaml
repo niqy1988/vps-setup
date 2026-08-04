@@ -1,12 +1,15 @@
-rclone_config_path: /var/local/rclone
+---
+rclone_user: rclone_user
+rclone_uid: 600000
+rclone_conf_src_dir: inventory/rclone/conf.d
+rclone_mount_base: /mnt/rclone
 
-rclone_mounts:
-  - name: sample
-    config: sample.conf
-    remote: sample
-    mount_path: /mnt/sample
-    dir: shared
-    polling: yes
-    vfs_cache_size: 50G
-  - name: sample2
-    config: another_sample.conf
+# list of mounts to deploy, each item:
+#   - name: <name> (matches inventory/rclone/conf.d/<name>.conf)
+#     vfs_cache_mode: <mode> (optional, default full; off|minimal|writes|full)
+#     vfs_cache_size: <size> (e.g. 2G, optional, default off = unlimited)
+#     vfs_cache_min_free_space: <size> (optional, default off = unlimited)
+rclone_mounts: []
+
+# Mount names whose config block and env file should be removed.
+rclone_removed_mounts: []

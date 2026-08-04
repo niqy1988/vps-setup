@@ -1,0 +1,62 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy Traefik as rootless Quadlet container with ACME and Path routing
+    options:
+      traefik_container:
+        type: str
+        default: traefik
+        description: Container name for Traefik
+        required: false
+
+      traefik_path:
+        type: str
+        default: "/app/traefik"
+        description: Host path for Traefik configuration files
+        required: false
+
+      traefik_version:
+        type: str
+        default: "latest"
+        required: false
+        description: Version of Traefik to deploy
+
+      podman_network:
+        type: str
+        default: podman_network
+        description: Shared Podman network used by Traefik
+        required: false
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list for ACME certificates
+
+      acme_email:
+        type: str
+        default: ""
+        required: false
+        description: ACME certificate email address
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: >
+          Cloudflare DNS API token for DNS challenge
+          and set up DNS record for traefik dashboard
+
+      traefik_users:
+        type: list
+        elements: dict
+        default: []
+        required: false
+        description: |
+          traefik users for authentication, with format:
+          - username: user1
+            password: p@ss
+          - username: user2
+            password: w0rd
+          if left empty(default), there's no auth and everyone has access

@@ -1,0 +1,9 @@
+---
+- name: Upgrade all packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Update packages
+      ansible.builtin.package:
+        name: "*"
+        state: latest # noqa: package-latest

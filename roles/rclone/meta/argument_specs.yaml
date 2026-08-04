@@ -1,0 +1,69 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy rootless rclone mounts via user systemd templates
+    options:
+      rclone_mounts:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description: |
+          list of mounts to deploy, each item:
+          - name: <name> (matches inventory/rclone/conf.d/<name>.conf)
+            vfs_cache_mode: <mode> (optional, default full; off|minimal|writes|full)
+            vfs_cache_size: <size> (e.g. 2G, optional, default off = unlimited)
+            vfs_cache_min_free_space: <size> (optional, default off = unlimited)
+        options:
+          name:
+            type: str
+            required: true
+            description: Remote name, must match inventory/rclone/conf.d/<name>.conf
+          vfs_cache_mode:
+            type: str
+            required: false
+            choices: ["off", "minimal", "writes", "full"]
+            description: rclone --vfs-cache-mode; quote 'off' (YAML 1.1 would parse bare off as boolean false); actual default 'full' comes from task template
+          vfs_cache_size:
+            type: str
+            required: false
+            description: Max vfs cache size (e.g. 2G); quote 'off' for unlimited, actual default 'off' comes from task template
+          vfs_cache_min_free_space:
+            type: str
+            required: false
+            description: Min free space to keep (e.g. 1G); quote 'off' for unlimited, actual default 'off' comes from task template
+
+      rclone_removed_mounts:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: |
+          List of mount names whose config block in rclone.conf and matching
+          env file should be removed.
+
+      rclone_conf_src_dir:
+        type: str
+        required: false
+        default: inventory/rclone/conf.d
+        description: |
+          Controller-side directory holding one .conf file per remote
+          (sensitive tokens live there; keep it out of VCS).
+
+      rclone_user:
+        type: str
+        required: false
+        default: rclone_user
+        description: User under which the rootless rclone mounts run.
+
+      rclone_uid:
+        type: int
+        required: false
+        default: 600000
+        description: UID/GID of the rclone mount user.
+
+      rclone_mount_base:
+        type: str
+        required: false
+        default: /mnt/rclone
+        description: Base directory holding one mount point per remote.

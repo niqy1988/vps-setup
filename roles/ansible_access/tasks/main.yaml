@@ -1,57 +1,21 @@
-- name: Create ansible user group
-  group:
-    name: "{{ username }}"
-    gid: "{{ uid | int }}"
-    state: present
-
-- name: Create ansible user
-  user:
-    name: "{{ username }}"
-    group: "{{ username }}"
-    comment: "ansible user"
-    shell: /bin/bash
-    create_home: yes
-    password_lock: yes
-    uid: "{{ uid | int }}"
-    state: present
-
-- name: Set subuid/subgid for ansible user namespace
-  lineinfile:
-    path: "{{ item }}"
-    regexp: "{{ username }}:"
-    line: "{{ username }}:{{ uid }}:65536"
-    state: present
-  loop:
-    - /etc/subuid
-    - /etc/subgid
-
-- name: Add authorized key
-  authorized_key:
-    user: "{{ username }}"
-    key: "{{ lookup('file', ssh_public_key_file) }}"
-    exclusive: yes
-    state: present
-
-- name: Grant no-password sudo privilege
-  copy:
-    content: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
-    dest: "/etc/sudoers.d/{{ username }}"
-    mode: "600"
-
 - name: Set up ansible folder
-  file:
+  become: true
+  ansible.builtin.file:
     path: /etc/ansible
     owner: root
     group: root
     state: directory
+    mode: "0755"
 
 - name: Set up facts folder
-  file:
+  become: true
+  ansible.builtin.file:
     path: /etc/ansible/facts.d
-    owner: "{{ username }}"
-    group: "{{ username }}"
-    recurse: yes
+    owner: "{{ ansible_username }}"
+    group: "{{ ansible_username }}"
+    recurse: true
     state: directory
+    mode: "0755"
 
 - name: Reset SSH connection to apply changes
-  meta: reset_connection
+  ansible.builtin.meta: reset_connection

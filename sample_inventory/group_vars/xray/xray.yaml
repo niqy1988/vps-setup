@@ -1,0 +1,10 @@
+# --- xray（含 argument_specs 之外的入站端口变量；均为角色默认值） ---
+xray_path: /app/xray
+xray_container: xray
+xray_version: latest
+xray_url_path: /xray/proxy
+xray_stats_port: 80
+xray_ws_port: 81
+xray_ws_v1_port: 82
+xray_xhttp_v2_port: 83
+xray_xhttp_wg_port: 84

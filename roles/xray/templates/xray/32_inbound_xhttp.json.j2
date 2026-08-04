@@ -1,0 +1,48 @@
+{
+    "inbounds": [
+        {
+            "tag": "xhttp-v2",
+            "port": {{ xray_xhttp_v2_port }},
+            "protocol": "vless",
+            "settings": {
+                "decryption": "none",
+                "clients": {{ xray_clients | to_nice_json }},
+                "fallbacks": [
+                    {
+                        "dest": "@blackhole",
+                        "xver": 0
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "xhttp",
+                "security": "none",
+                "xhttpSettings": {
+                    "path": "{{ xray_url_path }}/v2"
+                }
+            }
+        },
+        {
+            "tag": "xhttp-wg",
+            "port": {{ xray_xhttp_wg_port }},
+            "protocol": "vless",
+            "settings": {
+                "decryption": "none",
+                "clients": {{ xray_clients | to_nice_json }},
+                "fallbacks": [
+                    {
+                        "dest": "@blackhole",
+                        "xver": 0
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "xhttp",
+                "security": "none",
+                "xhttpSettings": {
+                    "path": "{{ xray_url_path }}/wg"
+                }
+            }
+        }
+    ]
+}

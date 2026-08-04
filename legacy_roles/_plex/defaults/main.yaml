@@ -1,0 +1,10 @@
+# plex
+plex_path: /app/plex
+media_path: /data/Media
+
+# podman
+plex_container: plex-server
+plex_direct_port: 32400
+
+# network
+plex_domain_prefix: plex

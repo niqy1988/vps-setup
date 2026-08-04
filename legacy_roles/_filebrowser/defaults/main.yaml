@@ -1,0 +1,12 @@
+username: "{{ podman_username }}"
+app_path: /app/filebrowser
+file_paths: "{{ host_exposed_files }}"
+
+# podman
+container: file-server
+networks:
+  - "{{ podman_network }}"
+
+# browser access
+domains: "{{ host_domains }}"
+server_prefix: file

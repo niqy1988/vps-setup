@@ -1,6 +1,9 @@
-- name: Reload firewalld
-  become: yes
-  systemd:
-    name: firewalld
-    enabled: yes
-    state: reloaded
+---
+- name: Bounce xray service
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ xray_container }}"
+    scope: user
+    state: restarted
+  listen: Restart xray

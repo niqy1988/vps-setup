@@ -1,0 +1,13 @@
+---
+- name: Update existing packages
+  hosts: hath
+  become: true
+  tasks:
+    - name: Update packages
+      package:
+        name: "*"
+        state: latest
+# - name: Set up Hentai@Home server
+#   hosts: hath
+#   roles:
+#     - role: hath

@@ -1,0 +1,53 @@
+---
+argument_specs:
+  main:
+    short_description: set up a new user
+    options:
+      username:
+        type: str
+        required: true
+        description: name of the user
+
+      comment:
+        type: str
+        required: true
+        description: user account description
+
+      password:
+        type: str
+        required: false
+        no_log: true
+        description: password of the user, default to none (password locked)
+
+      ssh_public_key:
+        type: str
+        required: false
+        description: >
+          login ssh public key as text (not a file path), e.g.
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"; default to no (no ssh login)
+
+      uid:
+        type: int
+        required: false
+        default: 100000
+        description: uid of the user
+
+      user_groups:
+        type: list
+        elements: str
+        required: false
+        default:
+          - users
+        description: additional groups the user belongs to
+
+      sudoer:
+        type: bool
+        required: false
+        default: false
+        description: whether user has sudo privilege
+
+      linger:
+        type: bool
+        required: false
+        default: false
+        description: whether user has a linger session (for systemd)

@@ -1,0 +1,111 @@
+---
+
+- name: Install requirement
+  become: true
+  ansible.builtin.package:
+    name:
+      - wireguard-tools
+    state: present
+
+- name: Set up wireguard keypair
+  block:
+    - name: Generate private key if not exist
+      ansible.builtin.command: wg genkey
+      register: wg_genkey_out
+      changed_when: true
+      when: ansible_local.wgcf.wg_private_key is undefined
+    - name: Set private key as variable
+      ansible.builtin.set_fact:
+        wg_private_key: "{{ ansible_local.wgcf.wg_private_key | default(wg_genkey_out.stdout) }}"
+    - name: Generate public key if not exist
+      ansible.builtin.shell:
+        cmd: "set -o pipefail && echo '{{ wg_private_key }}' | wg pubkey"
+        executable: /bin/bash
+      register: wg_pubkey_out
+      changed_when: true
+      when: ansible_local.wgcf.wg_public_key is undefined
+    - name: Set public key as variable
+      ansible.builtin.set_fact:
+        wg_public_key: "{{ ansible_local.wgcf.wg_public_key | default(wg_pubkey_out.stdout) }}"
+
+- name: Set up install serial number
+  ansible.builtin.set_fact:
+    wgcf_serial_number: "{{ ansible_local.wgcf.wgcf_serial_number | default(lookup('community.general.random_string', length=12, special=false)) }}"
+
+- name: Register new device if no device config available
+  when: ansible_local.wgcf.wgcf_device_reg is undefined
+  block:
+    - name: Login to Warp with Service Auth
+      ansible.builtin.uri:
+        url: "https://{{ wgcf_organization_name }}.cloudflareaccess.com/warp"
+        follow_redirects: none
+        headers:
+          CF-Access-Client-Id: "{{ wgcf_service_auth_client_id }}"
+          CF-Access-Client-Secret: "{{ wgcf_service_auth_client_secret }}"
+        status_code:
+          - 302
+      register: sa_login_resp
+    - name: Parse login to get jwt token
+      ansible.builtin.set_fact:
+        jwt_token: "{{ (sa_login_resp.location | url_query).token[0] }}"
+    - name: Register new device
+      ansible.builtin.uri:
+        url: https://zero-trust-client.cloudflareclient.com/v0a2483/reg
+        method: POST
+        headers:
+          User-Agent: okhttp/3.12.1
+          Content-Type: application/json
+          Accept: application/json; charset=UTF-8
+          CF-Client-Version: a-6.16-2483
+          CF-Access-Jwt-Assertion: "{{ jwt_token }}"
+        body:
+          name: "{{ inventory_hostname }}"
+          locale: en_US
+          key: "{{ wg_public_key }}"
+          os_version: "{{ ansible_distribution_version }}"
+          manufacturer: "{{ ansible_distribution }}"
+          model: "{{ ansible_fqdn }}"
+          serial_number: "{{ wgcf_serial_number }}"
+        body_format: json
+      register: device_reg_resp
+- name: Set device register result as variable
+  ansible.builtin.set_fact:
+    wgcf_device_reg: "{{ ansible_local.wgcf.wgcf_device_reg | default(device_reg_resp.json) }}"
+
+- name: Generate wireguard config for xray
+  ansible.builtin.set_fact:
+    wgcf_xray_config:
+      tag: wgcf_v6
+      protocol: wireguard
+      settings:
+        secretKey: "{{ wg_private_key }}"
+        address:
+          - "{{ wgcf_device_reg.config.interface.addresses.v6 }}"
+          - "{{ wgcf_device_reg.config.interface.addresses.v4 }}"
+        peers:
+          - publicKey: "{{ wgcf_device_reg.config.peers[0].public_key }}"
+            endpoint: "{{ wgcf_device_reg.config.peers[0].endpoint.v6 | replace(':0', ':') }}{{ wgcf_device_reg.config.peers[0].endpoint.ports[0] }}"
+            allowedIPs:
+              - ::/0
+              - 0.0.0.0/0
+        reserved: "{{ wgcf_device_reg.config.client_id | decode_wgcf_reserved }}"
+        kernelMode: false
+        domainStrategy: ForceIPv6v4
+
+- name: Save generated config to ansible facts
+  block:
+    - name: Create fact
+      ansible.builtin.set_fact:
+        wgcf_fact:
+          wg_private_key: "{{ wg_private_key }}"
+          wg_public_key: "{{ wg_public_key }}"
+          wgcf_serial_number: "{{ wgcf_serial_number }}"
+          wgcf_device_reg: "{{ wgcf_device_reg }}"
+          wgcf_xray_config: "{{ wgcf_xray_config }}"
+    - name: Persist fact to host
+      ansible.builtin.copy:
+        content: "{{ wgcf_fact | to_nice_json }}"
+        dest: /etc/ansible/facts.d/wgcf.fact
+        mode: "0644"
+    - name: Reload facts
+      ansible.builtin.setup: {}

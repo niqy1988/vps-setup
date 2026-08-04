@@ -1,3 +1,3 @@
-username: ansible_remote_user
-uid: 1000000
-ssh_public_key_file: ~/.ssh/id_rsa.pub
+ansible_username: ansible_remote # noqa: var-naming[no-role-prefix]
+ansible_uid: 900000 # noqa: var-naming[no-role-prefix]
+# ssh public key (text) has no default; set ansible_ssh_public_key in inventory group_vars

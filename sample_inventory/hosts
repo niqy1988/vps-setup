@@ -1,8 +1,14 @@
 # sandbox hosts with interactive access
 [dev]
-sample_interactive_host
+sample_dev_host
+
+[prod]
+sample_generic_host
 
 # other hosts
 [others]
-sample_generic_host
 sample_noroot_host # host without root access, relies on a bootstrap account
+
+# xray 组：podman + traefik + wgcf + xray 全套（同一主机可属多个组）
+[xray]
+sample_generic_host

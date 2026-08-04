@@ -1,4 +1,18 @@
 # ansible hosts
 /inventory
 /files
+
+# sandbox roles
 sandbox.yaml
+
+# dev tools
+.idea
+.vscode
+build.yml
+
+# python cache
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store

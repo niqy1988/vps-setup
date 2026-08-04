@@ -1,1 +1,5 @@
-root_ssh_private_key_file: ~/.ssh/generic_host_root_key
+# bootstrap connects as root; no private key file specified — OpenSSH auto-discovers the key (ssh agent or ~/.ssh/id_*)
+# 属于 [prod] 与 [xray] 组：podman + traefik + wgcf + xray 全套
+
+# 主机级变量示例（也可在 hosts 行内以 key=value 定义）
+example_host_var: some value

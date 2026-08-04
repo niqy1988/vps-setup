@@ -1,0 +1,27 @@
+{
+    "outbounds": [
+        {
+            "tag": "native",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv6v4"
+            }
+        },
+        {
+            "tag": "ipv4",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv4v6"
+            }
+        },
+        {
+            "tag": "outbound-block",
+            "protocol": "blackhole",
+            "settings": {
+                "response": {
+                    "type": "http"
+                }
+            }
+        }
+    ]
+}

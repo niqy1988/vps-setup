@@ -1,0 +1,78 @@
+- name: Create filebrowser folder
+  become: true
+  file:
+    path: "{{ app_path }}"
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    recurse: true
+    follow: false
+    state: directory
+
+- name: Set up configs
+  become: true
+  become_user: "{{ username }}"
+  block:
+    - name: Copy config file
+      copy:
+        src: config.json
+        dest: "{{ app_path }}/config.json"
+    - name: Create database file
+      file:
+        path: "{{ app_path }}/database.db"
+        state: touch
+    - name: Create temp folder
+      file:
+        path: "{{ app_path }}/srv/temp"
+        state: directory
+    - name: Add disclaimer files
+      copy:
+        src: "{{ item }}"
+        dest: "{{ app_path }}/srv/{{ item }}"
+      loop:
+        - __请勿在根目录保存文件__.txt
+        - __DO NOT SAVE FILE HERE__.txt
+
+- name: Generate podman volume mount lists
+  block:
+    - name: config files and default mounts
+      set_fact:
+        volume_mounts:
+          - "{{ app_path }}/config.json:/.filebrowser.json"
+          - "{{ app_path }}/database.db:/database.db"
+          - "{{ app_path }}/srv/temp:/srv/temp"
+          - "{{ app_path }}/srv/__请勿在根目录保存文件__.txt:/srv/__请勿在根目录保存文件__.txt"
+          - "{{ app_path }}/srv/__DO NOT SAVE FILE HERE__.txt:/srv/__DO NOT SAVE FILE HERE__.txt"
+    - name: served files
+      set_fact:
+        volume_mounts: "{{ volume_mounts + [ item.path ~ ':/srv/' ~ item.name ] }}"
+      loop: "{{ file_paths }}"
+
+### Podman container and service
+- name: Create filebrowser container
+  become: true
+  become_user: "{{ username }}"
+  containers.podman.podman_container:
+    name: "{{ container }}"
+    image: docker.io/filebrowser/filebrowser
+    label:
+      io.containers.autoupdate: registry
+      PODMAN_SYSTEMD_UNIT: "container-{{ container }}.service"
+    network: "{{ networks }}"
+    volume: "{{ volume_mounts }}"
+    recreate: true
+    state: created
+    generate_systemd:
+      path: "/home/{{ username }}/.config/systemd/user"
+      new: true
+      no_header: true
+      force: true
+
+- name: Enable and start filebrowser service
+  become: true
+  become_user: "{{ username }}"
+  systemd_service:
+    name: "container-{{ container }}.service"
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started

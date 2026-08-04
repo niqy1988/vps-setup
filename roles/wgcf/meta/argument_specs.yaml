@@ -1,0 +1,19 @@
+---
+argument_specs:
+  main:
+    short_description: set up a new user
+    options:
+      wgcf_organization_name:
+        type: str
+        required: true
+        description: Cloudflare Zero Trust organization name
+
+      wgcf_service_auth_client_id:
+        type: str
+        required: true
+        description: Service Auth client ID with access to device registration
+
+      wgcf_service_auth_client_secret:
+        type: str
+        required: true
+        description: Service Auth secret

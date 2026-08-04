@@ -1,0 +1,10 @@
+traefik_container: traefik
+traefik_path: "/app/traefik"
+traefik_version: latest
+
+podman_network: podman_network  # noqa: var-naming[no-role-prefix]
+
+acme_email: ""  # noqa: var-naming[no-role-prefix]
+cloudflare_dns_api_token: ""  # noqa: var-naming[no-role-prefix]
+
+traefik_users: []

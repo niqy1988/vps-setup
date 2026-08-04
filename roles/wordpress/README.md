@@ -1,1 +1,0 @@
-# Install and run wordpress on docker
