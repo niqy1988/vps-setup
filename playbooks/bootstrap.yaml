@@ -144,6 +144,7 @@
         state: directory
         group: users
         mode: "02775"
+        setype: container_file_t
     - name: Sets default ACL for data folder
       ansible.posix.acl:
         path: /data
