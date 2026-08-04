@@ -1,0 +1,21 @@
+[Unit]
+Description=Rclone Mount Service for %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+EnvironmentFile=%h/.config/rclone/mounts/%i.env
+ExecStartPre=/usr/bin/mkdir -p {{ rclone_mount_base }}/%i/
+ExecStart=/usr/bin/rclone mount %i: {{ rclone_mount_base }}/%i/ \
+  --vfs-cache-mode ${RCLONE_VFS_CACHE_MODE} \
+  --vfs-cache-max-size ${RCLONE_VFS_CACHE_MAX_SIZE} \
+  --vfs-cache-min-free-space ${RCLONE_VFS_CACHE_MIN_FREE_SPACE} \
+  --allow-other
+ExecStop=/usr/bin/fusermount3 -uz {{ rclone_mount_base }}/%i/
+ExecStopPost=/usr/bin/rmdir {{ rclone_mount_base }}/%i/
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

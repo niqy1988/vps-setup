@@ -1,0 +1,12 @@
+# rclone 配置示例（脱敏占位）。
+#
+# 1) 每个 remote 一个 .conf 文件放在 inventory/rclone/conf.d/<name>.conf，
+#    内容为该 remote 的 INI section（token 等敏感信息放这里，inventory 已 gitignore）。
+# 2) 最终 rclone_mounts 由调用 playbook 计算后传给 rclone role；role 只吃最终值。
+#    每个 item 可选字段：
+#    - vfs_cache_mode: off|minimal|writes|full（默认 full）
+#    - vfs_cache_size: 如 2G（默认 off = 不限）
+#    - vfs_cache_min_free_space: 如 1G（默认 off = 不限）
+rclone_mounts:
+  - name: pcloud
+    vfs_cache_size: 2G

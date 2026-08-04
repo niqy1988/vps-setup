@@ -105,7 +105,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 - `docs/adr/0002-traefik-acme.md`：consequence 更新（acme role 已删除）
 
 ### Known leftover issues
-- `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`；`rclone`（实际 role 为 `__rclone`，命名不匹配）
+- `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`（旧 `rclone` 引用已由正式 `roles/rclone/` 取代，tests 引用待清理）
 
 ### TODO
 - [ ] `filebrowser`/`plex`/`qbittorrent` 对外访问改由 Traefik 容器标签（`traefik.http.*`）+ Podman 完成，替代旧 nginx 反代（参照 `xray`/`traefik` 的 Quadlet labels 做法）
