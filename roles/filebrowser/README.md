@@ -56,18 +56,18 @@ Web 文件管理与 WebDAV 访问。
 ## 依赖项
 
 - **其他 role**：依赖 `podman`、`traefik`、`rclone`（见 `meta/main.yaml`）。
-  `rclone` 依赖通过 `vars` 把 `filebrowser_rclone_mounts` 合并进
-  `rclone_mounts`（`rclone_mounts | default([]) + filebrowser_rclone_mounts`），
-  因此 role 提及的挂载会被 `rclone` 角色实际部署，inventory 中 `rclone`
-  既有的挂载不受影响。`traefik` 提供 `traefik-auth@file` 中间件与路由；
-  `podman` 提供 rootless 环境、网络与用户。
+  `rclone` 依赖通过 `vars` 只传入本角色需要的挂载
+  （`rclone_mounts: "{{ filebrowser_rclone_mounts }}"`），即 `rclone`
+  角色只部署本角色提及的挂载，不接管其他挂载。`traefik` 提供
+  `traefik-auth@file` 中间件与路由；`podman` 提供 rootless 环境、网络
+  与用户。
   ```yaml
   dependencies:
     - role: podman
     - role: traefik
     - role: rclone
       vars:
-        rclone_mounts: "{{ rclone_mounts | default([]) + filebrowser_rclone_mounts }}"
+        rclone_mounts: "{{ filebrowser_rclone_mounts }}"
   ```
 - **Ansible 变量 / 前置条件**：
   - `domains`：每主机的根域名列表（示例见 `sample_inventory/`）。

@@ -4,4 +4,4 @@ dependencies:
   - role: traefik
   - role: rclone
     vars:
-      rclone_mounts: "{{ rclone_mounts | default([]) + filebrowser_rclone_mounts }}"
+      rclone_mounts: "{{ filebrowser_rclone_mounts }}"

@@ -1,0 +1,14 @@
+---
+- name: Update existing packages
+  hosts: dev
+  become: true
+  tasks:
+    - name: Update packages
+      ansible.builtin.package:
+        name: "*"
+        state: latest # noqa: package-latest
+
+- name: Set up filebrowser
+  hosts: dev
+  roles:
+    - role: filebrowser
