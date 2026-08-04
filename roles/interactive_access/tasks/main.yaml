@@ -1,12 +1,12 @@
 - name: Install screen tool
-  package:
+  ansible.builtin.package:
     name: screen
     state: present
 
 - name: Install tree tool
-  package:
+  ansible.builtin.package:
     name: tree
     state: present
 
 - name: Reset SSH connection to apply changes
-  meta: reset_connection
+  ansible.builtin.meta: reset_connection

@@ -1,17 +1,19 @@
 - name: Set up ansible folder
-  file:
+  ansible.builtin.file:
     path: /etc/ansible
     owner: root
     group: root
     state: directory
+    mode: "0755"
 
 - name: Set up facts folder
-  file:
+  ansible.builtin.file:
     path: /etc/ansible/facts.d
     owner: "{{ ansible_username }}"
     group: "{{ ansible_username }}"
     recurse: true
     state: directory
+    mode: "0755"
 
 - name: Reset SSH connection to apply changes
-  meta: reset_connection
+  ansible.builtin.meta: reset_connection

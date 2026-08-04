@@ -1,2 +1,2 @@
-tcp_ports: []
-udp_ports: []
+tcp_ports: [] # noqa: var-naming[no-role-prefix]
+udp_ports: [] # noqa: var-naming[no-role-prefix]
