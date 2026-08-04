@@ -7,6 +7,7 @@
 
 - name: Set up filebrowser
   import_playbook: file_server.yaml
-# - import_playbook: media_server.yaml
 
+- name: Set up media server
+  import_playbook: media_server.yaml
 # - import_playbook: seedbox.yaml

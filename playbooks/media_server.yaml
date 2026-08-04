@@ -1,0 +1,8 @@
+---
+- name: Set up media server (qbittorrent + sonarr + radarr + plex)
+  hosts: media
+  roles:
+    - role: qbittorrent
+    - role: sonarr
+    - role: radarr
+    - role: plex

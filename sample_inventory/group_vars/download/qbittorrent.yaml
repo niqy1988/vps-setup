@@ -1,0 +1,18 @@
+# --- qbittorrent ---
+# 以下为角色默认值（defaults/main.yaml），可覆盖
+qbittorrent_container: qbittorrent
+qbittorrent_path: /app/qbittorrent
+qbittorrent_version: latest
+qbittorrent_subdomain: bt
+qbittorrent_webui_port: 8080
+qbittorrent_webui_username: admin
+qbittorrent_direct_port: 6881
+qbittorrent_download_path: /data/Downloads
+# 分类须与 Sonarr/Radarr 下载客户端配置的分类一致
+qbittorrent_categories:
+  - name: sonarr
+    save_path: /data/Downloads/sonarr
+  - name: radarr
+    save_path: /data/Downloads/radarr
+# WebUI 密码（敏感，用占位符替换）
+qbittorrent_webui_password: "<password>"
