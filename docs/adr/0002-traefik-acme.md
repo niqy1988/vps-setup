@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-09
-- **Scope:** 适用于全部 `xray` 组主机（`contabo_us`、`hostdare_cn2`、`hostdare_la`）。原为 hostdare_la 单机方案，现已全面铺开（2026-08-04）。
+- **Scope:** 适用于全部 `xray` 组主机。原为单机方案，现已全面铺开（2026-08-04）。
 - **Context:** The existing `acme` role uses `acme.sh` to obtain certificates and places them in `/app/certs/`. This adds a separate tool to manage alongside Podman services.
 - **Decision:** Replace `acme.sh` with Traefik's built-in ACME client using Cloudflare DNS challenge. Certificates are stored as `acme.json` in Traefik's config directory.
 - **Consequences:**

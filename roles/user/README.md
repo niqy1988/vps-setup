@@ -67,7 +67,7 @@
       user_groups:
         - users
       sudoer: true
-      ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA..."
+      ssh_public_key: "<ssh_public_key>"
       linger: true
 ```
 
