@@ -1,0 +1,15 @@
+# --- traefik ---
+# 以下为角色默认值（defaults/main.yaml），可覆盖
+traefik_path: /app/traefik
+traefik_version: latest
+# 默认空，实际部署必须设置（敏感，用占位符替换）
+acme_email: "<acme_email>"
+cloudflare_dns_api_token: "<cf_dns_api_token>"
+traefik_users:
+  - username: "<username>"
+    password: "<password>"
+
+# --- xray（域名列表，traefik 证书 / xray 路由共用） ---
+# 默认值来自 xray defaults（domain.net 为示例占位），可覆盖
+domains:
+  - domain.net

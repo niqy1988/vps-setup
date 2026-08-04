@@ -1,0 +1,4 @@
+# --- podman（traefik / xray / rclone 复用） ---
+podman_username: podman_user
+podman_uid: 1000000
+podman_network: podman_network

@@ -1,3 +1,4 @@
+# 属于 [others] 组：无 root 的主机，靠 bootstrap 账号连接
 bootstrap_username: bootstrap_account_with_sudo
 
 other_host_vars: some value
