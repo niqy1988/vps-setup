@@ -14,6 +14,24 @@ argument_specs:
             vfs_cache_mode: <mode> (optional, default full; off|minimal|writes|full)
             vfs_cache_size: <size> (e.g. 2G, optional, default off = unlimited)
             vfs_cache_min_free_space: <size> (optional, default off = unlimited)
+        options:
+          name:
+            type: str
+            required: true
+            description: Remote name, must match inventory/rclone/conf.d/<name>.conf
+          vfs_cache_mode:
+            type: str
+            required: false
+            choices: ['off', 'minimal', 'writes', 'full']
+            description: rclone --vfs-cache-mode; quote 'off' (YAML 1.1 would parse bare off as boolean false); actual default 'full' comes from task template
+          vfs_cache_size:
+            type: str
+            required: false
+            description: Max vfs cache size (e.g. 2G); quote 'off' for unlimited, actual default 'off' comes from task template
+          vfs_cache_min_free_space:
+            type: str
+            required: false
+            description: Min free space to keep (e.g. 1G); quote 'off' for unlimited, actual default 'off' comes from task template
 
       rclone_removed_mounts:
         type: list
