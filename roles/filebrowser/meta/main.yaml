@@ -3,5 +3,3 @@ dependencies:
   - role: podman
   - role: traefik
   - role: rclone
-    vars:
-      rclone_mounts: "{{ filebrowser_rclone_mounts }}"

@@ -4,7 +4,7 @@ filebrowser_container: filebrowser
 filebrowser_path: /app/filebrowser
 filebrowser_version: latest
 filebrowser_subdomain: file
-# 每个条目对应一个 rclone mount（由 rclone role 部署），
+# 每个条目是一个 rclone mount 的 name（完整配置在 host vars 的 rclone_mounts），
 # 角色会在 /data/<name> 创建指向 /mnt/rclone/<name> 的符号链接
 filebrowser_rclone_mounts:
-  - name: "<remote>"
+  - mydrive

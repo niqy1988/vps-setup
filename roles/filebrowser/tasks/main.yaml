@@ -34,8 +34,8 @@
   become: true
   become_user: "{{ podman_username }}"
   ansible.builtin.file:
-    src: "/mnt/rclone/{{ item.name }}"
-    dest: "/data/{{ item.name }}"
+    src: "/mnt/rclone/{{ item }}"
+    dest: "/data/{{ item }}"
     state: link
   loop: "{{ filebrowser_rclone_mounts }}"
 

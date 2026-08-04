@@ -29,33 +29,14 @@ argument_specs:
 
       filebrowser_rclone_mounts:
         type: list
-        elements: dict
+        elements: str
         required: false
         default: []
         description: |
-          list of rclone mounts to expose under /data, each item:
-          - name: <name> (mount deployed by the rclone role under /mnt/rclone/<name>)
-            vfs_cache_mode: <mode> (optional; off|minimal|writes|full)
-            vfs_cache_size: <size> (optional)
-            vfs_cache_min_free_space: <size> (optional)
-        options:
-          name:
-            type: str
-            required: true
-            description: Remote name, must match a mount deployed by the rclone role
-          vfs_cache_mode:
-            type: str
-            required: false
-            choices: ["off", "minimal", "writes", "full"]
-            description: rclone --vfs-cache-mode; quote 'off' (YAML 1.1 parses bare off as boolean)
-          vfs_cache_size:
-            type: str
-            required: false
-            description: Max vfs cache size (e.g. 2G); quote 'off' for unlimited
-          vfs_cache_min_free_space:
-            type: str
-            required: false
-            description: Min free space to keep (e.g. 1G); quote 'off' for unlimited
+          Names of rclone mounts to expose under /data (e.g. [mydrive]).
+          Full mount config lives in host vars under the shared rclone
+          variable rclone_mounts; the rclone dependency deploys only the
+          mounts whose name is listed here.
 
       podman_network:
         type: str

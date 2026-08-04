@@ -108,4 +108,5 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 ### TODO
 - [ ] `filebrowser`/`plex`/`qbittorrent` 对外访问改由 Traefik 容器标签（`traefik.http.*`）+ Podman 完成，替代旧 nginx 反代（参照 `xray`/`traefik` 的 Quadlet labels 做法）
 - [ ] 清理/重写 `tests/` 目录，删除或迁移引用已不存在 role 的测试场景
+- [ ] `filebrowser` 完成后，更新 `rclone` role 文档以体现新使用思路：`filebrowser`（及后续类似 role）只声明所需 mount 名称列表（`filebrowser_rclone_mounts`），mount 完整配置由 host vars 的共享变量 `rclone_mounts` 定义，`rclone` 依赖据此过滤部署
 

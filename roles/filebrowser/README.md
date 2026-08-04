@@ -10,8 +10,9 @@ Web 文件管理与 WebDAV 访问。
 
 1. 创建 `/app/filebrowser`（`database.db`、`cache`、`log` 与
    `config.yaml`）；
-2. 依赖 `rclone` 角色部署 `filebrowser_rclone_mounts` 中列出的挂载，
-   并在 `/data/<name>` 创建指向 `/mnt/rclone/<name>` 的符号链接，作为
+2. 依赖 `rclone` 角色部署挂载（完整配置见 host vars 的共享变量
+   `rclone_mounts`），并为 `filebrowser_rclone_mounts` 中的每个名字在
+   `/data/<name>` 创建指向 `/mnt/rclone/<name>` 的符号链接，作为
    filebrowser 的数据源暴露（`/data` 即 `sources` 中的 `Data` 根）；
 3. 用 `containers.podman.podman_container` + `state: quadlet` 生成容器
    定义（rootless，`user: "0:0"` + `group_add: keep-groups`，挂载
@@ -35,47 +36,33 @@ Web 文件管理与 WebDAV 访问。
 | `filebrowser_path` | str | 否 | `/app/filebrowser` | 配置与数据目录 |
 | `filebrowser_version` | str | 否 | `latest` | 镜像版本（生产环境建议在 inventory 固定版本） |
 | `filebrowser_subdomain` | str | 否 | `file` | 路由与 DNS 记录的子域前缀（生成 `file.<domain>`） |
-| `filebrowser_rclone_mounts` | list\[dict\] | 否 | `[]` | 要暴露到 `/data` 下的 rclone 挂载列表（子项见下） |
+| `filebrowser_rclone_mounts` | list\[str\] | 否 | `[]` | 要暴露到 `/data` 下的 rclone 挂载名称列表（完整配置见 host vars 的 `rclone_mounts`） |
 | `podman_network` | str | 否 | `podman_network` | 容器加入的 Podman 网络（`podman` 角色共享变量） |
 | `domains` | list\[str\] | 否 | `[]` | 根域名列表（用于 Host 路由，inventory 每主机设置） |
 | `cloudflare_dns_api_token` | str | 否 | `""` | Cloudflare DNS API token（为空则不建 DNS 记录） |
 
-`filebrowser_rclone_mounts` 子项（argument_specs 嵌套校验，schema 与
-`rclone` 角色的 `rclone_mounts` 一致）：
-
-| 子变量 | 类型 | 必填 | 默认值 | 说明 |
-| --- | --- | --- | --- | --- |
-| `name` | str | ✅ 是 | — | rclone 远端名（须为 `rclone` 角色部署的挂载） |
-| `vfs_cache_mode` | str | 否 | — | `off\|minimal\|writes\|full` |
-| `vfs_cache_size` | str | 否 | — | VFS 缓存上限（如 `2G`）；`"off"` = 不限 |
-| `vfs_cache_min_free_space` | str | 否 | — | 保留的最小剩余空间（如 `1G`）；`"off"` = 不限 |
-
-> ⚠️ **`off` 必须加引号**：YAML 1.1 会把裸 `off` 解析成布尔 `false`，
-> 要表示"不限"请写 `"off"`。
-
 ## 依赖项
 
 - **其他 role**：依赖 `podman`、`traefik`、`rclone`（见 `meta/main.yaml`）。
-  `rclone` 依赖通过 `vars` 只传入本角色需要的挂载
-  （`rclone_mounts: "{{ filebrowser_rclone_mounts }}"`），即 `rclone`
-  角色只部署本角色提及的挂载，不接管其他挂载。`traefik` 提供
-  `traefik-auth@file` 中间件与路由；`podman` 提供 rootless 环境、网络
-  与用户。
+  `rclone` 角色直接读取 host vars 的同名共享变量 `rclone_mounts`（挂载
+  完整配置的唯一入口），本角色不覆盖、不过滤；`filebrowser_rclone_mounts`
+  仅用于本角色在 `/data` 下建符号链接：
   ```yaml
   dependencies:
     - role: podman
     - role: traefik
     - role: rclone
-      vars:
-        rclone_mounts: "{{ filebrowser_rclone_mounts }}"
   ```
+  `traefik` 提供 `traefik-auth@file` 中间件与路由；`podman` 提供 rootless
+  环境、网络与用户。
 - **Ansible 变量 / 前置条件**：
   - `domains`：每主机的根域名列表（示例见 `sample_inventory/`）。
   - `cloudflare_dns_api_token`：为空则跳过 DNS 记录（示例见
     `sample_inventory/`）。
-  - `filebrowser_rclone_mounts` 中的 `name` 对应的 rclone 远端配置
+  - `filebrowser_rclone_mounts` 中的每个名字需在 host vars 的 `rclone_mounts`
+    中定义（含 `vfs_cache_*` 等配置），且对应的 rclone 远端配置
     （`rclone_conf_src_dir` 下的 `<name>.conf`）需存在，示例见
-    `sample_inventory/rclone/conf.d/`。
+    `sample_inventory/`。
 
 ## 参数与 defaults 对照
 
@@ -92,11 +79,11 @@ Web 文件管理与 WebDAV 访问。
     - role: filebrowser
       filebrowser_subdomain: file
       filebrowser_rclone_mounts:
-        - name: mydrive
-          vfs_cache_mode: full
-          vfs_cache_size: "2G"
-          vfs_cache_min_free_space: "1G"
+        - mydrive
 ```
+
+`mydrive` 的完整挂载配置（`vfs_cache_mode` 等）在 host vars 的
+`rclone_mounts` 中定义。
 
 部署后：Web 管理界面 `https://file.example.com`（需 traefik basic auth），
 WebDAV `https://file.example.com/dav`。
