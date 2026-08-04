@@ -1,6 +1,6 @@
-# roles 的 ansible-lint 整理记录
+# ansible-lint 整理记录（roles + playbooks）
 
-> 本文记录 `roles/` 下 9 个 role 的 lint 达标过程：每个 role 改了什么、哪些违规是**有意忽略**的及原因、以及过程中用户提出的疑问与最终结论。
+> 本文记录 `roles/` 下 9 个 role 与 `playbooks/` 下 6 个 playbook 的 lint 达标过程：每个文件改了什么、哪些违规是**有意忽略/豁免**的及原因、以及过程中用户提出的疑问与最终结论。
 > 配套记忆：`/memories/repo/lint.md`（精简版 + 实时状态）。
 
 ## 环境与当前状态
@@ -10,8 +10,43 @@
 - 分支 `new_arch`，工作区干净。
 - **当前验证命令与结果**：
   - `ansible-lint roles/` → `0 failure(s), 0 warning(s)` on 61 files，production profile。
+  - `ansible-lint playbooks/` → `0 failure(s), 0 warning(s)`（production profile，19 files），见「playbooks 的 lint 整理记录」。
   - 单 role：`ansible-lint roles/<role>` 同样 0/0。
   - 全项目 `ansible-lint`（无参数）→ 报 **3 个 fatal** `syntax-check[specific]`，全在 `tests/`（`file_server.yaml:23` filebrowser / `media_server.yaml:21` plex / `seedbox.yaml:21` qbittorrent）——**有意保留**，见「疑问 8」。
+
+## playbooks 的 lint 整理记录（2026-08-04）
+
+> 覆盖 `playbooks/` 下 6 个文件（`all.yaml` / `bootstrap.yaml` / `debug_print.yaml` / `sandbox.yaml` / `update_packages.yaml` / `xray.yaml`）。`tests/` 不参与——指定 `playbooks/` 路径即避开。
+
+### 当前状态
+- `ansible-lint playbooks/` → **0 failure / 0 warning**（production profile，19 files）。
+- 有意豁免 3 处：`state: latest` 行尾内联 `# noqa: package-latest`（纯升级语义，见「noqa 清单」）。
+
+### 达标过程（78 → 0）
+- **78 → 11**（修无争议项）：FQCN 补全（`package`/`file`/`copy`/`systemd_service`/`reboot`/`find`/`replace`/`cron`/`debug`→`ansible.builtin.*`，`acl`→`ansible.posix.acl`，`sysctl`→`ansible.posix.sysctl`）；`name[play]`/`name[missing]`/`name[casing]`；`risky-file-permissions` 目录 `file`/`copy` 补 `mode`；handler `shell`→`command` + `changed_when: false`。
+- **11 → 6**（用户）：各 `Install X` 任务由 `state: latest` 改 `state: present`（Chinese locale / Python / ACL / SELinux / firewalld / PowerTools / EPEL）。
+- **6 → 4**：3 处升级语义 `name: "*"` 的 `package-latest` 加行尾 `# noqa: package-latest`。
+- **4 → 0**：`bootstrap.yaml` timezone 的 reboot 由任务改 handler（`notify` + handlers 块，去掉 `register: tz_result`），消除 `no-handler`。
+
+### 各文件改动
+- **all.yaml**：两个 `import_playbook` 补 `name`（`name[play]`）。
+- **update_packages.yaml**：play 名 `dnf upgrade all` → `Upgrade all packages with dnf`（`name[casing]`）；`package` → `ansible.builtin.package`；升级语义保留 latest + noqa。
+- **xray.yaml**：`package` → `ansible.builtin.package`；升级语义保留 latest + noqa。
+- **debug_print.yaml**：`debug` → `ansible.builtin.debug`；两个 `debug` 任务补 `name`（`name[missing]`）。
+- **bootstrap.yaml**：FQCN 补全；两个 `Refresh dnf cache` handler `shell: dnf makecache` → `ansible.builtin.command` + `changed_when: false`；`Create app folder` 补 `mode: "0755"`；SELinux 任务名 `enable`→`Enable`（`name[casing]`）；timezone reboot 任务→handler；各 `Install X` 改 `state: present`；`Update existing packages` 保留 latest + noqa。
+- **sandbox.yaml**：FQCN 补全（`package`/`file`/`copy`/`systemd_service`→`ansible.builtin.*`，`acl`→`ansible.posix.acl`）；任务名首字母大写；目录/`copy` 补 `mode`。**第一段 `Set up rclone` play 已由用户删除**（rclone role 开发完成不再需要）。
+
+### noqa 清单（有意豁免）
+| 文件 | 任务 | noqa | 原因 |
+| --- | --- | --- | --- |
+| `bootstrap.yaml` | Update existing packages | `# noqa: package-latest` | 显式升级任务（`name: "*"`） |
+| `update_packages.yaml` | Update packages | `# noqa: package-latest` | 整本 playbook 即 `dnf upgrade all` |
+| `xray.yaml` | Update packages | `# noqa: package-latest` | 同上，显式升级 |
+
+### playbooks 相关疑问与结论
+- **为什么不要 `state: latest`，哪些可改 `present`？** `latest` 破坏幂等（每次可能 changed）、结果不可控、升级有副作用。标准：**"确保已装"→`present`；"升级到最新"→`latest`（且放独立 playbook）**。bootstrap 里 7 处 `Install X` 改 present；3 处 `name: "*"` 的升级任务保留 latest。
+- **reboot 改 handler 后何时触发？** handler 在**当前 play 结束**时 flush（非 playbook 结束）。`Update timezone` play 只有 2 个任务，行为与原来任务形式等价；timezone 未变则 reboot 不触发（handler 仅被 notify 且 changed 才运行），保留原语义。
+- **role 内 3 处 `flush_handlers` 是否必要？** 均**必要**，保留：`firewall_service`（`firewalld` 模块需 service 已 reload 才认）；`podman`（被 traefik/xray 经 `meta` 依赖、同 play 先执行，网络须在容器启动前建好）；`traefik`（容器 `security_opt: label=type:traefik_container.process` 须在 SELinux policy 加载后才启动）。通用判断标准：**handler 的效果是否被同一 play 内后续任务依赖**。
 
 ## 各 role 的 lint 过程（按 git 提交）
 
