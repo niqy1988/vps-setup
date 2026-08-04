@@ -1,4 +1,0 @@
-#!/bin/sh
-
-fusermount -uz {{ item.mount_path }}/{{ item.dir | default('') }}
-sudo rm -r {{ item.mount_path }}
