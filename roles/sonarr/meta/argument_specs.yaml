@@ -1,0 +1,68 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy Sonarr as rootless Quadlet container with Traefik routing
+    options:
+      sonarr_container:
+        type: str
+        default: sonarr
+        required: false
+        description: Container name for Sonarr
+
+      sonarr_path:
+        type: str
+        default: /app/sonarr
+        required: false
+        description: Host path for Sonarr data and configuration files
+
+      sonarr_version:
+        type: str
+        default: latest
+        required: false
+        description: Version of the Sonarr image to deploy
+
+      sonarr_subdomain:
+        type: str
+        default: sonarr
+        required: false
+        description: Subdomain prefix used for Host routing and DNS record
+
+      sonarr_port:
+        type: int
+        default: 8989
+        required: false
+        description: Container web port (not published; reached via Traefik)
+
+      sonarr_rclone_mount:
+        type: str
+        default: ""
+        required: false
+        description: |
+          Name of the rclone mount whose <mount>/Media directory is exposed as
+          the media library (e.g. mydrive). Empty skips the cloud link and uses
+          a plain local directory instead.
+
+      sonarr_media_path:
+        type: str
+        default: /data/Media
+        required: false
+        description: Media library root path (symlinked to the rclone mount when sonarr_rclone_mount is set)
+
+      podman_network:
+        type: str
+        default: podman_network
+        required: false
+        description: Shared Podman network used by Sonarr
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list for Host routing
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: Cloudflare DNS API token to set up the Sonarr DNS record

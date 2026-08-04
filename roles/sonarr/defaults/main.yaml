@@ -1,0 +1,12 @@
+sonarr_container: sonarr
+sonarr_path: /app/sonarr
+sonarr_version: latest
+sonarr_subdomain: sonarr
+sonarr_port: 8989
+sonarr_rclone_mount: ""
+sonarr_media_path: /data/Media
+
+podman_network: podman_network # noqa: var-naming[no-role-prefix]
+
+domains: [] # noqa: var-naming[no-role-prefix]
+cloudflare_dns_api_token: "" # noqa: var-naming[no-role-prefix]
