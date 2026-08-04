@@ -142,11 +142,12 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
   启动期探测旧库等杂散文件会触发一次性 AVC，自愈后无新增属正常。
 - **幂等性**：filebrowser 自身已全幂等（db touch 用 preserve）；依赖 role 仍有少量
   非幂等（如 traefik auth 中间件因 bcrypt 随机盐每次 changed），属既有问题待单独优化。
-- **SELinux enforcing 下容器访问 `/data` 失败（补充，2026-08-05）**：bootstrap 的
-  "Create data folder" 任务原未设 `setype`，`/data` 保持 `default_t`；permissive（dev）
-  下容器照常访问，enforcing（prod）下容器 `container_t` 访问 `default_t` 的 `/data`
-  被拒（`ls: Permission denied`，且不一定会记 AVC）。已给 bootstrap 数据目录任务补
-  `setype: container_file_t`（与各容器 role 一致）。注意：`file` 模块的 setype 是
-  运行时标签（非 fcontext），全盘 `restorecon` 会还原成 `default_t`；如需持久可加
-  `semanage fcontext`。
+- **SELinux enforcing 下容器访问 `/data` 失败（补充，2026-08-05）**：`/data` 原为
+  `default_t`（bootstrap 建目录未设 setype），permissive 下容器照常访问，enforcing 下
+  容器 `container_t` 访问被拒（`ls: Permission denied`，且不一定会记 AVC）。修复放在
+  **`podman` role**（只在容器机上生效）：对 `/app`、`/data` 用 `file` 模块 `setype:
+  container_file_t`（运行时标签，`# noqa: risky-file-permissions`）；并用
+  `community.general.sefcontext` 为 `/app(/.*)?`、`/data(/.*)?`、`/mnt/rclone(/.*)?`
+  写**持久 fcontext 规则**（跨重启 / restorecon）。注意：`file` 模块 setype 是运行时
+  标签（≈chcon），全盘 `restorecon` 会还原成 `default_t`——持久性靠 sefcontext 规则。
 
