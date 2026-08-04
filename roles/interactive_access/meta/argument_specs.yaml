@@ -19,7 +19,7 @@ argument_specs:
         required: false
         description: >
           login ssh public key as text (not a file path), e.g.
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NjustaexsamplePbUa6KGxujatwihavID09cIQcE1UC8x"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
       interactive_uid:
         type: int
