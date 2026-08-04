@@ -45,10 +45,12 @@ argument_specs:
       rclone_conf_src_dir:
         type: str
         required: false
-        default: inventory/rclone/conf.d
+        default: "{{ inventory_dir }}/rclone/conf.d"
         description: |
           Controller-side directory holding one .conf file per remote
           (sensitive tokens live there; keep it out of VCS).
+          Resolved from the inventory directory, so it works regardless of
+          the playbook location.
 
       rclone_user:
         type: str

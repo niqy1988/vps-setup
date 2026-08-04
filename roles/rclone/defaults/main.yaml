@@ -1,7 +1,7 @@
 ---
 rclone_user: rclone_user
 rclone_uid: 600000
-rclone_conf_src_dir: inventory/rclone/conf.d
+rclone_conf_src_dir: "{{ inventory_dir }}/rclone/conf.d"
 rclone_mount_base: /mnt/rclone
 
 # list of mounts to deploy, each item:

@@ -35,7 +35,7 @@ vfs 缓存参数通过 env 文件传给挂载（而不是编码进服务实例�
 | --- | --- | --- | --- | --- |
 | `rclone_mounts` | list\[dict\] | 否 | `[]` | 要部署的挂载列表（子项见下） |
 | `rclone_removed_mounts` | list\[str\] | 否 | `[]` | 要移除的挂载名（停服务 + 删配置块 + 删 env 文件） |
-| `rclone_conf_src_dir` | str | 否 | `inventory/rclone/conf.d`（defaults 默认值，可覆盖） | 控制端存放各远端 `.conf` 的目录（含敏感 token 勿入库，示例见 `sample_inventory/rclone/conf.d/`） |
+| `rclone_conf_src_dir` | str | 否 | `{{ inventory_dir }}/rclone/conf.d`（defaults 默认值，可覆盖） | 控制端存放各远端 `.conf` 的目录（含敏感 token 勿入库，示例见 `sample_inventory/rclone/conf.d/`）；基于 `inventory_dir` 解析，不受 playbook 位置影响 |
 | `rclone_user` | str | 否 | `rclone_user` | 运行 rootless 挂载的用户 |
 | `rclone_uid` | int | 否 | `600000` | rclone 用户 UID/GID |
 | `rclone_mount_base` | str | 否 | `/mnt/rclone` | 挂载点基础目录 |

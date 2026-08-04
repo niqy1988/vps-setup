@@ -51,7 +51,7 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
 ```shell
 # 1. 安装 uv 与 ansible（含 ansible-core / ansible-lint）
 curl -LsSf https://astral.sh/uv/install.sh | sh
-uv tool install --with "bcrypt<5" --with libpass --with-executables-from ansible-core,ansible-lint ansible
+uv tool install --python 3.14 --with "bcrypt<5" --with libpass --with-executables-from ansible-core,ansible-lint ansible
 
 # 2. 安装依赖的 collection
 ansible-galaxy install -r requirements.yaml
