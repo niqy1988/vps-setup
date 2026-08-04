@@ -26,7 +26,7 @@
 
 - name: Label shared app and data dirs for container access
   become: true
-  ansible.builtin.file:  # noqa: risky-file-permissions
+  ansible.builtin.file: # noqa: risky-file-permissions
     path: "{{ item }}"
     state: directory
     setype: container_file_t
@@ -34,16 +34,15 @@
     - /app
     - /data
 
-- name: Add persistent SELinux fcontext rules for app, data and rclone dirs
+- name: Add persistent SELinux fcontext rules for app and data dirs
   become: true
   community.general.sefcontext:
     target: "{{ item }}"
     setype: container_file_t
     state: present
   loop:
-    - '/app(/.*)?'
-    - '/data(/.*)?'
-    - '/mnt/rclone(/.*)?'
+    - "/app(/.*)?"
+    - "/data(/.*)?"
 
 - name: Setup quadlet directory
   become: true

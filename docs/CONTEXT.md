@@ -147,7 +147,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
   容器 `container_t` 访问被拒（`ls: Permission denied`，且不一定会记 AVC）。修复放在
   **`podman` role**（只在容器机上生效）：对 `/app`、`/data` 用 `file` 模块 `setype:
   container_file_t`（运行时标签，`# noqa: risky-file-permissions`）；并用
-  `community.general.sefcontext` 为 `/app(/.*)?`、`/data(/.*)?`、`/mnt/rclone(/.*)?`
+  `community.general.sefcontext` 为 `/app(/.*)?`、`/data(/.*)?`
   写**持久 fcontext 规则**（跨重启 / restorecon）。注意：`file` 模块 setype 是运行时
   标签（≈chcon），全盘 `restorecon` 会还原成 `default_t`——持久性靠 sefcontext 规则。
 
