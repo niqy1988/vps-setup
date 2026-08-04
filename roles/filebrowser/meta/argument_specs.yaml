@@ -1,0 +1,58 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy filebrowser as rootless Quadlet container with Traefik routing
+    options:
+      filebrowser_container:
+        type: str
+        default: filebrowser
+        required: false
+        description: Container name for filebrowser
+
+      filebrowser_path:
+        type: str
+        default: /app/filebrowser
+        required: false
+        description: Host path for filebrowser data and configuration files
+
+      filebrowser_version:
+        type: str
+        default: latest
+        required: false
+        description: Version of filebrowser image to deploy
+
+      filebrowser_subdomain:
+        type: str
+        default: file
+        required: false
+        description: Subdomain prefix used for Host routing and DNS record
+
+      filebrowser_rclone_mounts:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: |
+          Names of rclone mounts to expose under /data (e.g. [mydrive]).
+          Full mount config lives in host vars under the shared rclone
+          variable rclone_mounts; the rclone dependency deploys only the
+          mounts whose name is listed here.
+
+      podman_network:
+        type: str
+        default: podman_network
+        required: false
+        description: Shared Podman network used by filebrowser
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list for Host routing
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: Cloudflare DNS API token to set up filebrowser DNS record

@@ -32,6 +32,12 @@ Ansible 按主机组部署的 YAML 文件，位于 `playbooks/` 下（如 `all.y
 ### role
 Ansible 的可复用角色，包含 tasks、handlers、templates、defaults、meta 等目录。如 `traefik/`, `xray/`, `podman/`。argument_specs.yaml 声明角色所需的外部变量。
 
+### filebrowser
+Web 文件管理与 WebDAV 服务，部署为 rootless Quadlet 容器，经 Traefik 路由
+（主路由挂 `traefik-auth@file`；WebDAV `/dav/<source>/` 用 filebrowser 自带
+Basic Auth）。数据源来自 rclone 挂载（消费类角色只声明名称列表，完整配置在
+host vars 的 `rclone_mounts`），在 `/data` 下建符号链接暴露。
+
 ### bootstrap
 初始化所有 VPS 基础环境的 playbook（`bootstrap.yaml`），包括 SSH 密钥登录、firewalld、BBR、/app 和 /data 目录等。
 
@@ -102,10 +108,38 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 - `docs/CONTEXT.md`：决策 #1/#2/#15/#22 更新
 - `docs/adr/0002-traefik-acme.md`：consequence 更新（acme role 已删除）
 
+### 2026-08-05（filebrowser 清理）
+- 删除 `legacy_roles/_filebrowser/`（已被正式 `roles/filebrowser/` 取代）
+- 删除 `tests/file_server.yaml`（已被 `playbooks/file_server.yaml` 取代）
+- `playbooks/all.yaml`：`import_playbook: file_server.yaml`（原注释掉的 `file_server.yaml` 引用移除）
+
 ### Known leftover issues
 - `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`（旧 `rclone` 引用已由正式 `roles/rclone/` 取代，tests 引用待清理）
 
 ### TODO
-- [ ] `filebrowser`/`plex`/`qbittorrent` 对外访问改由 Traefik 容器标签（`traefik.http.*`）+ Podman 完成，替代旧 nginx 反代（参照 `xray`/`traefik` 的 Quadlet labels 做法）
+- [x] `filebrowser` 对外访问已改由 Traefik 容器标签（2026-08-05，`roles/filebrowser/` Quadlet labels 落地）；`plex`/`qbittorrent` 仍待迁移（替代旧 nginx 反代）
 - [ ] 清理/重写 `tests/` 目录，删除或迁移引用已不存在 role 的测试场景
+- [x] 已更新 `rclone` role 文档体现新使用思路（2026-08-05）：消费类角色（如 `filebrowser`）只声明所需 mount 名称列表，mount 完整配置由 host vars 的共享变量 `rclone_mounts` 定义
+
+## 运行经验（2026-08-05，filebrowser 部署）
+
+- **`containers.podman` 对 `podman_network state: quadlet` 的支持有版本门槛**：
+  1.11.0 不支持（state 仅 `present/absent`），需升级到支持 quadlet 的版本
+  （1.20.2 实测可用）。`podman_* state: quadlet` 的合法性不能只靠 lint——
+  缺 `containers` 集合时模块参数校验会被跳过。
+- **`lookup('file')` 相对路径以 playbook 所在目录为基准**（非控制机 cwd）：
+  读取 `inventory/...` 等控制端文件时，相对路径默认值在 `playbooks/` 子目录下会
+  失效（解析成 `playbooks/inventory/...`）。改用 `{{ inventory_dir }}/...` 绝对基准。
+- **`state: touch` 非幂等**：`file` 模块 touch 默认 `modification_time/access_time = now`，
+  每次更新 mtime 恒报 changed；设 `modification_time: preserve` / `access_time: preserve`
+  即幂等，且仍会校验/修正 owner/group/mode/setype（满足"需要时重标签用户/组/context"）。
+- **argument_specs 嵌套校验会拦 CLI 风格连字符键名**：host vars 里 rclone mount
+  用 `vfs-cache-size` 被嵌套 options 校验拒绝；应用下划线变量名 `vfs_cache_size`。
+- **gtsteffaniak fork 的 WebDAV 端点是 `/dav/<source>/`**（需源名，如 `/dav/Data/`），
+  裸 `/dav` 返回 404 属正常；WebDAV 用 filebrowser 自带 Basic Auth（用户名 + JWT token）。
+- **SELinux**：容器（`container_t`）访问 `user_home_t` 类型的文件会产生 AVC
+  （permissive 记录、enforcing 拒绝）；容器读写的文件应标 `container_file_t`。
+  启动期探测旧库等杂散文件会触发一次性 AVC，自愈后无新增属正常。
+- **幂等性**：filebrowser 自身已全幂等（db touch 用 preserve）；依赖 role 仍有少量
+  非幂等（如 traefik auth 中间件因 bcrypt 随机盐每次 changed），属既有问题待单独优化。
 

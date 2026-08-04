@@ -2,3 +2,9 @@
 # 属于 [dev] 组（sandbox，交互式访问）
 
 interactive_ssh_public_key: "<ssh_public_key>"
+
+# rclone mounts 完整配置（共享变量）；filebrowser 等角色用 filebrowser_rclone_mounts 按名字引用
+rclone_mounts:
+  - name: mydrive
+    vfs_cache_mode: full
+    vfs_cache_max_size: 1G

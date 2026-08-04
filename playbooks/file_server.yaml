@@ -1,0 +1,5 @@
+---
+- name: Set up filebrowser
+  hosts: file
+  roles:
+    - role: filebrowser

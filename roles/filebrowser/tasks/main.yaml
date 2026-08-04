@@ -1,0 +1,113 @@
+---
+- name: Set up filebrowser folder
+  become: true
+  ansible.builtin.file:
+    path: "{{ filebrowser_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+
+- name: Set up filebrowser cache and log folder
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    path: "{{ filebrowser_path }}/{{ item }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+  loop:
+    - cache
+    - log
+
+- name: Create filebrowser database file
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    path: "{{ filebrowser_path }}/database.db"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    mode: "0644"
+    setype: container_file_t
+    state: touch
+    modification_time: preserve
+    access_time: preserve
+
+- name: Link rclone mounts under /data
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    src: "/mnt/rclone/{{ item }}"
+    dest: "/data/{{ item }}"
+    state: link
+  loop: "{{ filebrowser_rclone_mounts }}"
+
+- name: Deploy filebrowser config
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.copy:
+    src: config.yaml
+    dest: "{{ filebrowser_path }}/config.yaml"
+    mode: "0644"
+    setype: container_file_t
+  notify:
+    - Restart filebrowser
+
+- name: Generate filebrowser Quadlet container definition
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ filebrowser_container }}"
+    image: "ghcr.io/gtsteffaniak/filebrowser:{{ filebrowser_version }}"
+    state: quadlet
+    timezone: Asia/Shanghai
+    user: "0:0"
+    group_add: keep-groups
+    network: "{{ podman_network }}.network"
+    volume:
+      - "{{ filebrowser_path }}:/home/filebrowser/data:Z"
+      - /data:/data
+      - /mnt/rclone:/mnt/rclone:rshared
+    env:
+      TZ: Asia/Shanghai
+      FILEBROWSER_CONFIG: data/config.yaml
+    label:
+      io.containers.autoupdate: registry
+      traefik.enable: true
+      traefik.http.routers.filebrowser.rule: "{{ domains | service_rule(filebrowser_subdomain) }}"
+      traefik.http.routers.filebrowser.middlewares: traefik-auth@file
+      traefik.http.routers.webdav.rule: "({{ domains | service_rule(filebrowser_subdomain) }}) && PathPrefix(`/dav`)"
+    read_only: true
+    security_opt:
+      - no-new-privileges
+    quadlet_options: |
+      [Install]
+      WantedBy=default.target
+  notify:
+    - Restart filebrowser
+
+- name: Enable and start filebrowser container
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ filebrowser_container }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+  notify:
+    - Restart filebrowser
+
+- name: Setup CloudFlare DNS resolution
+  community.general.cloudflare_dns:
+    zone: "{{ item }}"
+    record: "{{ filebrowser_subdomain }}"
+    type: CNAME
+    value: "{{ item }}"
+    comment: file browser
+    proxied: true
+    solo: true
+    api_token: "{{ cloudflare_dns_api_token }}"
+    state: present
+  loop: "{{ domains }}"
+  when: cloudflare_dns_api_token | default("") | length > 0

@@ -35,7 +35,7 @@ vfs 缓存参数通过 env 文件传给挂载（而不是编码进服务实例�
 | --- | --- | --- | --- | --- |
 | `rclone_mounts` | list\[dict\] | 否 | `[]` | 要部署的挂载列表（子项见下） |
 | `rclone_removed_mounts` | list\[str\] | 否 | `[]` | 要移除的挂载名（停服务 + 删配置块 + 删 env 文件） |
-| `rclone_conf_src_dir` | str | 否 | `inventory/rclone/conf.d`（defaults 默认值，可覆盖） | 控制端存放各远端 `.conf` 的目录（含敏感 token 勿入库，示例见 `sample_inventory/rclone/conf.d/`） |
+| `rclone_conf_src_dir` | str | 否 | `{{ inventory_dir }}/rclone/conf.d`（defaults 默认值，可覆盖） | 控制端存放各远端 `.conf` 的目录（含敏感 token 勿入库，示例见 `sample_inventory/rclone/conf.d/`）；基于 `inventory_dir` 解析，不受 playbook 位置影响 |
 | `rclone_user` | str | 否 | `rclone_user` | 运行 rootless 挂载的用户 |
 | `rclone_uid` | int | 否 | `600000` | rclone 用户 UID/GID |
 | `rclone_mount_base` | str | 否 | `/mnt/rclone` | 挂载点基础目录 |
@@ -90,6 +90,15 @@ vfs 缓存参数通过 env 文件传给挂载（而不是编码进服务实例�
 `sample_inventory/rclone/conf.d/`）。一个文件可含多个 section（如
 `<remote>.conf` 含 `[<remote>_raw]` 与 `[<remote>]` crypt 层）。rclone
 在加载完整个配置后才解析远端引用，因此 section 顺序不影响。
+
+## 消费类角色（如 `filebrowser`）的使用方式
+
+`filebrowser` 等"消费 rclone 挂载"的角色只声明所需挂载的**名称列表**
+（如 `filebrowser_rclone_mounts: [mydrive]`），挂载的**完整配置**统一
+在 host vars 的共享变量 `rclone_mounts` 中定义（本角色的唯一输入）。
+本角色被这类角色依赖时直接读取 host vars 的 `rclone_mounts` 部署，
+不做合并 / 过滤；消费角色仅按名称在自身数据根（如 `/data/<name>`）
+建符号链接暴露。示例见 `roles/filebrowser/README.md` 与 `sample_inventory/`。
 
 ## 使用范例
 

@@ -4,8 +4,9 @@
 
 - name: Set up xray
   import_playbook: xray.yaml
-# - import_playbook: file_server.yaml
 
+- name: Set up filebrowser
+  import_playbook: file_server.yaml
 # - import_playbook: media_server.yaml
 
 # - import_playbook: seedbox.yaml

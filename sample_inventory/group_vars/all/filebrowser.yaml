@@ -1,0 +1,10 @@
+# --- filebrowser ---
+# 以下为角色默认值（defaults/main.yaml），可覆盖
+filebrowser_container: filebrowser
+filebrowser_path: /app/filebrowser
+filebrowser_version: latest
+filebrowser_subdomain: file
+# 每个条目是一个 rclone mount 的 name（完整配置在 host vars 的 rclone_mounts），
+# 角色会在 /data/<name> 创建指向 /mnt/rclone/<name> 的符号链接
+filebrowser_rclone_mounts:
+  - mydrive

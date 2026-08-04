@@ -12,7 +12,7 @@
   - `ansible-lint roles/` → `0 failure(s), 0 warning(s)` on 61 files，production profile。
   - `ansible-lint playbooks/` → `0 failure(s), 0 warning(s)`（production profile，19 files），见「playbooks 的 lint 整理记录」。
   - 单 role：`ansible-lint roles/<role>` 同样 0/0。
-  - 全项目 `ansible-lint`（无参数）→ 报 **3 个 fatal** `syntax-check[specific]`，全在 `tests/`（`file_server.yaml:23` filebrowser / `media_server.yaml:21` plex / `seedbox.yaml:21` qbittorrent）——**有意保留**，见「疑问 8」。
+  - 全项目 `ansible-lint`（无参数）→ 报 **2 个 fatal** `syntax-check[specific]`，全在 `tests/`（`media_server.yaml:21` plex / `seedbox.yaml:21` qbittorrent）——**有意保留**，见「疑问 8」（filebrowser 的 `file_server.yaml` fatal 已随 2026-08-05 清理消失）。
 
 ## playbooks 的 lint 整理记录（2026-08-04）
 
