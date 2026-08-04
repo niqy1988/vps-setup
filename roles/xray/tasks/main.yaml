@@ -55,16 +55,16 @@
     label:
       io.containers.autoupdate: registry
       traefik.enable: true
-      traefik.http.routers.xray-ws.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`/stream/pass`)"
+      traefik.http.routers.xray-ws.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}`)"
       traefik.http.routers.xray-ws.service: xray-ws
       traefik.http.services.xray-ws.loadbalancer.server.port: "{{ xray_ws_port }}"
-      traefik.http.routers.xray-ws-v1.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`/stream/pass/v1`)"
+      traefik.http.routers.xray-ws-v1.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}/v1`)"
       traefik.http.routers.xray-ws-v1.service: xray-ws-v1
       traefik.http.services.xray-ws-v1.loadbalancer.server.port: "{{ xray_ws_v1_port }}"
-      traefik.http.routers.xray-xhttp-v2.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`/stream/pass/v2`)"
+      traefik.http.routers.xray-xhttp-v2.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}/v2`)"
       traefik.http.routers.xray-xhttp-v2.service: xray-xhttp-v2
       traefik.http.services.xray-xhttp-v2.loadbalancer.server.port: "{{ xray_xhttp_v2_port }}"
-      traefik.http.routers.xray-xhttp-wg.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`/stream/pass/wg`)"
+      traefik.http.routers.xray-xhttp-wg.rule: "({{ domains | service_rule('www') }}) && PathPrefix(`{{ xray_url_path }}/wg`)"
       traefik.http.routers.xray-xhttp-wg.service: xray-xhttp-wg
       traefik.http.services.xray-xhttp-wg.loadbalancer.server.port: "{{ xray_xhttp_wg_port }}"
     read_only: true
