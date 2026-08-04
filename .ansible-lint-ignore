@@ -1,0 +1,3 @@
+# user is a low-level base role; its public params keep generic names
+# (uid/sudoer/linger) and are exempt from the role-prefix naming rule.
+roles/user/defaults/main.yaml var-naming[no-role-prefix]

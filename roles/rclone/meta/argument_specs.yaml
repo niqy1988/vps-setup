@@ -22,7 +22,7 @@ argument_specs:
           vfs_cache_mode:
             type: str
             required: false
-            choices: ['off', 'minimal', 'writes', 'full']
+            choices: ["off", "minimal", "writes", "full"]
             description: rclone --vfs-cache-mode; quote 'off' (YAML 1.1 would parse bare off as boolean false); actual default 'full' comes from task template
           vfs_cache_size:
             type: str
