@@ -1,7 +1,7 @@
 ---
 argument_specs:
   main:
-    short_description: set up a new user 
+    short_description: set up a new user
     options:
       wgcf_organization_name:
         type: str

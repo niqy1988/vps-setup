@@ -2,7 +2,7 @@
 - name: Bounce xray service
   become: true
   become_user: "{{ podman_username }}"
-  systemd_service:
+  ansible.builtin.systemd_service:
     name: "{{ xray_container }}"
     scope: user
     state: restarted

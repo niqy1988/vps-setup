@@ -1,20 +1,22 @@
 ### xray config
 - name: Set up xray folder
   become: true
-  file:
+  ansible.builtin.file:
     path: "{{ xray_path }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
     setype: container_file_t
     state: directory
+    mode: "0755"
 
 - name: Set up xray config and log folder
   become: true
   become_user: "{{ podman_username }}"
-  file:
+  ansible.builtin.file:
     path: "{{ xray_path }}/{{ item }}"
     setype: container_file_t
     state: directory
+    mode: "0755"
   loop:
     - config
     - log
@@ -25,7 +27,7 @@
 - name: Add xray config files
   become: true
   become_user: "{{ podman_username }}"
-  template:
+  ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ xray_path }}/config/{{ item | basename | regex_replace('\\.j2$', '') }}"
     mode: "0644"
@@ -77,7 +79,7 @@
 - name: Enable and start xray container
   become: true
   become_user: "{{ podman_username }}"
-  systemd_service:
+  ansible.builtin.systemd_service:
     name: "{{ xray_container }}"
     scope: user
     daemon_reload: true
@@ -87,9 +89,10 @@
 
 - name: Setup logrotate
   become: true
-  template:
+  ansible.builtin.template:
     src: logrotate.j2
     dest: "/etc/logrotate.d/{{ xray_container }}_log"
+    mode: "0644"
 
 - name: Setup CloudFlare DNS resolution
   community.general.cloudflare_dns:

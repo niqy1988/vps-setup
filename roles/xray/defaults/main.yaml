@@ -13,9 +13,9 @@ xray_stats_port: 80
 
 # www
 xray_url_path: /xray/proxy
-domains:
+domains:  # noqa: var-naming[no-role-prefix]
   - domain.net
-cloudflare_dns_api_token: ""
+cloudflare_dns_api_token: ""  # noqa: var-naming[no-role-prefix]
 
 # xray inbound ports
 xray_ws_port: 81
