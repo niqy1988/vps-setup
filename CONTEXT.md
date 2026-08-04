@@ -42,11 +42,12 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 
 | Group | Purpose |
 |-------|---------|
-| `dev` | 需要交互式用户登录的主机 |
+| `prod` | 生产机，podman镜像指定版本，默认不允许交互式用户登录 |
+| `dev` | 开发机，podman镜像选择latest，允许交互式用户登录的主机 |
+| `interactive` | 允许交互式用户登录的生产机 |
 | `hostdare` | HostDare 机房的主机 |
-| `xray` | 部署 Xray 代理服务的主机 |
-| `toy` | 实验性/玩具用途的主机 |
 | `contabo` | Contabo 机房的主机 |
+| `xray` | 部署 Xray 代理服务的主机 |
 
 ## Service Deployment Matrix (xray hosts)
 
