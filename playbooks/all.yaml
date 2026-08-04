@@ -6,8 +6,7 @@
   import_playbook: xray.yaml
 
 - name: Set up filebrowser
-  import_playbook: filebrowser.yaml
-
+  import_playbook: file_server.yaml
 # - import_playbook: media_server.yaml
 
 # - import_playbook: seedbox.yaml

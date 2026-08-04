@@ -110,8 +110,8 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 
 ### 2026-08-05（filebrowser 清理）
 - 删除 `legacy_roles/_filebrowser/`（已被正式 `roles/filebrowser/` 取代）
-- 删除 `tests/file_server.yaml`（已被 `playbooks/filebrowser.yaml` 取代）
-- `playbooks/all.yaml`：`import_playbook: filebrowser.yaml`（原注释掉的 `file_server.yaml` 引用移除）
+- 删除 `tests/file_server.yaml`（已被 `playbooks/file_server.yaml` 取代）
+- `playbooks/all.yaml`：`import_playbook: file_server.yaml`（原注释掉的 `file_server.yaml` 引用移除）
 
 ### Known leftover issues
 - `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`（旧 `rclone` 引用已由正式 `roles/rclone/` 取代，tests 引用待清理）

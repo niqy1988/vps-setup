@@ -87,7 +87,7 @@ ansible-playbook playbooks/all.yaml
 | `all.yaml` | 总入口：import `bootstrap.yaml` + `xray.yaml` |
 | `bootstrap.yaml` | 初始化基础环境：ansible 管理账号、时区、官方镜像源（mirrorlist）、EPEL / CRB、关键软件包、firewalld、BBR、目录等 |
 | `xray.yaml` | 更新 `xray` 组软件包 + 部署 `xray` 角色 |
-| `filebrowser.yaml` | 部署 `filebrowser` 角色（默认 `file` 组） |
+| `file_server.yaml` | 部署 `filebrowser` 角色（默认 `file` 组） |
 | `update_packages.yaml` | 升级全部主机软件包 |
 | `debug_print.yaml` | 调试：打印控制机 / 远端变量与主机名 |
 | `sandbox.yaml` | 本地探索 / 临时任务（不用于生产） |
