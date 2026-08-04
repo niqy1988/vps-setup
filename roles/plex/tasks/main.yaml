@@ -1,0 +1,135 @@
+---
+- name: Set up plex folder
+  become: true
+  ansible.builtin.file:
+    path: "{{ plex_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+
+- name: Set up plex config and transcode folder
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    path: "{{ plex_path }}/{{ item }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+  loop:
+    - config
+    - transcode
+
+- name: Check media library path state
+  ansible.builtin.stat:
+    path: "{{ plex_media_path }}"
+  register: plex_media_path_stat
+
+- name: Fail if media library path is a real directory (migrate to cloud first)
+  ansible.builtin.fail:
+    msg: >-
+      {{ plex_media_path }} is a real directory. Move its contents to
+      {{ plex_rclone_mount }}:Media on the rclone mount, remove the local
+      directory, then re-run the playbook.
+  when:
+    - plex_rclone_mount | default("") | length > 0
+    - plex_media_path_stat.stat.exists
+    - plex_media_path_stat.stat.isdir
+    - not plex_media_path_stat.stat.islnk
+
+- name: Ensure media directory exists on rclone mount
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file: # noqa: risky-file-permissions
+    path: "/mnt/rclone/{{ plex_rclone_mount }}/Media"
+    state: directory
+  when:
+    - plex_rclone_mount | default("") | length > 0
+    - not (plex_media_path_stat.stat.exists and plex_media_path_stat.stat.isdir and not plex_media_path_stat.stat.islnk)
+
+- name: Link media library directory
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.file:
+    src: "/mnt/rclone/{{ plex_rclone_mount }}/Media"
+    dest: "{{ plex_media_path }}"
+    state: link
+  when:
+    - plex_rclone_mount | default("") | length > 0
+    - not (plex_media_path_stat.stat.exists and plex_media_path_stat.stat.isdir and not plex_media_path_stat.stat.islnk)
+
+- name: Ensure media library directory (local fallback)
+  become: true
+  ansible.builtin.file:
+    path: "{{ plex_media_path }}"
+    owner: "{{ podman_username }}"
+    group: "{{ podman_username }}"
+    setype: container_file_t
+    state: directory
+    mode: "0755"
+  when: plex_rclone_mount | default("") | length == 0
+
+- name: Generate plex Quadlet container definition
+  become: true
+  become_user: "{{ podman_username }}"
+  containers.podman.podman_container:
+    name: "{{ plex_container }}"
+    image: "docker.io/plexinc/pms-docker:{{ plex_version }}"
+    state: quadlet
+    timezone: Asia/Shanghai
+    user: "0:0"
+    group_add: keep-groups
+    network: "{{ podman_network }}.network"
+    publish:
+      - "{{ plex_direct_port }}:32400/tcp"
+    volume:
+      - "{{ plex_path }}/config:/config:Z"
+      - "{{ plex_path }}/transcode:/transcode:Z"
+      - /data:/data
+      - /mnt/rclone:/mnt/rclone:rshared
+    env:
+      TZ: Asia/Shanghai
+      PLEX_UID: "0"
+      PLEX_GID: "0"
+      PLEX_CLAIM: "{{ plex_claim_token }}"
+    label:
+      io.containers.autoupdate: registry
+      traefik.enable: true
+      traefik.http.routers.plex.rule: "{{ domains | service_rule(plex_subdomain) }}"
+      traefik.http.routers.plex.middlewares: traefik-auth@file
+      traefik.http.services.plex.loadbalancer.server.port: "32400"
+    security_opt:
+      - no-new-privileges
+    quadlet_options: |
+      [Install]
+      WantedBy=default.target
+  notify:
+    - Restart plex
+
+- name: Enable and start plex container
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ plex_container }}"
+    scope: user
+    daemon_reload: true
+    enabled: true
+  notify:
+    - Restart plex
+
+- name: Setup CloudFlare DNS resolution
+  community.general.cloudflare_dns:
+    zone: "{{ item }}"
+    record: "{{ plex_subdomain }}"
+    type: CNAME
+    value: "{{ item }}"
+    comment: plex
+    proxied: true
+    solo: true
+    api_token: "{{ cloudflare_dns_api_token }}"
+    state: present
+  loop: "{{ domains }}"
+  when: cloudflare_dns_api_token | default("") | length > 0

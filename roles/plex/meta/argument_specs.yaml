@@ -1,0 +1,76 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy Plex Media Server as rootless Quadlet container with Traefik routing
+    options:
+      plex_container:
+        type: str
+        default: plex
+        required: false
+        description: Container name for Plex
+
+      plex_path:
+        type: str
+        default: /app/plex
+        required: false
+        description: Host path for Plex config and transcode data
+
+      plex_version:
+        type: str
+        default: latest
+        required: false
+        description: Version of the Plex image to deploy
+
+      plex_subdomain:
+        type: str
+        default: plex
+        required: false
+        description: Subdomain prefix used for Host routing and DNS record
+
+      plex_direct_port:
+        type: int
+        default: 32400
+        required: false
+        description: Host port published for direct Plex access (maps to container 32400) and opened in firewalld
+
+      plex_rclone_mount:
+        type: str
+        default: ""
+        required: false
+        description: |
+          Name of the rclone mount whose <mount>/Media directory is exposed as
+          the media library (e.g. mydrive). Empty skips the cloud link and uses
+          a plain local directory instead.
+
+      plex_media_path:
+        type: str
+        default: /data/Media
+        required: false
+        description: Media library root path (symlinked to the rclone mount when plex_rclone_mount is set)
+
+      plex_claim_token:
+        type: str
+        default: ""
+        required: false
+        description: |
+          Plex claim token for first-time server claim (from plex.tv/claim).
+          Secret - set in inventory. Empty skips claiming (server runs unclaimed).
+
+      podman_network:
+        type: str
+        default: podman_network
+        required: false
+        description: Shared Podman network used by Plex
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list for Host routing
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: Cloudflare DNS API token to set up the Plex DNS record

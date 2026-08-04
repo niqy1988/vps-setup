@@ -1,0 +1,9 @@
+---
+- name: Restart plex
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "{{ plex_container }}"
+    scope: user
+    state: restarted
+  listen: Restart plex

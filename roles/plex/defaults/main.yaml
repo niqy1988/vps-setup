@@ -1,0 +1,13 @@
+plex_container: plex
+plex_path: /app/plex
+plex_version: latest
+plex_subdomain: plex
+plex_direct_port: 32400
+plex_rclone_mount: ""
+plex_media_path: /data/Media
+plex_claim_token: ""
+
+podman_network: podman_network # noqa: var-naming[no-role-prefix]
+
+domains: [] # noqa: var-naming[no-role-prefix]
+cloudflare_dns_api_token: "" # noqa: var-naming[no-role-prefix]
