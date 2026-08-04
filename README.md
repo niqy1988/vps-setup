@@ -32,7 +32,7 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
 ├── requirements.yaml      # 依赖的 Ansible collection
 ├── playbooks/             # 顶层 Playbook（all / bootstrap / xray / ...）
 ├── roles/                 # 正式角色（10 个，均带中文 README）
-├── legacy_roles/          # 已废弃的旧角色（_plex / _qbittorrent / _filebrowser）
+├── legacy_roles/          # 已废弃的旧角色（_plex / _qbittorrent）
 ├── inventory/             # 私有 inventory（git 忽略），镜像 sample_inventory 结构
 ├── sample_inventory/      # 文档唯一引用的范例 inventory（已脱敏）
 ├── docs/                  # 文档（架构上下文 / 规范 / lint 记录 / ADR）
