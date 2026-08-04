@@ -1,0 +1,77 @@
+---
+argument_specs:
+  main:
+    short_description: Deploy filebrowser as rootless Quadlet container with Traefik routing
+    options:
+      filebrowser_container:
+        type: str
+        default: filebrowser
+        required: false
+        description: Container name for filebrowser
+
+      filebrowser_path:
+        type: str
+        default: /app/filebrowser
+        required: false
+        description: Host path for filebrowser data and configuration files
+
+      filebrowser_version:
+        type: str
+        default: latest
+        required: false
+        description: Version of filebrowser image to deploy
+
+      filebrowser_subdomain:
+        type: str
+        default: file
+        required: false
+        description: Subdomain prefix used for Host routing and DNS record
+
+      filebrowser_rclone_mounts:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description: |
+          list of rclone mounts to expose under /data, each item:
+          - name: <name> (mount deployed by the rclone role under /mnt/rclone/<name>)
+            vfs_cache_mode: <mode> (optional; off|minimal|writes|full)
+            vfs_cache_size: <size> (optional)
+            vfs_cache_min_free_space: <size> (optional)
+        options:
+          name:
+            type: str
+            required: true
+            description: Remote name, must match a mount deployed by the rclone role
+          vfs_cache_mode:
+            type: str
+            required: false
+            choices: ["off", "minimal", "writes", "full"]
+            description: rclone --vfs-cache-mode; quote 'off' (YAML 1.1 parses bare off as boolean)
+          vfs_cache_size:
+            type: str
+            required: false
+            description: Max vfs cache size (e.g. 2G); quote 'off' for unlimited
+          vfs_cache_min_free_space:
+            type: str
+            required: false
+            description: Min free space to keep (e.g. 1G); quote 'off' for unlimited
+
+      podman_network:
+        type: str
+        default: podman_network
+        required: false
+        description: Shared Podman network used by filebrowser
+
+      domains:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Domain list for Host routing
+
+      cloudflare_dns_api_token:
+        type: str
+        default: ""
+        required: false
+        description: Cloudflare DNS API token to set up filebrowser DNS record

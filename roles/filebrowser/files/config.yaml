@@ -1,0 +1,16 @@
+server:
+  database: "data/database.db"
+  cacheDir: "data/cache"
+  cacheDirCleanup: true
+  sources:
+    - path: "/data"
+      name: Data
+  logging:
+    - output: "data/log/filebrowser.log"
+      levels: "info|warning|error"
+      noColors: true
+    - output: stdout
+      levels: "info|warning|error|debug"
+auth:
+  methods:
+    noauth: true

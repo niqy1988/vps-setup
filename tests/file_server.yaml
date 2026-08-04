@@ -15,9 +15,5 @@
 
 - name: Set up file browser
   hosts: file
-  vars:
-    filebrowser_data_links: "{{ file_data_links }}"
-    filebrowser_networks: "{{ file_networks }}"
-    filebrowser_domains: "{{ file_domains }}"
   roles:
     - role: filebrowser

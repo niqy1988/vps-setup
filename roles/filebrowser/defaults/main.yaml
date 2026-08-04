@@ -1,0 +1,11 @@
+filebrowser_container: filebrowser
+filebrowser_path: "/app/filebrowser"
+filebrowser_version: latest
+filebrowser_subdomain: file
+filebrowser_rclone_mounts: []
+
+podman_network: podman_network # noqa: var-naming[no-role-prefix]
+
+domains: # noqa: var-naming[no-role-prefix]
+  - domain.net
+cloudflare_dns_api_token: "" # noqa: var-naming[no-role-prefix]
