@@ -19,6 +19,8 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
   兼容性（ADR-0003），经 Traefik 暴露 HTTPS 入口。
 - **wgcf 出口**：注册 Cloudflare WARP 设备，为 Xray 提供 WireGuard 出口。
 - **rclone 挂载**：rootless systemd user service 按需挂载云盘（VFS 缓存）。
+- **媒体自动化**：qBittorrent 本地下载 + Sonarr/Radarr 管理媒体库（落云端
+  挂载）+ Plex 流媒体读取（ADR-004）。
 - **账号与权限**：`user` / `ansible_access` / `interactive_access` 统一管理
   系统用户、sudo 与 SSH 公钥。
 - **提权约定**：提权下沉到 role 内部 task 层级，role 自包含，调用 play 无需
@@ -31,7 +33,7 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
 ├── ansible.cfg            # 连接用户 / inventory / roles_path 配置
 ├── requirements.yaml      # 依赖的 Ansible collection
 ├── playbooks/             # 顶层 Playbook（all / bootstrap / xray / ...）
-├── roles/                 # 正式角色（10 个，均带中文 README）
+├── roles/                 # 正式角色（14 个，均带中文 README）
 ├── legacy_roles/          # 已废弃的旧角色（_plex / _qbittorrent）
 ├── inventory/             # 私有 inventory（git 忽略），镜像 sample_inventory 结构
 ├── sample_inventory/      # 文档唯一引用的范例 inventory（已脱敏）
@@ -77,6 +79,8 @@ ansible-playbook playbooks/all.yaml
 | `dev` | 开发机：镜像 latest、SELinux permissive、允许交互式登录 |
 | `interactive` | 允许交互式登录的生产机 |
 | `xray` | 部署 Xray 代理栈的主机（podman + traefik + wgcf + xray 全套） |
+| `download` | 下载客户端主机（qbittorrent） |
+| `media` | 媒体服务器主机（sonarr / radarr / plex） |
 
 主机可同时属于多个组。组的具体构成与主机级变量示例见 `sample_inventory/`。
 
@@ -84,10 +88,11 @@ ansible-playbook playbooks/all.yaml
 
 | Playbook | 说明 |
 | --- | --- |
-| `all.yaml` | 总入口：import `bootstrap.yaml` + `xray.yaml` |
+| `all.yaml` | 总入口：import `bootstrap.yaml` + `xray.yaml` + `file_server.yaml` + `media_server.yaml` |
 | `bootstrap.yaml` | 初始化基础环境：ansible 管理账号、时区、官方镜像源（mirrorlist）、EPEL / CRB、关键软件包、firewalld、BBR、目录等 |
 | `xray.yaml` | 更新 `xray` 组软件包 + 部署 `xray` 角色 |
 | `file_server.yaml` | 部署 `filebrowser` 角色（默认 `file` 组） |
+| `media_server.yaml` | 部署媒体栈：`qbittorrent` + `sonarr` + `radarr` + `plex`（默认 `media` 组） |
 | `update_packages.yaml` | 升级全部主机软件包 |
 | `debug_print.yaml` | 调试：打印控制机 / 远端变量与主机名 |
 | `sandbox.yaml` | 本地探索 / 临时任务（不用于生产） |
@@ -106,6 +111,10 @@ ansible-playbook playbooks/all.yaml
 | [`xray`](roles/xray/README.md) | Xray 代理 | VLESS + WS / XHTTP |
 | [`firewall_service`](roles/firewall_service/README.md) | firewalld 端口服务 | 向 firewalld 注册服务 |
 | [`filebrowser`](roles/filebrowser/README.md) | Web 文件管理 + WebDAV | Quadlet 容器，经 Traefik 路由 |
+| [`qbittorrent`](roles/qbittorrent/README.md) | BT 下载客户端 | 本地下载 + Traefik WebUI |
+| [`sonarr`](roles/sonarr/README.md) | 剧集媒体库管理 | Arr 直导云媒体库 |
+| [`radarr`](roles/radarr/README.md) | 电影媒体库管理 | Arr 直导云媒体库 |
+| [`plex`](roles/plex/README.md) | 媒体服务器 | 读取云媒体库流媒体 |
 
 各角色参数（`argument_specs`）、依赖、范例见各自 README；示例变量统一见
 `sample_inventory/`。

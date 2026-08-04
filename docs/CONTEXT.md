@@ -38,6 +38,29 @@ Web 文件管理与 WebDAV 服务，部署为 rootless Quadlet 容器，经 Trae
 Basic Auth）。数据源来自 rclone 挂载（消费类角色只声明名称列表，完整配置在
 host vars 的 `rclone_mounts`），在 `/data` 下建符号链接暴露。
 
+### qbittorrent
+BT 下载客户端，部署为 rootless Quadlet 容器。下载数据落在**本地真实盘**
+（`/data/Downloads`，与 rclone 挂载解耦，规避 VFS 对 BT 随机写/做种的不友好），
+由 Sonarr/Radarr 完成后导入云端媒体库。WebUI 经 Traefik 路由
+（`bt.<domain>`，挂 `traefik-auth@file`）；BT 监听端口发布到宿主并开放
+firewalld。
+
+### sonarr / radarr
+剧集 / 电影媒体库管理器，部署为 rootless Quadlet 容器，经 Traefik 路由
+（`sonarr.<domain>` / `radarr.<domain>`）。下载完成后从 `/data/Downloads`
+导入到媒体库（`/data/Media`，符号链接到 rclone 挂载的 `<mount>/Media`），
+以「顺序整文件写 → close → 后台上传」写入挂载（VFS full cache 甜点）。
+
+### plex
+媒体服务器，rootless Quadlet 容器，读取云端媒体库（`/data/Media` =
+rclone 挂载）提供流媒体。支持直连端口（`plex_direct_port`）与 Traefik
+HTTPS 子域（`plex.<domain>`）两种入口。FUSE 挂载上 inotify 不生效，需定时扫描。
+
+### media stack
+「本地下载 + Arr 直导云挂载 + Plex 读云」的媒体自动化架构（见 ADR-004）：
+BT 下载不碰 VFS 挂载（落本地盘）；Arr 导入即写 VFS 缓存、后台自动上传云端；
+Plex 读挂载。
+
 ### bootstrap
 初始化所有 VPS 基础环境的 playbook（`bootstrap.yaml`），包括 SSH 密钥登录、firewalld、BBR、/app 和 /data 目录等。
 
@@ -52,6 +75,8 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | `dev` | 开发机，podman镜像选择latest，SELinux permissive，允许交互式用户登录的主机 |
 | `interactive` | 允许交互式用户登录的生产机 |
 | `xray` | 部署 Xray 代理服务的主机 |
+| `download` | 下载客户端主机（qbittorrent） |
+| `media` | 媒体服务器主机（sonarr / radarr / plex） |
 
 ## Service Deployment Matrix (xray hosts)
 
@@ -62,6 +87,21 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | Podman (rootless) | `podman` | — | — | — |
 | Traefik | `traefik` | `podman_network` (Quadlet) | Yes (ACME) | Labels (self-defined routes) |
 | Xray | `xray` | `host` | No (HTTP only) | Labels in .container Quadlet; backend at `127.0.0.1`（Xray 入站端口，见 `sample_inventory/`）|
+
+### Media Stack (media/download hosts)
+
+适用于 `media` / `download` 组主机，由 `playbooks/media_server.yaml`（经
+`all.yaml` 引入）统一部署（qbittorrent → sonarr → radarr → plex）。
+
+| Service | Role | Network | Access |
+|---------|------|---------|--------|
+| qBittorrent | `qbittorrent` | `podman_network` | Traefik `bt.<domain>`（traefik-auth）+ BT 端口发布 / firewalld |
+| Sonarr | `sonarr` | `podman_network` | Traefik `sonarr.<domain>`（traefik-auth） |
+| Radarr | `radarr` | `podman_network` | Traefik `radarr.<domain>`（traefik-auth） |
+| Plex | `plex` | `podman_network` | 直连端口 `plex_direct_port` + Traefik `plex.<domain>`（traefik-auth） |
+
+媒体库根目录 `/data/Media` 符号链接到 rclone 挂载的 `<mount>/Media`（落云），
+下载目录 `/data/Downloads` 为本地真实盘（BT 不碰挂载）。
 
 ## Architectural Decisions Summary
 
@@ -92,6 +132,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | 23 | Container-defined routing | Each container's .container Quadlet has its own traefik.http.* labels |
 | 24 | Double health check | Quadlet healthcheck (systemd) + Traefik HTTP probe to Xray stats API |
 | 25 | Xray host network address | Traefik routes to `127.0.0.1`（Xray 入站端口，见 `sample_inventory/`）for Xray backend |
+| 26 | Media stack: BT on local disk | BT 下载落本地盘（`/data/Downloads`），Arr 直导云挂载，Plex 读云（ADR-004） |
 
 ## Removed Roles & Cleanup Log (2026-08-04)
 
@@ -117,8 +158,10 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 - `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`（旧 `rclone` 引用已由正式 `roles/rclone/` 取代，tests 引用待清理）
 
 ### TODO
-- [x] `filebrowser` 对外访问已改由 Traefik 容器标签（2026-08-05，`roles/filebrowser/` Quadlet labels 落地）；`plex`/`qbittorrent` 仍待迁移（替代旧 nginx 反代）
+- [x] `filebrowser` 对外访问已改由 Traefik 容器标签（2026-08-05，`roles/filebrowser/` Quadlet labels 落地）
+- [x] `plex` / `qbittorrent` 已由新 `roles/plex`、`roles/qbittorrent` 取代（2026-08-05，media stack，见 ADR-004）
 - [ ] 清理/重写 `tests/` 目录，删除或迁移引用已不存在 role 的测试场景
+- [ ] `legacy_roles/_plex`、`_qbittorrent` 已被正式角色取代且无引用，可删除（tests 中的 `plex` / `qbittorrent` 引用现已解析到新角色）
 - [x] 已更新 `rclone` role 文档体现新使用思路（2026-08-05）：消费类角色（如 `filebrowser`）只声明所需 mount 名称列表，mount 完整配置由 host vars 的共享变量 `rclone_mounts` 定义
 
 ## 运行经验（2026-08-05，filebrowser 部署）

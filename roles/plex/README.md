@@ -81,9 +81,9 @@
 ## 注意事项
 
 - **媒体库在 FUSE 挂载上 inotify 不生效**：Plex 无法靠文件监听即时发现新
-  片，请在设置中开启「定时扫描」（periodic scan）；rclone 的 pcloud 后端
-  支持 change notification，目录列表会及时刷新，但 Plex 侧的自动扫描仍需
-  定时触发。
+  片，请在设置中开启「定时扫描」（periodic scan）；rclone 挂载（支持
+  change notification 的远端）的目录列表会及时刷新，但 Plex 侧的自动扫描
+  仍需定时触发。
 - **认领**：`plex_claim_token` 只在首次认领时使用，之后可留空。
 - **直连 vs 反代**：Plex 客户端可通过直连端口（`plex_direct_port`）或
   HTTPS 子域连接；两者入口均可用。
