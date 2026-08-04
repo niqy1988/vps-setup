@@ -2,18 +2,20 @@
 # Traefik role tasks
 - name: Set up traefik folder
   become: true
-  file:
+  ansible.builtin.file:
     path: "{{ traefik_path }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
+    mode: "0755"
     setype: container_file_t
     state: directory
 
 - name: Set up folder to store config/certs/log
   become: true
   become_user: "{{ podman_username }}"
-  file:
+  ansible.builtin.file:
     path: "{{ traefik_path }}/{{ item }}"
+    mode: "0755"
     setype: container_file_t
     state: directory
   loop:
@@ -26,7 +28,7 @@
 - name: Deploy traefik_container SELinux module
   become: true
   become_user: "{{ podman_username }}"
-  copy:
+  ansible.builtin.copy:
     src: traefik_container.cil
     dest: "{{ traefik_path }}/traefik_container.cil"
     mode: "0644"
@@ -34,12 +36,12 @@
     - Enable traefik_container SELinux policy
 
 - name: Flush handlers
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Deploy traefik.yaml configuration
   become: true
   become_user: "{{ podman_username }}"
-  template:
+  ansible.builtin.template:
     src: traefik.yaml.j2
     dest: "{{ traefik_path }}/config/traefik.yaml"
     mode: "0644"
@@ -50,7 +52,7 @@
 - name: Deploy traefik_auth middleware
   become: true
   become_user: "{{ podman_username }}"
-  template:
+  ansible.builtin.template:
     src: traefik_auth.yaml.j2
     dest: "{{ traefik_path }}/config/config.d/traefik_auth.yaml"
     mode: "0644"
@@ -96,7 +98,7 @@
 - name: Enable and start traefik container
   become: true
   become_user: "{{ podman_username }}"
-  systemd_service:
+  ansible.builtin.systemd_service:
     name: "{{ traefik_container }}"
     scope: user
     daemon_reload: true
@@ -117,9 +119,10 @@
 
 - name: Setup logrotate
   become: true
-  template:
+  ansible.builtin.template:
     src: logrotate.j2
     dest: "/etc/logrotate.d/{{ traefik_container }}_log"
+    mode: "0644"
 
 - name: Setup CloudFlare DNS resolution
   community.general.cloudflare_dns:

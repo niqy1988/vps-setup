@@ -1,7 +1,7 @@
 ---
 - name: Reload firewalld
   become: true
-  systemd_service:
+  ansible.builtin.systemd_service:
     name: firewalld
     enabled: true
     state: reloaded
@@ -10,7 +10,7 @@
 - name: Bounce traefik service
   become: true
   become_user: "{{ podman_username }}"
-  systemd_service:
+  ansible.builtin.systemd_service:
     name: "{{ traefik_container }}"
     scope: user
     state: restarted
@@ -18,7 +18,7 @@
 
 - name: Enable traefik_container.cil to SELinux policy
   become: true
-  command:
+  ansible.builtin.command:
     argv:
       - semodule
       - -i
