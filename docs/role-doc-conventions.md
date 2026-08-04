@@ -26,6 +26,7 @@ role 列表：
 | `wgcf` | Cloudflare WARP 设备注册（Xray wireguard 出口） | `xray` |
 | `xray` | Xray 代理（VLESS + WS/XHTTP） | — |
 | `firewall_service` | 向 firewalld 注册端口服务 | — |
+| `filebrowser` | Web 文件管理 + WebDAV（Quadlet + Traefik 路由） | — |
 
 ## 二、文档脱敏规则（重要约定）
 

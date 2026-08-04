@@ -91,6 +91,15 @@ vfs 缓存参数通过 env 文件传给挂载（而不是编码进服务实例�
 `<remote>.conf` 含 `[<remote>_raw]` 与 `[<remote>]` crypt 层）。rclone
 在加载完整个配置后才解析远端引用，因此 section 顺序不影响。
 
+## 消费类角色（如 `filebrowser`）的使用方式
+
+`filebrowser` 等"消费 rclone 挂载"的角色只声明所需挂载的**名称列表**
+（如 `filebrowser_rclone_mounts: [mydrive]`），挂载的**完整配置**统一
+在 host vars 的共享变量 `rclone_mounts` 中定义（本角色的唯一输入）。
+本角色被这类角色依赖时直接读取 host vars 的 `rclone_mounts` 部署，
+不做合并 / 过滤；消费角色仅按名称在自身数据根（如 `/data/<name>`）
+建符号链接暴露。示例见 `roles/filebrowser/README.md` 与 `sample_inventory/`。
+
 ## 使用范例
 
 ```yaml

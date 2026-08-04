@@ -21,8 +21,9 @@ Web 文件管理与 WebDAV 访问。
 4. 通过容器 label 声明 Traefik 路由：
    - 主路由：`file.<domain>`，挂 `traefik-auth@file` 中间件（basic auth
      统一认证，认证信息由 `traefik` 角色管理）；
-   - WebDAV 路由：`file.<domain>/dav`，**不挂** traefik-auth（WebDAV 走
-     自带认证）；
+   - WebDAV 路由：`file.<domain>/dav/<source>/`（源名见 config 的
+     `server.sources`），**不挂** traefik-auth（WebDAV 走 filebrowser
+     自带 Basic Auth：用户名 + JWT token）；
 5. 创建 Cloudflare DNS 记录 `file.<domain>` CNAME（当
    `cloudflare_dns_api_token` 非空时）。
 
@@ -85,5 +86,6 @@ Web 文件管理与 WebDAV 访问。
 `mydrive` 的完整挂载配置（`vfs_cache_mode` 等）在 host vars 的
 `rclone_mounts` 中定义。
 
-部署后：Web 管理界面 `https://file.example.com`（需 traefik basic auth），
-WebDAV `https://file.example.com/dav`。
+部署后：Web 管理界面 `https://file.example.com`（需 traefik basic auth）；
+WebDAV `https://file.example.com/dav/<source>/`（如 `/dav/Data/`，用
+filebrowser Basic Auth：用户名 + JWT token 当密码）。
