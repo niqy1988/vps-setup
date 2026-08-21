@@ -9,14 +9,14 @@
 
 - name: Create hashed password
   ansible.builtin.set_fact:
-    hashed_password: "{{ password | password_hash('sha512') }}"
+    user_hashed_password: "{{ password | password_hash('sha512') }}"
   when: password is defined
 
 - name: Set up user
   become: true
   ansible.builtin.user:
     name: "{{ username }}"
-    password: "{{ hashed_password | default('!') }}"
+    password: "{{ user_hashed_password | default('!') }}"
     update_password: on_create
     uid: "{{ uid | int }}"
     group: "{{ username }}"
