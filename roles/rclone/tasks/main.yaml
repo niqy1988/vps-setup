@@ -1,7 +1,7 @@
 ---
 - name: Install rclone and fuse3 packages
   become: true
-  ansible.builtin.package:
+  ansible.builtin.apt:
     name:
       - rclone
       - fuse3
@@ -92,7 +92,6 @@
     path: "{{ rclone_mount_base }}"
     group: users
     mode: "02775"
-    setype: container_file_t
     state: directory
 
 - name: Set default ACL on rclone mount base directory

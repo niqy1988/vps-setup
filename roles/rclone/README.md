@@ -79,10 +79,7 @@ vfs 缓存参数通过 env 文件传给挂载（而不是编码进服务实例�
 ## 参数与 defaults 对照
 
 `argument_specs` 中所有顶层 optional 变量均已在 `defaults/main.yaml`
-定义 ✅。嵌套子项 `vfs_cache_mode` / `vfs_cache_size` /
-`vfs_cache_min_free_space` 为可选且无 spec 默认，**实际默认值来自
-`templates/vfs_cache.env.j2` 的 `| default(...)`**（`full` / `"off"` /
-`"off"`），符合“纯执行者、默认由模板兜底”的设计。
+定义 ✅。嵌套子项中 `vfs_cache_size` 为必选且无 spec 默认
 
 ## 源配置布局
 
@@ -110,7 +107,6 @@ vfs 缓存参数通过 env 文件传给挂载（而不是编码进服务实例�
         - name: mydrive
           vfs_cache_mode: full
           vfs_cache_size: "2G"
-          vfs_cache_min_free_space: "1G"
         - name: otherdrive
           vfs_cache_size: "off"
 ```

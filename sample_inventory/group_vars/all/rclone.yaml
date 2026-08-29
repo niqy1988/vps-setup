@@ -5,13 +5,12 @@
 #    内容为该 remote 的 INI section（token 等敏感信息放这里，勿入库）。
 # 2) rclone_mounts 默认 []；下面为一个示范条目：
 #    - name 必填，须匹配 rclone_conf_src_dir 下的 <name>.conf
-#    - vfs_cache_mode / vfs_cache_size / vfs_cache_min_free_space 默认值
-#      来自模板：full / "off"（不限）/ "off"（不限），可覆盖
+#    - vfs_cache_mode 默认 full
+#    - vfs_cache_size 必填，示例 2G；off 表示无限制
 rclone_user: rclone_user
 rclone_uid: 600000
 rclone_mount_base: /mnt/rclone
 rclone_mounts:
   - name: "<remote>"
     vfs_cache_mode: full
-    vfs_cache_size: "off"
-    vfs_cache_min_free_space: "off"
+    vfs_cache_size: "1G"
