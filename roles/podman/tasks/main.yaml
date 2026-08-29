@@ -1,15 +1,10 @@
 - name: Install podman with supporting packages
   become: true
-  ansible.builtin.apt:
+  ansible.builtin.package:
     name:
       - podman
       - uidmap
-    state: present
-
-- name: Install podman python bindings for ansible access
-  become: true
-  ansible.builtin.apt:
-    name: python3-podman
+      - python3-podman
     state: present
 
 - name: Set subuid and subgid range for podman user

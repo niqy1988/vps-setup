@@ -1,7 +1,7 @@
 ---
 - name: Install rclone and fuse3 packages
   become: true
-  ansible.builtin.apt:
+  ansible.builtin.package:
     name:
       - rclone
       - fuse3

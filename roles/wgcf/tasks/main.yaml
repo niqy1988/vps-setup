@@ -1,7 +1,7 @@
 ---
 - name: Install requirement
   become: true
-  ansible.builtin.apt:
+  ansible.builtin.package:
     name:
       - wireguard-tools
     state: present
