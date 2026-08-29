@@ -4,7 +4,6 @@ dependencies:
     username: "{{ podman_username }}"
     uid: "{{ podman_uid }}"
     user_groups:
-      - systemd-journal
       - users
     linger: true
     comment: podman user

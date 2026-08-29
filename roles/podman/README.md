@@ -6,8 +6,7 @@
 ## 功能概述
 
 1. 安装 `podman`、`systemd-container`、`net-tools`（健康检查用）、
-   `podman`（pip 包，供 `containers.podman` 集合调用）、`udica`
-   （SELinux 容器策略工具）。
+   `python3-podman`（Python 绑定，供 `containers.podman` 集合调用）。
 2. 通过 `sysctl` 将非特权端口起点设为 `80`（`net.ipv4.ip_unprivileged_port_start`），
    使 rootless 容器可绑定 80/443。
 3. 为 Podman 用户创建 Quadlet 目录
@@ -47,8 +46,7 @@
 - **Ansible 变量 / 前置条件**：
   - 依赖 `user` 角色为 Podman 用户写入 `/etc/subuid`、`/etc/subgid`
     映射（rootless 容器 UID 映射基础）。
-  - 建议先执行 `playbooks/bootstrap.yaml`（安装 SELinux 工具、
-    firewalld、创建 `/app` 等）。
+  - 建议先执行 `playbooks/bootstrap.yaml`（初始化 ufw、创建 `/app` 等）。
 
 ## 参数与 defaults 对照
 
