@@ -1,8 +1,7 @@
 ---
-
 - name: Install requirement
   become: true
-  ansible.builtin.package:
+  ansible.builtin.apt:
     name:
       - wireguard-tools
     state: present
@@ -62,7 +61,7 @@
           name: "{{ inventory_hostname }}"
           locale: en_US
           key: "{{ wg_public_key }}"
-          os_version: "{{ ansible_distribution_version }}"
+          os_version: "{{ ansible_distribution_version | string }}"
           manufacturer: "{{ ansible_distribution }}"
           model: "{{ ansible_fqdn }}"
           serial_number: "{{ wgcf_serial_number }}"

@@ -5,7 +5,6 @@
     path: "{{ xray_path }}"
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
-    setype: container_file_t
     state: directory
     mode: "0755"
 
@@ -14,7 +13,6 @@
   become_user: "{{ podman_username }}"
   ansible.builtin.file:
     path: "{{ xray_path }}/{{ item }}"
-    setype: container_file_t
     state: directory
     mode: "0755"
   loop:
@@ -31,7 +29,6 @@
     src: "{{ item }}"
     dest: "{{ xray_path }}/config/{{ item | basename | regex_replace('\\.j2$', '') }}"
     mode: "0644"
-    setype: container_file_t
   loop: "{{ query('fileglob', '../templates/xray/*.j2') }}"
   notify:
     - Restart xray
@@ -47,8 +44,8 @@
     user: 0:0
     network: "{{ podman_network }}.network"
     volume:
-      - "{{ xray_path }}/config:/usr/local/etc/xray:Z"
-      - "{{ xray_path }}/log:/var/log/xray:Z"
+      - "{{ xray_path }}/config:/usr/local/etc/xray"
+      - "{{ xray_path }}/log:/var/log/xray"
     env:
       TZ: Asia/Shanghai
     healthcheck: "CMD xray api statsquery --server=localhost:{{ xray_stats_port }}"
