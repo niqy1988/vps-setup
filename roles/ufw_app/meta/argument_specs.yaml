@@ -1,0 +1,41 @@
+---
+argument_specs:
+  main:
+    short_description: allow TCP/UDP ports in ufw
+    options:
+      ufw_app_name:
+        type: str
+        required: true
+        description: application name used to label the opened ports
+
+      ufw_app_description:
+        type: str
+        required: false
+        default: "Custom application"
+        description: description of the application
+
+      ufw_app_ports:
+        type: dict
+        required: false
+        default: {}
+        description: >
+          Dictionary of ports to open, with keys as the protocol
+          and values as a list of ports or port ranges.
+            Example:
+            {
+              "tcp": [80, 443, "8000:8080"],
+              "udp": [53, "120:129"]
+            }
+        options:
+          tcp:
+            type: list
+            elements: raw
+            required: false
+            default: []
+            description: "List of TCP ports to expose."
+          udp:
+            type: list
+            elements: raw
+            required: false
+            default: []
+            description: "List of UDP ports to expose."

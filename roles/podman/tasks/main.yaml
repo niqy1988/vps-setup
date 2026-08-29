@@ -3,46 +3,19 @@
   ansible.builtin.package:
     name:
       - podman
-      - systemd-container
+      - uidmap
+      - python3-podman
     state: present
 
-- name: Install netstat for health check
+- name: Set subuid and subgid range for podman user
   become: true
-  ansible.builtin.package:
-    name: net-tools
-    state: present
-
-- name: Install podman-py for ansible access
-  ansible.builtin.pip:
-    name: podman
-    state: present
-
-- name: Allow usual http ports to be unprivileged
-  become: true
-  ansible.posix.sysctl:
-    name: net.ipv4.ip_unprivileged_port_start
-    value: "80"
-    state: present
-
-- name: Label shared app and data dirs for container access
-  become: true
-  ansible.builtin.file: # noqa: risky-file-permissions
-    path: "{{ item }}"
-    state: directory
-    setype: container_file_t
+  ansible.builtin.lineinfile:
+    path: "/etc/{{ item }}"
+    regexp: "^{{ podman_username }}"
+    line: "{{ podman_username }}:{{ podman_uid | int + 1 }}:65535"
   loop:
-    - /app
-    - /data
-
-- name: Add persistent SELinux fcontext rules for app and data dirs
-  become: true
-  community.general.sefcontext:
-    target: "{{ item }}"
-    setype: container_file_t
-    state: present
-  loop:
-    - "/app(/.*)?"
-    - "/data(/.*)?"
+    - subuid
+    - subgid
 
 - name: Setup quadlet directory
   become: true
@@ -69,14 +42,20 @@
   become: true
   become_user: "{{ podman_username }}"
   ansible.builtin.systemd_service:
-    name: "podman-auto-update.{{ item }}"
+    name: "podman-auto-update.service"
+    scope: user
+    daemon_reload: true
+    enabled: true
+
+- name: Start podman auto-update timer
+  become: true
+  become_user: "{{ podman_username }}"
+  ansible.builtin.systemd_service:
+    name: "podman-auto-update.timer"
     scope: user
     daemon_reload: true
     enabled: true
     state: started
-  loop:
-    - service
-    - timer
 
 - name: Enable podman socket service
   become: true
@@ -87,9 +66,3 @@
     daemon_reload: true
     enabled: true
     state: started
-
-- name: Install SELinux tools
-  become: true
-  ansible.builtin.package:
-    name: udica
-    state: present

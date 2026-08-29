@@ -40,25 +40,25 @@
         update_cache: true
         cache_valid_time: 3600 # Only updates if it hasn't been updated in the last hour (3600 seconds)
     - name: Install Chinese locale
-      ansible.builtin.apt:
+      ansible.builtin.package:
         name: locales-all
         state: present
     - name: Install Python pip
-      ansible.builtin.apt:
+      ansible.builtin.package:
         name:
           - python3-pip
           - python3-packaging
         state: present
     - name: Install ACL tools
-      ansible.builtin.apt:
+      ansible.builtin.package:
         name: acl
         state: present
     - name: Install ufw
-      ansible.builtin.apt:
+      ansible.builtin.package:
         name: ufw
         state: present
     - name: Install logrotate
-      ansible.builtin.apt:
+      ansible.builtin.package:
         name: logrotate
         state: present
     - name: Update existing packages

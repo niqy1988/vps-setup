@@ -25,7 +25,7 @@ role 列表：
 | `traefik` | 反向代理 + ACME | `xray` |
 | `wgcf` | Cloudflare WARP 设备注册（Xray wireguard 出口） | `xray` |
 | `xray` | Xray 代理（VLESS + WS/XHTTP） | — |
-| `firewall_service` | 向 firewalld 注册端口服务 | — |
+| `firewall_service` | 通过 ufw 开放 TCP/UDP 端口 | — |
 | `filebrowser` | Web 文件管理 + WebDAV（Quadlet + Traefik 路由） | — |
 
 ## 二、文档脱敏规则（重要约定）

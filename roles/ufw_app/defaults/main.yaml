@@ -1,0 +1,4 @@
+ufw_app_description: "Custom service {{ service_name }}"
+ufw_app_ports:
+  tcp: []
+  udp: []

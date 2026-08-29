@@ -4,6 +4,6 @@
   become: true
   tasks:
     - name: Update packages
-      ansible.builtin.package:
+      ansible.builtin.apt:
         upgrade: dist
         update_cache: true

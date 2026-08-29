@@ -8,12 +8,9 @@ Dashboard 基本认证、日志轮转与 Cloudflare DNS 记录。
 
 1. 创建配置目录结构（`config`、`config/config.d`、`certs`、`log`、
    `log/old`）。
-2. 部署 SELinux 自定义策略模块 `traefik_container.cil`（由
-   `udica` 模板生成），并通过 handler `semodule -i` 安装——容器以
-   `label=type:traefik_container.process` 受限运行。
-3. 渲染 `traefik.yaml`（入口点、TLS、ACME resolver、Dashboard、ping）
+2. 渲染 `traefik.yaml`（入口点、TLS、ACME resolver、Dashboard、ping）
    与 `traefik_auth.yaml`（Dashboard 基本认证中间件）。
-4. 用 `containers.podman.podman_container` 生成 Quadlet 定义：
+3. 用 `containers.podman.podman_container` 生成 Quadlet 定义：
    - 镜像 `docker.io/library/traefik:<version>`，网络挂到
      `podman_network.network`；
    - 发布 `80:80` / `443:443`，挂载 config / log / certs，并复用
@@ -22,8 +19,8 @@ Dashboard 基本认证、日志轮转与 Cloudflare DNS 记录。
    - `io.containers.autoupdate: registry`（自动更新）；
    - 通过容器 label 暴露 Traefik 自身 Dashboard 路由并挂上
      `traefik-auth@file` 认证中间件。
-5. 启用并启动容器；在 firewalld 中开放 `http` / `https`。
-6. 部署 logrotate 配置；若配置了 `cloudflare_dns_api_token`，为每个
+4. 启用并启动容器；在 ufw 中开放 `http` / `https`（80/443）。
+5. 部署 logrotate 配置；若配置了 `cloudflare_dns_api_token`，为每个
    `domains` 创建 `traefik.<domain>` 的 CNAME 记录（Cloudflare 托管
    DNS）。
 
@@ -55,8 +52,7 @@ Dashboard 基本认证、日志轮转与 Cloudflare DNS 记录。
     （示例见 `sample_inventory/group_vars/all/www.yaml`）。
   - 自定义 Jinja2 filter `service_rule`（`filter_plugins/traefik_filters.py`），
     用于生成多域名 Host 匹配规则。
-- **前置条件**：`bootstrap.yaml` 已安装 SELinux 工具（`udica`）、
-  firewalld，并创建 `/app`。
+- **前置条件**：`bootstrap.yaml` 已初始化 ufw，并创建 `/app`。
 
 ## 参数与 defaults 对照
 

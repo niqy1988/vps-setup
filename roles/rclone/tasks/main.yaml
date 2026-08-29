@@ -92,7 +92,6 @@
     path: "{{ rclone_mount_base }}"
     group: users
     mode: "02775"
-    setype: container_file_t
     state: directory
 
 - name: Set default ACL on rclone mount base directory

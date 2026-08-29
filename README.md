@@ -42,7 +42,7 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
 ## 前置要求
 
 - 控制机：macOS / Linux，能通过 SSH 访问目标 VPS。
-- 目标机：AlmaLinux 系（本项目按 dnf / firewalld / SELinux 编写）。
+- 目标机：Debian 13（trixie）。包管理用 `apt` 模块，防火墙用 `ufw`，不使用 SELinux。
 - SSH 凭据：私钥全链路不指定，交给 ssh-agent + OpenSSH 自动发现；公钥由
   `user` / `ansible_access` 等角色以文本形式部署到目标机。
 
@@ -59,7 +59,7 @@ ansible-galaxy install -r requirements.yaml
 # 3. 准备 inventory：以 sample_inventory/ 为模板，复制/改造成自己的私有
 #    inventory（占位符全部替换为真实值；真实 inventory 目录被 git 忽略）
 
-# 4. 初始化基础环境（SSH 密钥登录、firewalld、BBR、/app /data 目录等）
+# 4. 初始化基础环境（SSH 密钥登录、ufw、BBR、/app /data 目录等）
 ansible-playbook playbooks/bootstrap.yaml
 
 # 5. 部署全部服务（import bootstrap + xray）
@@ -73,8 +73,8 @@ ansible-playbook playbooks/all.yaml
 
 | 组 | 用途 |
 | --- | --- |
-| `prod` | 生产机：镜像指定版本、SELinux enforcing、默认不允许交互式登录 |
-| `dev` | 开发机：镜像 latest、SELinux permissive、允许交互式登录 |
+| `prod` | 生产机：镜像指定版本、默认不允许交互式登录 |
+| `dev` | 开发机：镜像 latest、允许交互式登录 |
 | `interactive` | 允许交互式登录的生产机 |
 | `xray` | 部署 Xray 代理栈的主机（podman + traefik + wgcf + xray 全套） |
 
@@ -85,7 +85,7 @@ ansible-playbook playbooks/all.yaml
 | Playbook | 说明 |
 | --- | --- |
 | `all.yaml` | 总入口：import `bootstrap.yaml` + `xray.yaml` |
-| `bootstrap.yaml` | 初始化基础环境：ansible 管理账号、时区、官方镜像源（mirrorlist）、EPEL / CRB、关键软件包、firewalld、BBR、目录等 |
+| `bootstrap.yaml` | 初始化基础环境：ansible 管理账号、时区、关键软件包、ufw 防火墙、BBR、目录等 |
 | `xray.yaml` | 更新 `xray` 组软件包 + 部署 `xray` 角色 |
 | `file_server.yaml` | 部署 `filebrowser` 角色（默认 `file` 组） |
 | `update_packages.yaml` | 升级全部主机软件包 |
@@ -104,7 +104,7 @@ ansible-playbook playbooks/all.yaml
 | [`traefik`](roles/traefik/README.md) | 反向代理 + ACME | 容器 label 自动发现路由 |
 | [`wgcf`](roles/wgcf/README.md) | Cloudflare WARP 注册 | 产出 Xray 的 WireGuard 出口 |
 | [`xray`](roles/xray/README.md) | Xray 代理 | VLESS + WS / XHTTP |
-| [`firewall_service`](roles/firewall_service/README.md) | firewalld 端口服务 | 向 firewalld 注册服务 |
+| [`firewall_service`](roles/firewall_service/README.md) | ufw 端口放行 | 通过 ufw 开放 TCP/UDP 端口 |
 | [`filebrowser`](roles/filebrowser/README.md) | Web 文件管理 + WebDAV | Quadlet 容器，经 Traefik 路由 |
 
 各角色参数（`argument_specs`）、依赖、范例见各自 README；示例变量统一见

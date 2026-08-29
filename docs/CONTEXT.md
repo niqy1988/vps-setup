@@ -39,7 +39,7 @@ Basic Auth）。数据源来自 rclone 挂载（消费类角色只声明名称�
 host vars 的 `rclone_mounts`），在 `/data` 下建符号链接暴露。
 
 ### bootstrap
-初始化所有 VPS 基础环境的 playbook（`bootstrap.yaml`），包括 SSH 密钥登录、firewalld、BBR、/app 和 /data 目录等。
+初始化所有 VPS 基础环境的 playbook（`bootstrap.yaml`），包括 SSH 密钥登录、ufw 防火墙、BBR、/app 和 /data 目录等。
 
 ### SSH 认证
 Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自动发现密钥：优先使用本地 ssh agent 中已加载的密钥，也会自动尝试默认位置的私钥（如 `~/.ssh/id_ed25519`），无需（也不强制）依赖 ssh agent。公钥通过 `user` 角色以文本形式（`ssh_public_key`）部署到被管理机器的 authorized_keys。
@@ -48,8 +48,8 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 
 | Group | Purpose |
 |-------|---------|
-| `prod` | 生产机，podman镜像指定版本，SELinux enforcing，默认不允许交互式用户登录 |
-| `dev` | 开发机，podman镜像选择latest，SELinux permissive，允许交互式用户登录的主机 |
+| `prod` | 生产机，podman镜像指定版本，默认不允许交互式用户登录 |
+| `dev` | 开发机，podman镜像选择latest，允许交互式用户登录的主机 |
 | `interactive` | 允许交互式用户登录的生产机 |
 | `xray` | 部署 Xray 代理服务的主机 |
 
@@ -122,6 +122,9 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 - [x] 已更新 `rclone` role 文档体现新使用思路（2026-08-05）：消费类角色（如 `filebrowser`）只声明所需 mount 名称列表，mount 完整配置由 host vars 的共享变量 `rclone_mounts` 定义
 
 ## 运行经验（2026-08-05，filebrowser 部署）
+
+> 以下 SELinux 相关条目适用于 2026-08-21 之前的 AlmaLinux 目标机；
+> 自该日起项目迁移至 Debian 13，不再使用 SELinux（Host Groups 表已更新）。
 
 - **`containers.podman` 对 `podman_network state: quadlet` 的支持有版本门槛**：
   1.11.0 不支持（state 仅 `present/absent`），需升级到支持 quadlet 的版本
