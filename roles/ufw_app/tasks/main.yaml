@@ -1,0 +1,30 @@
+### Open firewall ports
+# Step 1: Generate UFW rule
+- name: Generate custome applications rule for ufw
+  become: true
+  community.general.ini_file:
+    path: /etc/ufw/applications.d/ufw-custom
+    section: "{{ ufw_app_name }}"
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    mode: "0644"
+  loop:
+    - key: title
+      value: "{{ ufw_app_name }}"
+    - key: description
+      value: "{{ ufw_app_description }}"
+    - key: ports
+      value: "{{ ufw_app_ports | format_ufw_ports }}"
+  register: ufw_app_rule
+
+# Step 2: Reload UFW IMMEDIATELY if Step 1 detected a change
+- name: Reload UFW application profiles immediately
+  community.general.ufw:
+    state: reloaded
+  when: ufw_app_rule.changed # noqa no-handler
+
+# Step 3: Ensure the app rule is active
+- name: Enable the application rule in UFW
+  community.general.ufw:
+    rule: allow
+    name: "{{ ufw_app_name }}"
