@@ -5,5 +5,5 @@
   tasks:
     - name: Update packages
       ansible.builtin.package:
-        name: "*"
-        state: latest # noqa: package-latest
+        upgrade: dist
+        update_cache: true

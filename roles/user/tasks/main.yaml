@@ -27,16 +27,6 @@
     comment: "{{ comment }}"
     state: present
 
-- name: Set subuid and subgid range
-  become: true
-  ansible.builtin.lineinfile:
-    path: "/etc/{{ item }}"
-    regexp: "^{{ username }}"
-    line: "{{ username }}:{{ uid | int + 1 }}:65535"
-  loop:
-    - subuid
-    - subgid
-
 # Set ansible remote temp folder
 - name: Create ansible remote temp folder
   become: true
