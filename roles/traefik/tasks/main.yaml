@@ -1,5 +1,13 @@
 ---
 # Traefik role tasks
+- name: Allow binding to privileged ports
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_unprivileged_port_start
+    value: 80
+    state: present
+    reload: true
+
 - name: Set up traefik folder
   become: true
   ansible.builtin.file:
@@ -7,7 +15,6 @@
     owner: "{{ podman_username }}"
     group: "{{ podman_username }}"
     mode: "0755"
-    setype: container_file_t
     state: directory
 
 - name: Set up folder to store config/certs/log
@@ -16,7 +23,6 @@
   ansible.builtin.file:
     path: "{{ traefik_path }}/{{ item }}"
     mode: "0755"
-    setype: container_file_t
     state: directory
   loop:
     - config
@@ -25,19 +31,6 @@
     - log
     - log/old
 
-- name: Deploy traefik_container SELinux module
-  become: true
-  become_user: "{{ podman_username }}"
-  ansible.builtin.copy:
-    src: traefik_container.cil
-    dest: "{{ traefik_path }}/traefik_container.cil"
-    mode: "0644"
-  notify:
-    - Enable traefik_container SELinux policy
-
-- name: Flush handlers
-  ansible.builtin.meta: flush_handlers
-
 - name: Deploy traefik.yaml configuration
   become: true
   become_user: "{{ podman_username }}"
@@ -45,7 +38,6 @@
     src: traefik.yaml.j2
     dest: "{{ traefik_path }}/config/traefik.yaml"
     mode: "0644"
-    setype: container_file_t
   notify:
     - Restart traefik
 
@@ -56,7 +48,6 @@
     src: traefik_auth.yaml.j2
     dest: "{{ traefik_path }}/config/config.d/traefik_auth.yaml"
     mode: "0644"
-    setype: container_file_t
 
 - name: Generate traefik Quadlet container definition
   become: true
@@ -72,9 +63,9 @@
       - "80:80"
       - "443:443"
     volume:
-      - "{{ traefik_path }}/config:/etc/traefik:Z"
-      - "{{ traefik_path }}/log:/var/log/traefik:Z"
-      - "{{ traefik_path }}/certs:/acme:Z"
+      - "{{ traefik_path }}/config:/etc/traefik"
+      - "{{ traefik_path }}/log:/var/log/traefik"
+      - "{{ traefik_path }}/certs:/acme"
       - "/run/user/{{ podman_uid }}/podman/podman.sock:/var/run/docker.sock:ro"
     env:
       TZ: Asia/Shanghai
@@ -88,7 +79,6 @@
     read_only: true
     security_opt:
       - no-new-privileges
-      - label=type:traefik_container.process
     quadlet_options: |
       [Install]
       WantedBy=default.target
@@ -105,17 +95,11 @@
     enabled: true
     state: started
 
-- name: Enable HTTP and HTTPS service in firewalld
+- name: Allow HTTP and HTTPS in ufw
   become: true
-  ansible.posix.firewalld:
-    service: "{{ item }}"
-    state: enabled
-    permanent: true
-  loop:
-    - http
-    - https
-  notify:
-    - Reload firewalld
+  community.general.ufw:
+    rule: allow
+    name: WWW Full
 
 - name: Setup logrotate
   become: true
