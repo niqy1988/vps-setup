@@ -6,9 +6,10 @@
 
 ## 功能概述
 
-1. 在etc/ufw/applications.d/ufw-custom中生成应用规则，
-2. 通过 `community.general.ufw` 读取并allow对应的规则。
-2. 规则即时生效，无需重载防火墙。
+1. 在 `/etc/ufw/applications.d/ufw-custom` 中生成应用规则
+   （`community.general.ini_file`，含 title / description / ports）；
+2. 通过 `community.general.ufw` 放行对应的应用规则；
+3. 规则即时生效，无需重载防火墙。
 
 ## 角色参数
 
@@ -16,9 +17,9 @@
 
 | 变量 | 类型 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- | --- |
-| `ufw_app_name` | str | ✅ 是 | — | 服务名，用作任务名/规则标签 |
-| `ufw_app_description` | str | ✅ 是 | — | 服务名，用作任务名/规则标签 |
-| `ufw_app_ports` | dict | 否 | `{}` | 要开放的 TCP/UDP 端口列表 |
+| `ufw_app_name` | str | ✅ 是 | — | 应用名，用作 ufw-custom 规则 section 名与任务名 |
+| `ufw_app_description` | str | 否 | `Custom application` | 应用描述（写入 ufw-custom 规则） |
+| `ufw_app_ports` | dict | 否 | `{}` | 要开放的端口，键为协议（`tcp` / `udp`），值为端口或端口区间字符串列表（如 `80`、`"9000:9010"`） |
 
 ## 依赖项
 
@@ -37,14 +38,15 @@
 ```yaml
 - hosts: all
   roles:
-    - role: firewall_service
+    - role: ufw_app
       ufw_app_name: myapp
       ufw_app_description: ufw rule for myapp
       ufw_app_ports:
-        tcp: 
+        tcp:
           - 8080
-          - 9000:9010
-        udp: 8443
+          - "9000:9010"
+        udp:
+          - 8443
 ```
 
 也可作为普通任务（`include_role`）使用：
@@ -54,13 +56,14 @@
   tasks:
     - name: 开放 myapp 端口
       ansible.builtin.include_role:
-        name: firewall_service
+        name: ufw_app
       vars:
         ufw_app_name: myapp
         ufw_app_description: ufw rule for myapp
         ufw_app_ports:
-          tcp: 
+          tcp:
             - 8080
-            - 9000:9010
-          udp: 8443
+            - "9000:9010"
+          udp:
+            - 8443
 ```
