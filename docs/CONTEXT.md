@@ -41,6 +41,12 @@ host vars 的 `rclone_mounts`），在 `/data` 下建符号链接暴露。
 ### bootstrap
 初始化所有 VPS 基础环境的 playbook（`bootstrap.yaml`），包括 SSH 密钥登录、ufw 防火墙、BBR、/app 和 /data 目录等。
 
+### ufw_app
+通过 `ufw` 开放指定 TCP / UDP 端口的角色（替代已删除的 `firewall_service`）。
+在 `/etc/ufw/applications.d/ufw-custom` 生成应用规则后经
+`community.general.ufw` 放行，规则即时生效。防火墙初始化在
+`bootstrap.yaml` 的 “Initialize ufw” 阶段完成。
+
 ### SSH 认证
 Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自动发现密钥：优先使用本地 ssh agent 中已加载的密钥，也会自动尝试默认位置的私钥（如 `~/.ssh/id_ed25519`），无需（也不强制）依赖 ssh agent。公钥通过 `user` 角色以文本形式（`ssh_public_key`）部署到被管理机器的 authorized_keys。
 
@@ -92,6 +98,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | 23 | Container-defined routing | Each container's .container Quadlet has its own traefik.http.* labels |
 | 24 | Double health check | Quadlet healthcheck (systemd) + Traefik HTTP probe to Xray stats API |
 | 25 | Xray host network address | Traefik routes to `127.0.0.1`（Xray 入站端口，见 `sample_inventory/`）for Xray backend |
+| 26 | Debian 13 base environment | 目标机迁至 Debian 13：apt + ufw、无 SELinux；`firewall_service` 由 `ufw_app` 取代（详见 `docs/adr/0001-debian13-migration.md`） |
 
 ## Removed Roles & Cleanup Log (2026-08-04)
 
@@ -113,6 +120,16 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 - 删除 `tests/file_server.yaml`（已被 `playbooks/file_server.yaml` 取代）
 - `playbooks/all.yaml`：`import_playbook: file_server.yaml`（原注释掉的 `file_server.yaml` 引用移除）
 
+### 2026-08-21（Debian 13 迁移）
+- 删除 `roles/firewall_service/`（firewalld 时代角色），新增 `roles/ufw_app/`
+- 移除全部 SELinux / firewalld 相关代码：`podman` / `traefik` / `xray` /
+  `filebrowser` / `rclone` 的 `setype`、`sefcontext`、CIL 模块、
+  `security_opt: label`、卷 `:Z` 选项
+- 删除 `docs/adr/0001~0003`（AlmaLinux 时代决策，视为 obsolete；本次迁移决策见
+  `docs/adr/0001-debian13-migration.md`）
+- `bootstrap.yaml` / `update_packages.yaml` 批量升级改 `ansible.builtin.apt`
+  （`upgrade: dist`）；firewall_service 相关 handler / noqa 移除
+
 ### Known leftover issues
 - `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`（旧 `rclone` 引用已由正式 `roles/rclone/` 取代，tests 引用待清理）
 
@@ -120,6 +137,28 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 - [x] `filebrowser` 对外访问已改由 Traefik 容器标签（2026-08-05，`roles/filebrowser/` Quadlet labels 落地）；`plex`/`qbittorrent` 仍待迁移（替代旧 nginx 反代）
 - [ ] 清理/重写 `tests/` 目录，删除或迁移引用已不存在 role 的测试场景
 - [x] 已更新 `rclone` role 文档体现新使用思路（2026-08-05）：消费类角色（如 `filebrowser`）只声明所需 mount 名称列表，mount 完整配置由 host vars 的共享变量 `rclone_mounts` 定义
+
+## Debian 13 迁移（2026-08-21）
+
+目标机基础环境从 AlmaLinux 迁移至 **Debian 13（trixie）**，决策详见
+[ADR-0001](adr/0001-debian13-migration.md)。关键事实：
+
+- **包管理**：安装用 `ansible.builtin.package`（自动选 apt 后端）；批量升级用
+  `ansible.builtin.apt` 的 `upgrade: dist`（= `apt full-upgrade`）。全新
+  Debian 首装前需 `update_cache: true`。中文 locale 用 `locales-all`。
+- **防火墙**：`firewalld` → `community.general.ufw`。默认拒绝入站、放行出站；
+  SSH 用 ufw profile 名 `OpenSSH`（Debian 只有 `[OpenSSH]`，无 `[ssh]`）。
+  `firewall_service` 角色已删除，由 `roles/ufw_app/` 取代。
+- **SELinux 全部移除**：各容器角色的 `setype` / `sefcontext` / CIL 模块 /
+  `security_opt: label` / 卷 `:Z` 选项全部删除；`community.general.sefcontext`
+  在无 SELinux 系统会失败（semanage 不存在），必须删除。
+- **podman 绑定**：`pip` 装 podman 撞 PEP 668，改装 `python3-podman`
+  （Debian 与 RHEL9 均有同名包）。
+- **SSH**：Debian 服务名是 `ssh`（无 `sshd.service`，`sshd.service` 仅是
+  `ssh.service` 的 `[Install] Alias=`），自启由 `ssh.socket`（socket
+  activation）负责；drop-in 白名单只保留 `00-default.conf`（清掉云镜像的
+  `50-cloud-init.conf`，避免覆盖安全设置）。
+- 相关 lint / 文档改动见 `docs/ansible-lint.md`、`docs/role-doc-conventions.md`。
 
 ## 运行经验（2026-08-05，filebrowser 部署）
 
