@@ -9,7 +9,7 @@ HTTPS 入口路由器，终结 TLS。使用 ACME + Cloudflare DNS challenge 管�
 每个容器的 Quadlet `.container` 文件中直接包含 `traefik.http.routers.*` 和 `traefik.http.services.*` labels，Traefik 读取后自动注册路由。与"全局路由配置"相对，新容器只需自带 labels 即可接入。
 
 ### Xray
-VLESS 代理后端，支持 WebSocket 和 XHTTP 两种传输层协议。不做 TLS 终结，接收来自 Traefik 的 HTTP 流量。使用 host 网络模式以保留 UDP/QUIC 兼容性。容器内进程以 root (0:0) 运行。Xray 自行处理 `/xray/proxy*` 子路径的协议分流（WS vs xHTTP），Traefik 只识别 `/xray/proxy` 前缀。保留 routing 段落用于未来 wgcf 出站路由。Quadlet 定义中配置健康检查（systemd 生命周期管理），Traefik 通过 stats API 端口（由 `xray_stats_port` 变量配置）做路由层健康检查。
+VLESS 代理后端，支持 WebSocket 和 XHTTP 两种传输层协议。不做 TLS 终结，接收来自 Traefik 的 HTTP 流量。加入 `podman_network` 容器网络（与 Traefik 同网，见 ADR-0004）。容器内进程以 root (0:0) 运行。Xray 自行处理 `/xray/proxy*` 子路径的协议分流（WS vs xHTTP），Traefik 只识别 `/xray/proxy` 前缀。保留 routing 段落用于未来 wgcf 出站路由。Quadlet 定义中配置健康检查（systemd 生命周期管理），Traefik 通过 stats API 端口（由 `xray_stats_port` 变量配置）做路由层健康检查。
 
 ### Quadlet
 Podman 的声明式 systemd 容器定义文件格式（`.container`, `.network`, `.volume`），
@@ -19,7 +19,7 @@ Podman 的声明式 systemd 容器定义文件格式（`.container`, `.network`,
 ADR-0002）。不手写 J2 模板。
 
 ### podman_network
-自定义 Podman 容器网络，由 Quadlet `.network` 文件定义。Traefik 加入此网络，Xray 通过 host 网络模式通过 `127.0.0.1` 访问 podman_network 中的服务。网络定义在 `podman` role 内创建。
+自定义 Podman 容器网络，由 Quadlet `.network` 文件定义。Traefik 与 Xray 均加入此网络，彼此经容器网络直连。网络定义在 `podman` role 内创建。
 
 ### rootless
 容器以非 root 用户（`podman_username`）创建和管理，但容器内进程可以以 root 运行。区别：rootless 指的是容器运行时，不是容器内进程权限。
@@ -72,7 +72,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 |---------|------|---------|-----|-------------------|
 | Podman (rootless) | `podman` | — | — | — |
 | Traefik | `traefik` | `podman_network` (Quadlet) | Yes (ACME) | Labels (self-defined routes) |
-| Xray | `xray` | `host` | No (HTTP only) | Labels in .container Quadlet; backend at `127.0.0.1`（Xray 入站端口，见 `sample_inventory/`）|
+| Xray | `xray` | `podman_network` | No (HTTP only) | Labels in .container Quadlet; backend 经容器网络直连（server port 见 `sample_inventory/`） |
 
 ## ADR 索引
 
@@ -81,7 +81,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | 0001 | 基础环境迁移至 Debian 13（apt + ufw、无 SELinux） | 已接受（2026-08-21） |
 | 0002 | Quadlet 声明式容器定义（`state: quadlet`） | 已接受 |
 | 0003 | Traefik ACME 管理证书 | 已接受 |
-| 0004 | Xray 使用 host 网络模式 | 已接受 |
+| 0004 | Xray 加入 podman_network 容器网络 | 已接受 |
 | 0005 | 容器定义路由（container-defined routing） | 已接受 |
 
 历史决策（已删除角色、被取代的旧做法、冗余条目）见 `docs/history.md`。

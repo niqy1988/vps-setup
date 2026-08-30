@@ -6,7 +6,7 @@
 ## 架构沿革
 
 - **2026-06**：以单台主机起步；容器用 Quadlet（ADR-0002）、证书用 Traefik ACME
-  （ADR-0003）、Xray 用 host 网络（ADR-0004）。
+  （ADR-0003）、Xray 加入 podman_network（ADR-0004）。
 - **2026-08-04**：架构铺开到 `xray` 组全部主机；删除 acme / nginx 角色；文档全量
   脱敏。
 - **2026-08-05**：filebrowser 角色落地（Traefik 标签路由 + rclone 挂载）。
@@ -29,7 +29,8 @@
 
 - Nginx 移除（原 #1 / #22，重复）→ ADR-0005（容器标签路由，无 Nginx 兜底）
 - Traefik ACME 取代 acme.sh（原 #2）→ ADR-0003
-- Xray host 网络（原 #3）→ ADR-0004
+- Xray 网络模式（原 #3）→ ADR-0004（Xray 加入 `podman_network`；早期
+  "host 网络 + 127.0.0.1 回环"表述与代码不符，已在 ADR-0004 重建时更正）
 - Quadlet 定义用 J2 模板（原 #7 / #8）→ **已过时**：现用 `state: quadlet` 模块
   生成定义文件（ADR-0002），不手写 J2 模板
 - Xray 支持 ws + xhttp 单入口（原 #13 / #21，重复）→ 现状由 `xray_*_port` 变量配置

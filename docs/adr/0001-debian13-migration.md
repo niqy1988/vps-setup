@@ -41,8 +41,8 @@ fcontext 规则才可跨重启存活）。
 - 移除约 300 行 SELinux / firewalld 相关代码与模板（CIL 模块、fcontext
   规则、`label` 安全选项、`flush_handlers` 等），各容器角色更简单。
 - `docs/adr/0001~0003`（AlmaLinux 时代的 Quadlet 迁移 / Traefik ACME /
-  Xray host 网络决策）已随本次迁移删除（决策要点保留在 `docs/CONTEXT.md`
-  的「Architectural Decisions Summary」表）。
+  Xray 网络决策）已随本次迁移删除（核心决策已重建为 ADR-0002~0004，
+  见 `docs/CONTEXT.md` 的 ADR 索引）。
 - 全部角色 / playbook 通过 `ansible-lint`（production profile，0 failure /
   0 warning）。
 - 后续新角色（如 `filebrowser` 一类容器角色）不再需要任何 SELinux 相关

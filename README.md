@@ -15,8 +15,8 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
   `.container` / `.network` 定义管理生命周期（ADR-0002）。
 - **Traefik 反向代理 + ACME**：Cloudflare DNS challenge 签发证书，通过容器
   label 自动发现路由（container-defined routing），无 Nginx 兜底（ADR-0003）。
-- **Xray 代理**：VLESS + WebSocket / XHTTP，host 网络模式保留 UDP/QUIC
-  兼容性（ADR-0004），经 Traefik 暴露 HTTPS 入口。
+- **Xray 代理**：VLESS + WebSocket / XHTTP，加入 `podman_network` 容器网络
+  （ADR-0004），经 Traefik 暴露 HTTPS 入口。
 - **wgcf 出口**：注册 Cloudflare WARP 设备，为 Xray 提供 WireGuard 出口。
 - **rclone 挂载**：rootless systemd user service 按需挂载云盘（VFS 缓存）。
 - **账号与权限**：`user` / `ansible_access` / `interactive_access` 统一管理
