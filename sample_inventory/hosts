@@ -12,3 +12,11 @@ sample_noroot_host # host without root access, relies on a bootstrap account
 # xray 组：podman + traefik + wgcf + xray 全套（同一主机可属多个组）
 [xray]
 sample_generic_host
+
+# file 组：部署 filebrowser（playbooks/file_server.yaml 目标）
+[file]
+sample_generic_host
+
+# interactive 组：允许交互式登录（如开发机）
+[interactive]
+sample_dev_host
