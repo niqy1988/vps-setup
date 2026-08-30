@@ -12,7 +12,11 @@ HTTPS 入口路由器，终结 TLS。使用 ACME + Cloudflare DNS challenge 管�
 VLESS 代理后端，支持 WebSocket 和 XHTTP 两种传输层协议。不做 TLS 终结，接收来自 Traefik 的 HTTP 流量。使用 host 网络模式以保留 UDP/QUIC 兼容性。容器内进程以 root (0:0) 运行。Xray 自行处理 `/xray/proxy*` 子路径的协议分流（WS vs xHTTP），Traefik 只识别 `/xray/proxy` 前缀。保留 routing 段落用于未来 wgcf 出站路由。Quadlet 定义中配置健康检查（systemd 生命周期管理），Traefik 通过 stats API 端口（由 `xray_stats_port` 变量配置）做路由层健康检查。
 
 ### Quadlet
-Podman 的声明式 systemd 容器定义文件格式（`.container`, `.network`, `.volume`），替代命令式 `podman_container` Ansible 模块。定义文件以 J2 模板存放在角色 `templates/quadlet/` 下，Ansible 渲染后部署到 `~/.config/containers/systemd/`，通过 systemd 管理生命周期。
+Podman 的声明式 systemd 容器定义文件格式（`.container`, `.network`, `.volume`），
+替代命令式 `podman_container` Ansible 模块。定义文件由 `containers.podman`
+模块（`state: quadlet`）按结构化参数直接生成到
+`~/.config/containers/systemd/`，由 systemd 用户会话管理生命周期（见
+ADR-0002）。不手写 J2 模板。
 
 ### podman_network
 自定义 Podman 容器网络，由 Quadlet `.network` 文件定义。Traefik 加入此网络，Xray 通过 host 网络模式通过 `127.0.0.1` 访问 podman_network 中的服务。网络定义在 `podman` role 内创建。
@@ -58,6 +62,7 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | `dev` | 开发机，podman镜像选择latest，允许交互式用户登录的主机 |
 | `interactive` | 允许交互式用户登录的生产机 |
 | `xray` | 部署 Xray 代理服务的主机 |
+| `file` | 部署 filebrowser（`file_server.yaml` 目标） |
 
 ## Service Deployment Matrix (xray hosts)
 
@@ -69,127 +74,28 @@ Ansible 全链路不指定 private key file。连接时认证交给 OpenSSH 自�
 | Traefik | `traefik` | `podman_network` (Quadlet) | Yes (ACME) | Labels (self-defined routes) |
 | Xray | `xray` | `host` | No (HTTP only) | Labels in .container Quadlet; backend at `127.0.0.1`（Xray 入站端口，见 `sample_inventory/`）|
 
-## Architectural Decisions Summary
+## ADR 索引
 
-| # | Decision | Key Detail |
-|---|----------|------------|
-| 1 | Nginx role removed project-wide | _nginx role deleted; not used on any xray host |
-| 2 | Traefik ACME replaces acme.sh | Certificates managed by Traefik; acme role removed |
-| 3 | Xray host network mode | UDP/QUIC compatibility |
-| 4 | Traefik routes to Xray | Not reverse fallback |
-| 5 | Route matching = PathPrefix only | Traefik only matches `/xray/proxy*`, Xray handles sub-path splitting |
-| 6 | Xray no TLS termination | HTTP-only backend, Traefik handles TLS |
-| 7 | Quadlet definitions as J2 templates | Ansible renders variables |
-| 13 | Xray supports ws + xhttp | Single entry port（由 `xray_*_port` 变量配置）; Xray handles sub-path protocol splitting |
-| 8 | Templates in subdirectories | templates/quadlet/ and templates/config/ |
-| 9 | podman_network in podman role | Shared infrastructure |
-| 10 | systemd reload via handlers | Per-role handler triggers |
-| 11 | Xray process runs as root in container | Container itself is rootless |
-| 12 | argument_specs as primary docs | defaults/main.yaml for fallback defaults |
-| 14 | wgcf routing reserved | Details deferred |
-| 15 | xray hosts: podman + traefik + xray only | nginx removed |
-| 16 | Firewall opened in traefik role handler | Port 80/443 after config deployed |
-| 17 | Cloudflare token via env var | From www.yaml, no vault needed yet |
-| 18 | Label-based service discovery | No traefik_dynamic.yml; routes in container .container Quadlet labels |
-| 19 | Traefik traefik.toml simplified | Only entrypoints, providers, ACME, buffering/streaming config |
-| 20 | Xray routing section kept | Future wgcf rules to be added |
-| 21 | Single entry port for WS + xHTTP | 由 `xray_*_port` 变量配置; Xray handles sub-path protocol splitting, not Traefik |
-| 22 | No Nginx on any xray host | _nginx role removed project-wide |
-| 23 | Container-defined routing | Each container's .container Quadlet has its own traefik.http.* labels |
-| 24 | Double health check | Quadlet healthcheck (systemd) + Traefik HTTP probe to Xray stats API |
-| 25 | Xray host network address | Traefik routes to `127.0.0.1`（Xray 入站端口，见 `sample_inventory/`）for Xray backend |
-| 26 | Debian 13 base environment | 目标机迁至 Debian 13：apt + ufw、无 SELinux；`firewall_service` 由 `ufw_app` 取代（详见 `docs/adr/0001-debian13-migration.md`） |
+| ADR | 主题 | 状态 |
+| --- | --- | --- |
+| 0001 | 基础环境迁移至 Debian 13（apt + ufw、无 SELinux） | 已接受（2026-08-21） |
+| 0002 | Quadlet 声明式容器定义（`state: quadlet`） | 已接受 |
+| 0003 | Traefik ACME 管理证书 | 已接受 |
+| 0004 | Xray 使用 host 网络模式 | 已接受 |
+| 0005 | 容器定义路由（container-defined routing） | 已接受 |
 
-## Removed Roles & Cleanup Log (2026-08-04)
+历史决策（已删除角色、被取代的旧做法、冗余条目）见 `docs/history.md`。
+运维知识（运行经验、迁移操作细节）见 `docs/ops.md`。
 
-### Deleted
-- `roles/_acme/` — acme.sh 证书管理，已被 Traefik ACME 取代
-- `roles/_nginx/` — nginx 反向代理，已被 Traefik 取代
-- 模板：`roles/plex/templates/plex.conf.j2`、`roles/qbittorrent/templates/qbittorrent.conf.j2`、`roles/filebrowser/templates/filebrowser.conf.j2`
+## Roadmap
 
-### Reference cleanup (by role / playbook)
-- `roles/plex/`：meta 移除 `nginx` 依赖；tasks 删除 "Create nginx rule" 任务；handlers 删除 `Reload nginx` notify
-- `roles/qbittorrent/`：meta 移除 `nginx` 依赖；tasks 删除 "Create nginx rule" 任务
-- `roles/filebrowser/`：defaults 删除自引用 `nginx_path`/`nginx_user`；tasks 删除 nginx site rules 段
-- `tests/`：`file_server.yaml`、`hath.yaml`、`media_server.yaml`、`seedbox.yaml`、`wordpress.yaml` 移除 `docker` 与 `nginx` 的 role play
-- `docs/CONTEXT.md`：决策 #1/#2/#15/#22 更新
-- `docs/adr/0002-traefik-acme.md`：consequence 更新（acme role 已删除）
+- **媒体栈**（`plex` / `qbittorrent` / `sonarr` / `radarr`）：已搁置、规划后续
+  开发，**未合入当前架构**；`all.yaml` 中 `media_server` / `seedbox` 保持注释。
+  参考实现见 `download_pack` 分支（未合入）。
+- 其余待办见 `docs/history.md` 的 TODO。
 
-### 2026-08-05（filebrowser 清理）
-- 删除 `legacy_roles/_filebrowser/`（已被正式 `roles/filebrowser/` 取代）
-- 删除 `tests/file_server.yaml`（已被 `playbooks/file_server.yaml` 取代）
-- `playbooks/all.yaml`：`import_playbook: file_server.yaml`（原注释掉的 `file_server.yaml` 引用移除）
+## 参考文档
 
-### 2026-08-21（Debian 13 迁移）
-- 删除 `roles/firewall_service/`（firewalld 时代角色），新增 `roles/ufw_app/`
-- 移除全部 SELinux / firewalld 相关代码：`podman` / `traefik` / `xray` /
-  `filebrowser` / `rclone` 的 `setype`、`sefcontext`、CIL 模块、
-  `security_opt: label`、卷 `:Z` 选项
-- 删除 `docs/adr/0001~0003`（AlmaLinux 时代决策，视为 obsolete；本次迁移决策见
-  `docs/adr/0001-debian13-migration.md`）
-- `bootstrap.yaml` / `update_packages.yaml` 批量升级改 `ansible.builtin.apt`
-  （`upgrade: dist`）；firewall_service 相关 handler / noqa 移除
-
-### Known leftover issues
-- `tests/` 整体已与当前项目脱节，仍引用不存在的 role：`certbot`、`mysql`、`wordpress`、`www`、`hath`（旧 `rclone` 引用已由正式 `roles/rclone/` 取代，tests 引用待清理）
-
-### TODO
-- [x] `filebrowser` 对外访问已改由 Traefik 容器标签（2026-08-05，`roles/filebrowser/` Quadlet labels 落地）；`plex`/`qbittorrent` 仍待迁移（替代旧 nginx 反代）
-- [ ] 清理/重写 `tests/` 目录，删除或迁移引用已不存在 role 的测试场景
-- [x] 已更新 `rclone` role 文档体现新使用思路（2026-08-05）：消费类角色（如 `filebrowser`）只声明所需 mount 名称列表，mount 完整配置由 host vars 的共享变量 `rclone_mounts` 定义
-
-## Debian 13 迁移（2026-08-21）
-
-目标机基础环境从 AlmaLinux 迁移至 **Debian 13（trixie）**，决策详见
-[ADR-0001](adr/0001-debian13-migration.md)。关键事实：
-
-- **包管理**：安装用 `ansible.builtin.package`（自动选 apt 后端）；批量升级用
-  `ansible.builtin.apt` 的 `upgrade: dist`（= `apt full-upgrade`）。全新
-  Debian 首装前需 `update_cache: true`。中文 locale 用 `locales-all`。
-- **防火墙**：`firewalld` → `community.general.ufw`。默认拒绝入站、放行出站；
-  SSH 用 ufw profile 名 `OpenSSH`（Debian 只有 `[OpenSSH]`，无 `[ssh]`）。
-  `firewall_service` 角色已删除，由 `roles/ufw_app/` 取代。
-- **SELinux 全部移除**：各容器角色的 `setype` / `sefcontext` / CIL 模块 /
-  `security_opt: label` / 卷 `:Z` 选项全部删除；`community.general.sefcontext`
-  在无 SELinux 系统会失败（semanage 不存在），必须删除。
-- **podman 绑定**：`pip` 装 podman 撞 PEP 668，改装 `python3-podman`
-  （Debian 与 RHEL9 均有同名包）。
-- **SSH**：Debian 服务名是 `ssh`（无 `sshd.service`，`sshd.service` 仅是
-  `ssh.service` 的 `[Install] Alias=`），自启由 `ssh.socket`（socket
-  activation）负责；drop-in 白名单只保留 `00-default.conf`（清掉云镜像的
-  `50-cloud-init.conf`，避免覆盖安全设置）。
-- 相关 lint / 文档改动见 `docs/ansible-lint.md`、`docs/role-doc-conventions.md`。
-
-## 运行经验（2026-08-05，filebrowser 部署）
-
-> 以下 SELinux 相关条目适用于 2026-08-21 之前的 AlmaLinux 目标机；
-> 自该日起项目迁移至 Debian 13，不再使用 SELinux（Host Groups 表已更新）。
-
-- **`containers.podman` 对 `podman_network state: quadlet` 的支持有版本门槛**：
-  1.11.0 不支持（state 仅 `present/absent`），需升级到支持 quadlet 的版本
-  （1.20.2 实测可用）。`podman_* state: quadlet` 的合法性不能只靠 lint——
-  缺 `containers` 集合时模块参数校验会被跳过。
-- **`lookup('file')` 相对路径以 playbook 所在目录为基准**（非控制机 cwd）：
-  读取 `inventory/...` 等控制端文件时，相对路径默认值在 `playbooks/` 子目录下会
-  失效（解析成 `playbooks/inventory/...`）。改用 `{{ inventory_dir }}/...` 绝对基准。
-- **`state: touch` 非幂等**：`file` 模块 touch 默认 `modification_time/access_time = now`，
-  每次更新 mtime 恒报 changed；设 `modification_time: preserve` / `access_time: preserve`
-  即幂等，且仍会校验/修正 owner/group/mode/setype（满足"需要时重标签用户/组/context"）。
-- **argument_specs 嵌套校验会拦 CLI 风格连字符键名**：host vars 里 rclone mount
-  用 `vfs-cache-size` 被嵌套 options 校验拒绝；应用下划线变量名 `vfs_cache_size`。
-- **gtsteffaniak fork 的 WebDAV 端点是 `/dav/<source>/`**（需源名，如 `/dav/Data/`），
-  裸 `/dav` 返回 404 属正常；WebDAV 用 filebrowser 自带 Basic Auth（用户名 + JWT token）。
-- **SELinux**：容器（`container_t`）访问 `user_home_t` 类型的文件会产生 AVC
-  （permissive 记录、enforcing 拒绝）；容器读写的文件应标 `container_file_t`。
-  启动期探测旧库等杂散文件会触发一次性 AVC，自愈后无新增属正常。
-- **幂等性**：filebrowser 自身已全幂等（db touch 用 preserve）；依赖 role 仍有少量
-  非幂等（如 traefik auth 中间件因 bcrypt 随机盐每次 changed），属既有问题待单独优化。
-- **SELinux enforcing 下容器访问 `/data` 失败（补充，2026-08-05）**：`/data` 原为
-  `default_t`（bootstrap 建目录未设 setype），permissive 下容器照常访问，enforcing 下
-  容器 `container_t` 访问被拒（`ls: Permission denied`，且不一定会记 AVC）。修复放在
-  **`podman` role**（只在容器机上生效）：对 `/app`、`/data` 用 `file` 模块 `setype:
-  container_file_t`（运行时标签，`# noqa: risky-file-permissions`）；并用
-  `community.general.sefcontext` 为 `/app(/.*)?`、`/data(/.*)?`
-  写**持久 fcontext 规则**（跨重启 / restorecon）。注意：`file` 模块 setype 是运行时
-  标签（≈chcon），全盘 `restorecon` 会还原成 `default_t`——持久性靠 sefcontext 规则。
+- 历史记录（角色清理日志、历史决策、遗留问题、TODO）见 `docs/history.md`。
+- 运维知识（运行经验、Debian 迁移操作细节）见 `docs/ops.md`。
 
