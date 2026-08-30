@@ -12,11 +12,11 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
 ## 特性
 
 - **rootless Podman + Quadlet**：容器以非 root 用户运行，用声明式
-  `.container` / `.network` 定义管理生命周期（ADR-0001）。
+  `.container` / `.network` 定义管理生命周期（ADR-0002）。
 - **Traefik 反向代理 + ACME**：Cloudflare DNS challenge 签发证书，通过容器
-  label 自动发现路由（container-defined routing），无 Nginx 兜底（ADR-0002）。
+  label 自动发现路由（container-defined routing），无 Nginx 兜底（ADR-0003）。
 - **Xray 代理**：VLESS + WebSocket / XHTTP，host 网络模式保留 UDP/QUIC
-  兼容性（ADR-0003），经 Traefik 暴露 HTTPS 入口。
+  兼容性（ADR-0004），经 Traefik 暴露 HTTPS 入口。
 - **wgcf 出口**：注册 Cloudflare WARP 设备，为 Xray 提供 WireGuard 出口。
 - **rclone 挂载**：rootless systemd user service 按需挂载云盘（VFS 缓存）。
 - **账号与权限**：`user` / `ansible_access` / `interactive_access` 统一管理
@@ -35,7 +35,7 @@ inventory，把裸机 VPS 从零配置为可用的代理 / 存储服务器。
 ├── legacy_roles/          # 已废弃的旧角色（_plex / _qbittorrent）
 ├── inventory/             # 私有 inventory（git 忽略），镜像 sample_inventory 结构
 ├── sample_inventory/      # 文档唯一引用的范例 inventory（已脱敏）
-├── docs/                  # 文档（架构上下文 / 规范 / lint 记录 / ADR）
+├── docs/                  # 文档（架构上下文 / ADR / 运维 / 历史 / 规范 / lint）
 └── tests/                 # 遗留测试 playbook（与当前架构脱节，待清理）
 ```
 
@@ -77,6 +77,7 @@ ansible-playbook playbooks/all.yaml
 | `dev` | 开发机：镜像 latest、允许交互式登录 |
 | `interactive` | 允许交互式登录的生产机 |
 | `xray` | 部署 Xray 代理栈的主机（podman + traefik + wgcf + xray 全套） |
+| `file` | 部署 filebrowser（`file_server.yaml` 目标） |
 
 主机可同时属于多个组。组的具体构成与主机级变量示例见 `sample_inventory/`。
 
@@ -112,9 +113,11 @@ ansible-playbook playbooks/all.yaml
 
 ## 文档
 
-- [docs/CONTEXT.md](docs/CONTEXT.md) —— 架构上下文、术语、主机组、决策记录。
-- [docs/adr/](docs/adr/) —— 架构决策记录（当前为 Debian 13 迁移；旧
-  AlmaLinux 时代的 ADR 已随迁移废弃删除，决策要点保留在 CONTEXT）。
+- [docs/CONTEXT.md](docs/CONTEXT.md) —— 架构上下文：术语表、主机组、服务矩阵、
+  ADR 索引与 Roadmap。
+- [docs/adr/](docs/adr/) —— 架构决策记录（ADR-0001~0005）。
+- [docs/ops.md](docs/ops.md) —— 运维知识（运行经验、迁移操作细节）。
+- [docs/history.md](docs/history.md) —— 历史档案（角色清理、历史决策、遗留问题）。
 - [docs/role-doc-conventions.md](docs/role-doc-conventions.md) —— Role 文档
   规范、脱敏规则、`sample_inventory` 约定、提权约定、参数审计记录。
 - [docs/ansible-lint.md](docs/ansible-lint.md) —— ansible-lint 整理记录
