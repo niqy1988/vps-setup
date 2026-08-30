@@ -17,8 +17,7 @@
    独立块）；
 2. 写入 `~/.config/rclone/mounts/<name>.env`：
    - `RCLONE_VFS_CACHE_MODE`（默认 `full`；`off|minimal|writes|full`），
-   - `RCLONE_VFS_CACHE_MAX_SIZE`（默认 `off` = 不限），
-   - `RCLONE_VFS_CACHE_MIN_FREE_SPACE`（默认 `off` = 不限）；
+   - `RCLONE_VFS_CACHE_MAX_SIZE`（必填，如 `2G`；`"off"` = 不限）；
 3. 确保 `rclone@<name>` 用户服务已启用并启动。
 
 对 `rclone_removed_mounts` 中的名字：停止 / 禁用服务、删除配置块与
@@ -46,8 +45,7 @@ vfs 缓存参数通过 env 文件传给挂载（而不是编码进服务实例�
 | --- | --- | --- | --- | --- |
 | `name` | str | ✅ 是 | — | 远端名，须匹配 `rclone_conf_src_dir` 下 `<name>.conf`（示例见 `sample_inventory/rclone/conf.d/`） |
 | `vfs_cache_mode` | str | 否 | `full`（实际来自模板） | `off\|minimal\|writes\|full` |
-| `vfs_cache_size` | str | 否 | `off`（实际来自模板） | VFS 缓存上限（如 `2G`）；`"off"` = 不限 |
-| `vfs_cache_min_free_space` | str | 否 | `off`（实际来自模板） | 保留的最小剩余空间（如 `1G`）；`"off"` = 不限 |
+| `vfs_cache_size` | str | ✅ 是 | — | VFS 缓存上限（如 `2G`）；`"off"` = 不限 |
 
 > ⚠️ **`off` 必须加引号**：YAML 1.1 会把裸 `off` 解析成布尔 `false`，
 > 要表示“不限”请写 `"off"`。
