@@ -1,5 +1,9 @@
 # ansible-lint 整理记录（roles + playbooks）
 
+> 本文中 2026-08-21 之前的记录针对 AlmaLinux（dnf / firewalld / SELinux）
+> 时代的目标机；自该日起项目迁移至 Debian 13（apt / ufw / 无 SELinux），
+> 迁移涉及的 lint 改动见文末「Debian 13 迁移后的 lint 整理」。
+
 > 本文记录 `roles/` 下 9 个 role 与 `playbooks/` 下 6 个 playbook 的 lint 达标过程：每个文件改了什么、哪些违规是**有意忽略/豁免**的及原因、以及过程中用户提出的疑问与最终结论。
 > 配套记忆：`/memories/repo/lint.md`（精简版 + 实时状态）。
 
@@ -7,10 +11,10 @@
 
 - **ansible-lint 6.22.2**（uv 安装，运行时有 `PATH altered` 警告但可用）。
 - 项目**无 `.ansible-lint` 配置文件**，也**不用 `.ansible-lint-ignore`**（2026-08-04 已删除，见「疑问 1」）。
-- 分支 `new_arch`，工作区干净。
+- 分支 `main`（2026-08-21 Debian 13 迁移已合入），工作区干净。
 - **当前验证命令与结果**：
-  - `ansible-lint roles/` → `0 failure(s), 0 warning(s)` on 61 files，production profile。
-  - `ansible-lint playbooks/` → `0 failure(s), 0 warning(s)`（production profile，19 files），见「playbooks 的 lint 整理记录」。
+  - `ansible-lint roles/` → `0 failure(s), 0 warning(s)`（production profile）。
+  - `ansible-lint playbooks/` → `0 failure(s), 0 warning(s)`（production profile），见「playbooks 的 lint 整理记录」。
   - 单 role：`ansible-lint roles/<role>` 同样 0/0。
   - 全项目 `ansible-lint`（无参数）→ 报 **2 个 fatal** `syntax-check[specific]`，全在 `tests/`（`media_server.yaml:21` plex / `seedbox.yaml:21` qbittorrent）——**有意保留**，见「疑问 8」（filebrowser 的 `file_server.yaml` fatal 已随 2026-08-05 清理消失）。
 
@@ -152,3 +156,30 @@ ansible-lint -t fqcn --exclude <path>
 - **尾随空格**：处理时先 `cat -e` / `od -An -tx1` 确认精确空格数，别凭 `nl` 输出肉眼估（`nl` 前缀会干扰判断）。
 - **YAML 1.1 布尔坑**：未加引号的 `off`/`on`/`yes`/`no` 会被解析成布尔；要字面字符串必须加引号（rclone choices、传"关闭/不限"值时尤其注意）。
 - **含 `{{ }}` 的字符串值尽量加双引号**；`ansible-lint --fix` 可能把引号去掉，用完后检查加回。
+
+## Debian 13 迁移后的 lint 整理（2026-08-21）
+
+目标机从 AlmaLinux 迁至 Debian 13（apt + ufw、无 SELinux）后，对 `roles/`
+与 `playbooks/` 重新跑 lint，全部达标（0 failure / 0 warning）。本节记录
+迁移本身涉及的 lint 相关改动（历史 AlmaLinux 条目见上文，已标注时代）。
+
+- **删除 `roles/firewall_service/`**（firewalld 时代，含 `service.xml.j2`
+  模板与 `flush_handlers`）；新增 **`roles/ufw_app/`**：`ini_file` 生成
+  `/etc/ufw/applications.d/ufw-custom` + `community.general.ufw` 放行，
+  自带 `filter_plugin/ufw_ports.py`（`format_ufw_ports` filter）。
+- **批量升级改 `ansible.builtin.apt`**：`bootstrap.yaml` /
+  `update_packages.yaml` / `xray.yaml` 的升级任务由 dnf 语义改为
+  `apt` 的 `upgrade: dist` + `update_cache: true`（保留行尾
+  `# noqa: package-latest` 豁免）。
+- **SELinux 相关 noqa / handler 移除**：traefik 不再有 CIL 模块
+  （`semodule -i` handler）与 `security_opt: label=type:...`；podman 不再有
+  `sefcontext` / `setype`（`state: quadlet` 的 `# noqa: args[module]` 保留）；
+  容器卷 `:Z` 选项移除。
+- **`python3-podman`**：podman role 的 pip 任务改为 `package` 安装
+  `python3-podman`（PEP 668 兼容，跨发行版）。
+- **其他**：SSH 服务名 `sshd` → `ssh`；ufw profile `ssh` → `OpenSSH`；
+  `locales-all` 取代 RHEL 的 langpacks。
+
+> 结论：迁移后角色 / playbook 仍维持 production profile 0/0；原有
+> `var-naming[no-role-prefix]` 豁免清单不变（`ufw_app` 自身变量
+> `ufw_app_*` 均带前缀，无需 noqa）。
