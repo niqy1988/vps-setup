@@ -2,6 +2,10 @@
 
 > 本文档沉淀 2026-08-04 的维护任务：为 `roles/` 下全部 9 个 role 补齐中文文档、
 > 建立文档脱敏与 `sample_inventory` 约定、统一提权方式、清理死变量，并记录审计结果。
+>
+> **2026-08-21 起**：目标机迁移至 Debian 13（apt + ufw、无 SELinux），
+> `firewall_service` 角色已删除、由 `ufw_app` 取代，本文档随之更新
+> （现 `roles/` 共 10 个 role）。firewalld / SELinux 相关描述均按 Debian 现状改写。
 
 ## 一、Role 文档规范
 
@@ -25,7 +29,7 @@ role 列表：
 | `traefik` | 反向代理 + ACME | `xray` |
 | `wgcf` | Cloudflare WARP 设备注册（Xray wireguard 出口） | `xray` |
 | `xray` | Xray 代理（VLESS + WS/XHTTP） | — |
-| `firewall_service` | 通过 ufw 开放 TCP/UDP 端口 | — |
+| `ufw_app` | 通过 ufw 开放 TCP/UDP 端口 | — |
 | `filebrowser` | Web 文件管理 + WebDAV（Quadlet + Traefik 路由） | — |
 
 ## 二、文档脱敏规则（重要约定）
@@ -97,7 +101,7 @@ sample_inventory/
 | `user` | `password`、`ssh_public_key` | 有意：缺省 = 锁定账号 / 无 SSH 登录 |
 | `interactive_access` | `interactive_ssh_public_key` | 有意：在 inventory group_vars 设置 |
 | `ansible_access` | `ansible_ssh_public_key` | 有意：在 inventory group_vars 设置（无 argument_specs） |
-| 其余 6 个 role | 无 | 全部 optional 变量均已定义 ✅ |
+| 其余 7 个 role | 无 | 全部 optional 变量均已定义 ✅ |
 
 已清理的死变量：
 
