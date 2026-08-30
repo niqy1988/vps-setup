@@ -104,7 +104,7 @@ ansible-playbook playbooks/all.yaml
 | [`traefik`](roles/traefik/README.md) | 反向代理 + ACME | 容器 label 自动发现路由 |
 | [`wgcf`](roles/wgcf/README.md) | Cloudflare WARP 注册 | 产出 Xray 的 WireGuard 出口 |
 | [`xray`](roles/xray/README.md) | Xray 代理 | VLESS + WS / XHTTP |
-| [`firewall_service`](roles/firewall_service/README.md) | ufw 端口放行 | 通过 ufw 开放 TCP/UDP 端口 |
+| [`ufw_app`](roles/ufw_app/README.md) | ufw 端口放行 | 在 ufw 中注册应用规则并开放 TCP/UDP 端口 |
 | [`filebrowser`](roles/filebrowser/README.md) | Web 文件管理 + WebDAV | Quadlet 容器，经 Traefik 路由 |
 
 各角色参数（`argument_specs`）、依赖、范例见各自 README；示例变量统一见
@@ -113,8 +113,8 @@ ansible-playbook playbooks/all.yaml
 ## 文档
 
 - [docs/CONTEXT.md](docs/CONTEXT.md) —— 架构上下文、术语、主机组、决策记录。
-- [docs/adr/](docs/adr/) —— 架构决策记录（Quadlet 迁移 / Traefik ACME /
-  Xray host 网络）。
+- [docs/adr/](docs/adr/) —— 架构决策记录（当前为 Debian 13 迁移；旧
+  AlmaLinux 时代的 ADR 已随迁移废弃删除，决策要点保留在 CONTEXT）。
 - [docs/role-doc-conventions.md](docs/role-doc-conventions.md) —— Role 文档
   规范、脱敏规则、`sample_inventory` 约定、提权约定、参数审计记录。
 - [docs/ansible-lint.md](docs/ansible-lint.md) —— ansible-lint 整理记录
