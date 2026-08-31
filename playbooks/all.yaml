@@ -1,6 +1,6 @@
 ---
-- name: Bootstrap all hosts
-  import_playbook: bootstrap.yaml
+- name: Update all hosts
+  import_playbook: update_packages.yaml
 
 - name: Set up xray
   import_playbook: xray.yaml
