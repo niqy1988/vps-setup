@@ -13,7 +13,6 @@
     path: /etc/ansible/facts.d
     owner: "{{ ansible_username }}"
     group: "{{ ansible_username }}"
-    recurse: true
     state: directory
     mode: "0755"
 
