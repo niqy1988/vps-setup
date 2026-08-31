@@ -35,10 +35,10 @@
   hosts: all
   become: true
   tasks:
-    - name: Update package cache
+    - name: Update existing packages
       ansible.builtin.apt:
+        upgrade: dist
         update_cache: true
-        cache_valid_time: 3600 # Only updates if it hasn't been updated in the last hour (3600 seconds)
     - name: Install Chinese locale
       ansible.builtin.package:
         name: locales-all
@@ -61,10 +61,6 @@
       ansible.builtin.package:
         name: logrotate
         state: present
-    - name: Update existing packages
-      ansible.builtin.apt:
-        upgrade: dist
-        update_cache: true
 
 - name: Set up base file system structure
   hosts: all
