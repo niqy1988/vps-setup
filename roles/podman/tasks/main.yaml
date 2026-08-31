@@ -6,6 +6,18 @@
       - uidmap
       - python3-podman
     state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    APT_LISTCHANGES_FRONTEND: none
+  vars:
+    dpkg_options: "force-confold,force-confdef"
+  async: 300
+  poll: 10
+  register: podman_package_install_result
+  # 开启重试循环：只要任务失败（包括 async 超时），就触发重试
+  until: podman_package_install_result is succeeded
+  retries: 3 # 最多重试 3 次
+  delay: 15 # 失败或超时后，等待 15 秒再重试
 
 - name: Set subuid and subgid range for podman user
   become: true

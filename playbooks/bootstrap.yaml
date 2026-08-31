@@ -39,28 +39,45 @@
       ansible.builtin.apt:
         upgrade: dist
         update_cache: true
-    - name: Install Chinese locale
-      ansible.builtin.package:
-        name: locales-all
-        state: present
-    - name: Install Python pip
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        APT_LISTCHANGES_FRONTEND: none
+      vars:
+        dpkg_options: "force-confold,force-confdef"
+      async: 600
+      poll: 10
+      register: apt_upgrade_result
+      # 开启重试循环：只要任务失败（包括 async 超时），就触发重试
+      until: apt_upgrade_result is succeeded
+      retries: 3 # 最多重试 3 次
+      delay: 15 # 失败或超时后，等待 15 秒再重试
+    - name: Install packages
       ansible.builtin.package:
         name:
+          # Chinese locale
+          - locales-all
+          # ACL tools
+          - acl
+          # Firewall
+          - ufw
+          # Python pip
           - python3-pip
           - python3-packaging
+          # Logrotate
+          - logrotate
         state: present
-    - name: Install ACL tools
-      ansible.builtin.package:
-        name: acl
-        state: present
-    - name: Install ufw
-      ansible.builtin.package:
-        name: ufw
-        state: present
-    - name: Install logrotate
-      ansible.builtin.package:
-        name: logrotate
-        state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        APT_LISTCHANGES_FRONTEND: none
+      vars:
+        dpkg_options: "force-confold,force-confdef"
+      async: 300
+      poll: 10
+      register: package_install_result
+      # 开启重试循环：只要任务失败（包括 async 超时），就触发重试
+      until: package_install_result is succeeded
+      retries: 3 # 最多重试 3 次
+      delay: 15 # 失败或超时后，等待 15 秒再重试
 
 - name: Set up base file system structure
   hosts: all

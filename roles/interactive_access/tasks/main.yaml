@@ -1,14 +1,22 @@
-- name: Install screen tool
+- name: Install interactive user tools
   become: true
   ansible.builtin.package:
-    name: screen
+    name:
+      - screen
+      - tree
     state: present
-
-- name: Install tree tool
-  become: true
-  ansible.builtin.package:
-    name: tree
-    state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    APT_LISTCHANGES_FRONTEND: none
+  vars:
+    dpkg_options: "force-confold,force-confdef"
+  async: 300
+  poll: 10
+  register: interactive_access_package_install_result
+  # 开启重试循环：只要任务失败（包括 async 超时），就触发重试
+  until: interactive_access_package_install_result is succeeded
+  retries: 3 # 最多重试 3 次
+  delay: 15 # 失败或超时后，等待 15 秒再重试
 
 - name: Reset SSH connection to apply changes
   ansible.builtin.meta: reset_connection
