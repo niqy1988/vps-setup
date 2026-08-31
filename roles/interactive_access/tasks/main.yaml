@@ -2,6 +2,7 @@
   become: true
   ansible.builtin.package:
     name:
+      - nano
       - screen
       - tree
     state: present
