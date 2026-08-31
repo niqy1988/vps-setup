@@ -34,8 +34,8 @@
   become_user: "{{ podman_username }}"
   ansible.builtin.file:
     path: "/home/{{ podman_username }}/.config/containers/systemd"
-    recurse: true
     state: directory
+    mode: "0755"
 
 - name: Setup default podman bridge network
   become: true

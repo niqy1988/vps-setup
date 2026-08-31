@@ -34,7 +34,7 @@
     path: "/home/{{ username }}/.ansible/tmp"
     owner: "{{ username }}"
     group: "{{ username }}"
-    recurse: true
+    mode: "0755"
     state: directory
 
 # ssh public key for remote login
