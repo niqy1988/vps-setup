@@ -37,12 +37,12 @@
   tasks:
     - name: Enable backports repository
       ansible.builtin.deb822_repository:
-        name: "{{ ansible_distribution_release }}-backports"
+        name: "{{ ansible_facts['distribution_release'] }}-backports"
         types:
           - deb
           - deb-src
         uris: http://deb.debian.org/debian
-        suites: "{{ ansible_distribution_release }}-backports"
+        suites: "{{ ansible_facts['distribution_release'] }}-backports"
         components: main
         signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
         state: present

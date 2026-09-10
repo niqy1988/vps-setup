@@ -38,8 +38,8 @@
 - **Ansible 变量 / facts**：
   - `ansible_local.wgcf.*`：由本角色之前运行写入的事实（私钥、公钥、
     序列号、设备注册信息、xray 配置）。
-  - `inventory_hostname`、`ansible_distribution_version`、
-    `ansible_distribution`、`ansible_fqdn`：用于设备注册请求体。
+  - `inventory_hostname` 与 `ansible_facts` 中的 `distribution_version`、
+    `distribution`、`fqdn`：用于设备注册请求体。
   - 自定义 Jinja2 filter：`url_query`、`decode_wgcf_reserved`
     （`filter_plugins/wgcf_filters.py`）。
 

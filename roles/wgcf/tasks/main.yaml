@@ -73,9 +73,9 @@
           name: "{{ inventory_hostname }}"
           locale: en_US
           key: "{{ wg_public_key }}"
-          os_version: "{{ ansible_distribution_version | string }}"
-          manufacturer: "{{ ansible_distribution }}"
-          model: "{{ ansible_fqdn }}"
+          os_version: "{{ ansible_facts['distribution_version'] | string }}"
+          manufacturer: "{{ ansible_facts['distribution'] }}"
+          model: "{{ ansible_facts['fqdn'] }}"
           serial_number: "{{ wgcf_serial_number }}"
         body_format: json
       register: device_reg_resp
